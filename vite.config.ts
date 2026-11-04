@@ -18,7 +18,11 @@ function sha256(value: string): `sha256-${string}` {
 	return `sha256-${createHash('sha256').update(value).digest('base64')}`;
 }
 
+// Headless Chromium needs SwiftShader for the WebGL 2 context MapLibre renders with.
+const WEBGL_ARGS = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
+
 export default defineConfig({
+	optimizeDeps: { include: ['maplibre-gl'] },
 	plugins: [
 		tailwindcss(),
 		sveltekit({
@@ -61,7 +65,7 @@ export default defineConfig({
 					name: 'client',
 					browser: {
 						enabled: true,
-						provider: playwright(),
+						provider: playwright({ launchOptions: { args: WEBGL_ARGS } }),
 						instances: [{ browser: 'chromium', headless: true }]
 					},
 					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
