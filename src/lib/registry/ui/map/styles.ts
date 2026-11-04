@@ -25,11 +25,14 @@ function isThemed(style: MapStyle): style is { light: StyleInput; dark: StyleInp
 
 /**
  * Origins a CSP `connect-src` must allow for the given style URLs. Add the hosts of any
- * sprites, glyphs or tiles a custom style loads from elsewhere.
+ * sprites, glyphs or tiles a custom style loads from elsewhere. Relative URLs are
+ * same-origin, which `'self'` already covers, so they add nothing.
  */
 export function styleOrigins(style: MapStyle): Origin[] {
 	const styles = isThemed(style) ? [style.light, style.dark] : [style];
-	const urls = styles.filter((item): item is string => typeof item === 'string');
+	const urls = styles.filter(
+		(item): item is string => typeof item === 'string' && URL.canParse(item)
+	);
 	return [...new Set(urls.map((url) => new URL(url).origin as Origin))];
 }
 

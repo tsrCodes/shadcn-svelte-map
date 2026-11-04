@@ -29,6 +29,13 @@ describe('styleOrigins', () => {
 	test('skips inline style objects', () => {
 		expect(styleOrigins(LIGHT_STYLE)).toEqual([]);
 	});
+
+	test('skips relative style URLs, which are same-origin', () => {
+		expect(styleOrigins('/styles/light.json')).toEqual([]);
+		expect(
+			styleOrigins({ light: 'styles/light.json', dark: 'https://b.example/dark.json' })
+		).toEqual(['https://b.example']);
+	});
 });
 
 describe('viewport helpers', () => {
