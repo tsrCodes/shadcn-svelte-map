@@ -1,0 +1,218 @@
+import type {
+	FeatureIdentifier,
+	LayerSpecification,
+	Map as MapLibreMap,
+	SourceSpecification,
+	StyleSpecification
+} from 'maplibre-gl';
+
+/** The parts of a MapLibre map the registry talks to. */
+export type RegistryMap = Pick<
+	MapLibreMap,
+	| 'getSource'
+	| 'addSource'
+	| 'removeSource'
+	| 'getLayer'
+	| 'getLayersOrder'
+	| 'addLayer'
+	| 'removeLayer'
+	| 'setFeatureState'
+	| 'removeFeatureState'
+>;
+
+/** A source and the layers drawn from it, owned by one component. */
+export interface LayerEntry {
+	sourceId: string;
+	source: SourceSpecification;
+	layers: LayerSpecification[];
+	/** Insert the layers below this layer id when it exists in the style. */
+	beforeId?: string;
+}
+
+export type FeatureState = Record<string, unknown>;
+
+/** A feature, or a whole source when `id` is left out. */
+export type FeatureTarget = Omit<FeatureIdentifier, 'id'> & { id?: FeatureIdentifier['id'] };
+
+interface StoredState {
+	target: FeatureIdentifier;
+	state: FeatureState;
+}
+
+function stateKey(sourceLayer: string | undefined, id: FeatureIdentifier['id']): string {
+	return `${sourceLayer ?? ''}\u0000${String(id)}`;
+}
+
+function insertLayer(
+	layers: LayerSpecification[],
+	layer: LayerSpecification,
+	beforeId: string | undefined
+): LayerSpecification[] {
+	const index = beforeId ? layers.findIndex((item) => item.id === beforeId) : -1;
+	if (index < 0) return [...layers, layer];
+	return [...layers.slice(0, index), layer, ...layers.slice(index)];
+}
+
+function withoutKey(state: FeatureState, key: string): FeatureState {
+	return Object.fromEntries(Object.entries(state).filter(([name]) => name !== key));
+}
+
+/**
+ * Keeps user sources, layers and feature-state alive across style swaps.
+ *
+ * Components register what they draw. When the style changes, `transformStyle`
+ * carries the registered sources and layers into the next style, and on
+ * `style.load` anything still missing is added back and the saved feature-state
+ * is applied again (a swap that cannot be diffed wipes it).
+ */
+export class LayerRegistry {
+	#map: RegistryMap | null = null;
+	#ready = false;
+	#entries = new Map<string, LayerEntry>();
+	#featureState = new Map<string, Map<string, StoredState>>();
+	#pendingRemoval = new Map<string, LayerEntry>();
+
+	/** True once the current style has loaded and can take sources and layers. */
+	get ready(): boolean {
+		return this.#ready;
+	}
+
+	attach(map: RegistryMap): void {
+		this.#map = map;
+		this.#ready = false;
+	}
+
+	detach(): void {
+		this.#map = null;
+		this.#ready = false;
+	}
+
+	/** Call when a new style object starts loading. */
+	styleLoading(): void {
+		this.#ready = false;
+	}
+
+	/** Call on every `style.load`. Re-adds missing entries and replays feature-state. */
+	styleLoaded(): void {
+		this.#ready = true;
+		for (const entry of this.#pendingRemoval.values()) this.#removeFromMap(entry);
+		this.#pendingRemoval.clear();
+		for (const entry of this.#entries.values()) this.#addToMap(entry);
+		this.#replayFeatureState();
+	}
+
+	has(sourceId: string): boolean {
+		return this.#entries.has(sourceId);
+	}
+
+	/** Register a source and its layers. Returns a function that removes them again. */
+	add(entry: LayerEntry): () => void {
+		if (this.#entries.has(entry.sourceId)) {
+			throw new Error(`Map source "${entry.sourceId}" is already registered.`);
+		}
+		this.#entries.set(entry.sourceId, entry);
+		this.#pendingRemoval.delete(entry.sourceId);
+		if (this.#ready) this.#addToMap(entry);
+		return () => this.remove(entry.sourceId);
+	}
+
+	remove(sourceId: string): void {
+		const entry = this.#entries.get(sourceId);
+		if (!entry) return;
+		this.#entries.delete(sourceId);
+		this.#featureState.delete(sourceId);
+		if (this.#ready) this.#removeFromMap(entry);
+		else this.#pendingRemoval.set(sourceId, entry);
+	}
+
+	/** Set feature-state and remember it so it survives style swaps. */
+	setFeatureState(target: FeatureIdentifier, state: FeatureState): void {
+		const states = this.#featureState.get(target.source) ?? new Map<string, StoredState>();
+		const key = stateKey(target.sourceLayer, target.id);
+		const previous = states.get(key)?.state ?? {};
+		states.set(key, { target: { ...target }, state: { ...previous, ...state } });
+		this.#featureState.set(target.source, states);
+		if (this.#ready) this.#map?.setFeatureState(target, state);
+	}
+
+	/** Remove one key, or all state, of a feature (or of a whole source when `id` is left out). */
+	removeFeatureState(target: FeatureTarget, key?: string): void {
+		this.#forgetState(target, key);
+		if (this.#ready) this.#map?.removeFeatureState(target, key);
+	}
+
+	/** Saved feature-state for one feature, as the registry will replay it. */
+	getFeatureState(target: FeatureIdentifier): FeatureState {
+		const stored = this.#featureState
+			.get(target.source)
+			?.get(stateKey(target.sourceLayer, target.id));
+		return { ...stored?.state };
+	}
+
+	/** Pass to `map.setStyle(style, { transformStyle })` to carry registered layers across. */
+	transformStyle = (
+		previous: StyleSpecification | undefined,
+		next: StyleSpecification
+	): StyleSpecification => {
+		let sources = { ...next.sources };
+		let layers = [...next.layers];
+		for (const entry of this.#entries.values()) {
+			sources = { ...sources, [entry.sourceId]: previous?.sources[entry.sourceId] ?? entry.source };
+			for (const layer of entry.layers) {
+				const current = previous?.layers.find((item) => item.id === layer.id) ?? layer;
+				const others = layers.filter((item) => item.id !== layer.id);
+				layers = insertLayer(others, current, entry.beforeId);
+			}
+		}
+		return { ...next, sources, layers };
+	};
+
+	#forgetState(target: FeatureTarget, key: string | undefined): void {
+		const states = this.#featureState.get(target.source);
+		if (!states) return;
+		if (target.id === undefined) {
+			this.#featureState.delete(target.source);
+			return;
+		}
+		const id = stateKey(target.sourceLayer, target.id);
+		const stored = states.get(id);
+		if (!stored) return;
+		const rest = key ? withoutKey(stored.state, key) : {};
+		if (Object.keys(rest).length > 0) states.set(id, { target: stored.target, state: rest });
+		else states.delete(id);
+		if (states.size === 0) this.#featureState.delete(target.source);
+	}
+
+	#addToMap(entry: LayerEntry): void {
+		const map = this.#map;
+		if (!map) return;
+		if (!map.getSource(entry.sourceId)) map.addSource(entry.sourceId, entry.source);
+		for (const layer of entry.layers) {
+			if (map.getLayer(layer.id)) continue;
+			const before = entry.beforeId && map.getLayer(entry.beforeId) ? entry.beforeId : undefined;
+			map.addLayer(layer, before);
+		}
+	}
+
+	#removeFromMap(entry: LayerEntry): void {
+		const map = this.#map;
+		if (!map) return;
+		for (const layer of [...entry.layers].reverse()) {
+			if (map.getLayer(layer.id)) map.removeLayer(layer.id);
+		}
+		if (!map.getSource(entry.sourceId)) return;
+		// A layer added outside the registry may still draw from this source;
+		// MapLibre throws when a source in use is removed, so leave it in place.
+		const inUse = map.getLayersOrder().some((id) => map.getLayer(id)?.source === entry.sourceId);
+		if (!inUse) map.removeSource(entry.sourceId);
+	}
+
+	#replayFeatureState(): void {
+		const map = this.#map;
+		if (!map) return;
+		for (const [sourceId, states] of this.#featureState) {
+			if (!map.getSource(sourceId)) continue;
+			for (const { target, state } of states.values()) map.setFeatureState(target, state);
+		}
+	}
+}
