@@ -11,6 +11,7 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<ModeWatcher />
+<!-- The initial mode script is served from /theme-init.js (see app.html) to keep the CSP strict. -->
+<ModeWatcher disableHeadScriptInjection disableTransitions={false} />
 
 {@render children()}
