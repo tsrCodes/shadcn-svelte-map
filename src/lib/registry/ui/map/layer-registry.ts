@@ -1,5 +1,7 @@
 import type {
 	FeatureIdentifier,
+	GeoJSONSource,
+	GeoJSONSourceSpecification,
 	LayerSpecification,
 	Map as MapLibreMap,
 	SourceSpecification,
@@ -18,6 +20,7 @@ export type RegistryMap = Pick<
 	| 'removeLayer'
 	| 'setFeatureState'
 	| 'removeFeatureState'
+	| 'setPaintProperty'
 >;
 
 /** A source and the layers drawn from it, owned by one component. */
@@ -30,6 +33,16 @@ export interface LayerEntry {
 }
 
 export type FeatureState = Record<string, unknown>;
+
+export type GeoJSONData = GeoJSONSourceSpecification['data'];
+
+/** Name of a paint property, as `map.setPaintProperty` takes it. */
+export type PaintProperty = Parameters<MapLibreMap['setPaintProperty']>[1];
+
+/** A paint value or expression, as `map.setPaintProperty` takes it. */
+export type PaintValue = Parameters<MapLibreMap['setPaintProperty']>[2];
+
+type PaintValues = Partial<Record<PaintProperty, PaintValue>>;
 
 /** A feature, or a whole source when `id` is left out. */
 export type FeatureTarget = Omit<FeatureIdentifier, 'id'> & { id?: FeatureIdentifier['id'] };
@@ -53,6 +66,11 @@ function insertLayer(
 	return [...layers.slice(0, index), layer, ...layers.slice(index)];
 }
 
+function withPaint(layer: LayerSpecification, paint: PaintValues | undefined): LayerSpecification {
+	if (!paint) return layer;
+	return { ...layer, paint: { ...layer.paint, ...paint } } as LayerSpecification;
+}
+
 function withoutKey(state: FeatureState, key: string): FeatureState {
 	return Object.fromEntries(Object.entries(state).filter(([name]) => name !== key));
 }
@@ -71,6 +89,10 @@ export class LayerRegistry {
 	#entries = new Map<string, LayerEntry>();
 	#featureState = new Map<string, Map<string, StoredState>>();
 	#pendingRemoval = new Map<string, LayerEntry>();
+	/** Data set while a style was loading, sent to the map once it is ready. */
+	#pendingData = new Set<string>();
+	/** Paint values set through the registry, by layer id; they win over any older style copy. */
+	#paint = new Map<string, PaintValues>();
 
 	/** True once the current style has loaded and can take sources and layers. */
 	get ready(): boolean {
@@ -98,6 +120,8 @@ export class LayerRegistry {
 		for (const entry of this.#pendingRemoval.values()) this.#removeFromMap(entry);
 		this.#pendingRemoval.clear();
 		for (const entry of this.#entries.values()) this.#addToMap(entry);
+		this.#flushData();
+		this.#replayPaint();
 		this.#replayFeatureState();
 	}
 
@@ -121,8 +145,42 @@ export class LayerRegistry {
 		if (!entry) return;
 		this.#entries.delete(sourceId);
 		this.#featureState.delete(sourceId);
+		this.#pendingData.delete(sourceId);
+		for (const layer of entry.layers) this.#paint.delete(layer.id);
 		if (this.#ready) this.#removeFromMap(entry);
 		else this.#pendingRemoval.set(sourceId, entry);
+	}
+
+	/** Replace the data of a registered GeoJSON source. Kept for style swaps. */
+	setData(sourceId: string, data: GeoJSONData): void {
+		const entry = this.#entries.get(sourceId);
+		if (!entry) return;
+		if (entry.source.type !== 'geojson') {
+			throw new Error(`Map source "${sourceId}" is not a GeoJSON source.`);
+		}
+		this.#entries.set(sourceId, { ...entry, source: { ...entry.source, data } });
+		this.#pendingData.add(sourceId);
+		if (this.#ready) this.#flushData();
+	}
+
+	/** Set one paint property of a registered layer. Kept for style swaps. */
+	setPaintProperty(
+		sourceId: string,
+		layerId: string,
+		name: PaintProperty,
+		value: PaintValue
+	): void {
+		const entry = this.#entries.get(sourceId);
+		if (!entry?.layers.some((layer) => layer.id === layerId)) return;
+		this.#paint.set(layerId, { ...this.#paint.get(layerId), [name]: value });
+		this.#entries.set(sourceId, {
+			...entry,
+			layers: entry.layers.map((layer) =>
+				layer.id === layerId ? withPaint(layer, { [name]: value }) : layer
+			)
+		});
+		if (this.#ready && this.#map?.getLayer(layerId))
+			this.#map.setPaintProperty(layerId, name, value);
 	}
 
 	/** Set feature-state and remember it so it survives style swaps. */
@@ -157,15 +215,50 @@ export class LayerRegistry {
 		let sources = { ...next.sources };
 		let layers = [...next.layers];
 		for (const entry of this.#entries.values()) {
-			sources = { ...sources, [entry.sourceId]: previous?.sources[entry.sourceId] ?? entry.source };
+			sources = { ...sources, [entry.sourceId]: this.#carriedSource(entry, previous) };
 			for (const layer of entry.layers) {
-				const current = previous?.layers.find((item) => item.id === layer.id) ?? layer;
+				const carried = previous?.layers.find((item) => item.id === layer.id) ?? layer;
+				const current = withPaint(carried, this.#paint.get(layer.id));
 				const others = layers.filter((item) => item.id !== layer.id);
 				layers = insertLayer(others, current, entry.beforeId);
 			}
 		}
 		return { ...next, sources, layers };
 	};
+
+	#carriedSource(entry: LayerEntry, previous: StyleSpecification | undefined): SourceSpecification {
+		// Data set through the registry is newer than whatever the old style holds.
+		if (this.#pendingData.has(entry.sourceId)) return entry.source;
+		return previous?.sources[entry.sourceId] ?? entry.source;
+	}
+
+	#flushData(): void {
+		const map = this.#map;
+		if (!map) return;
+		for (const sourceId of this.#pendingData) {
+			const entry = this.#entries.get(sourceId);
+			if (entry?.source.type !== 'geojson') {
+				this.#pendingData.delete(sourceId);
+				continue;
+			}
+			// Keep it pending until the source exists, so the next style load still applies it.
+			const source = map.getSource<GeoJSONSource>(sourceId);
+			if (!source) continue;
+			source.setData(entry.source.data);
+			this.#pendingData.delete(sourceId);
+		}
+	}
+
+	#replayPaint(): void {
+		const map = this.#map;
+		if (!map) return;
+		for (const [layerId, paint] of this.#paint) {
+			if (!map.getLayer(layerId)) continue;
+			for (const [name, value] of Object.entries(paint) as [PaintProperty, PaintValue][]) {
+				map.setPaintProperty(layerId, name, value);
+			}
+		}
+	}
 
 	#forgetState(target: FeatureTarget, key: string | undefined): void {
 		const states = this.#featureState.get(target.source);

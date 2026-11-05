@@ -9,10 +9,13 @@ function createFakeMap(layerIds: string[] = ['background']) {
 	let layers = [...layerIds];
 	const layerSources = new Map<string, string>();
 	const states = new Map<string, Record<string, unknown>>();
+	const data = new Map<string, unknown>();
+	const paint = new Map<string, Record<string, unknown>>();
 	const key = (source: string, id: unknown) => `${source}/${String(id)}`;
 
 	const map = {
-		getSource: (id: string) => (sources.has(id) ? {} : undefined),
+		getSource: (id: string) =>
+			sources.has(id) ? { setData: (value: unknown) => data.set(id, value) } : undefined,
 		addSource: (id: string) => sources.add(id),
 		removeSource: (id: string) => {
 			if (
@@ -40,7 +43,9 @@ function createFakeMap(layerIds: string[] = ['background']) {
 				...state
 			}),
 		removeFeatureState: (target: { source: string; id?: unknown }) =>
-			states.delete(key(target.source, target.id))
+			states.delete(key(target.source, target.id)),
+		setPaintProperty: (layer: string, name: string, value: unknown) =>
+			paint.set(layer, { ...paint.get(layer), [name]: value })
 	};
 
 	return {
@@ -48,6 +53,8 @@ function createFakeMap(layerIds: string[] = ['background']) {
 		layers: () => layers,
 		sources: () => [...sources],
 		state: (source: string, id: unknown) => states.get(key(source, id)),
+		data: (source: string) => data.get(source),
+		paint: (layer: string) => paint.get(layer),
 		/** A full style rebuild: everything user-added is gone. */
 		rebuild: (ids: string[]) => {
 			sources.clear();
@@ -188,5 +195,91 @@ describe('LayerRegistry', () => {
 		expect(result.layers.map((layer) => layer.id)).toEqual([POINTS_LAYER, 'labels']);
 		expect(result.layers[0]).toMatchObject({ paint: { 'circle-radius': 3 } });
 		expect(next.layers).toEqual([LABELS]);
+	});
+
+	test('setData sends data to the map, or holds it until the style is ready', () => {
+		const fake = createFakeMap();
+		const registry = new LayerRegistry();
+		registry.attach(fake.map);
+		registry.add(POINTS_ENTRY);
+		registry.styleLoaded();
+		const one = { type: 'FeatureCollection' as const, features: [] };
+		registry.setData(POINTS_SOURCE, one);
+		expect(fake.data(POINTS_SOURCE)).toBe(one);
+
+		const two = { type: 'FeatureCollection' as const, features: [] };
+		registry.styleLoading();
+		registry.setData(POINTS_SOURCE, two);
+		expect(fake.data(POINTS_SOURCE)).toBe(one);
+		registry.styleLoaded();
+		expect(fake.data(POINTS_SOURCE)).toBe(two);
+	});
+
+	test('setData keeps data pending while the source is missing from the map', () => {
+		const fake = createFakeMap();
+		const registry = new LayerRegistry();
+		registry.attach(fake.map);
+		registry.add(POINTS_ENTRY);
+		registry.styleLoaded();
+		fake.rebuild(['background']);
+
+		const fresh = { type: 'FeatureCollection' as const, features: [] };
+		registry.setData(POINTS_SOURCE, fresh);
+		expect(fake.data(POINTS_SOURCE)).toBeUndefined();
+
+		// Still pending, so the next style takes the new data over the old style's copy.
+		const stale = { type: 'FeatureCollection' as const, features: [] };
+		const previous: StyleSpecification = {
+			version: 8,
+			sources: { [POINTS_SOURCE]: { type: 'geojson', data: stale } },
+			layers: POINTS_ENTRY.layers
+		};
+		const next = registry.transformStyle(previous, { version: 8, sources: {}, layers: [] });
+		expect((next.sources[POINTS_SOURCE] as { data: unknown }).data).toBe(fresh);
+	});
+
+	test('setData rejects sources that are not GeoJSON and ignores unknown ones', () => {
+		const registry = new LayerRegistry();
+		registry.add({ sourceId: 'tiles', source: { type: 'raster', tiles: [] }, layers: [] });
+		const empty = { type: 'FeatureCollection' as const, features: [] };
+		expect(() => registry.setData('tiles', empty)).toThrow(/not a GeoJSON source/);
+		expect(() => registry.setData('missing', empty)).not.toThrow();
+	});
+
+	test('setPaintProperty survives a rebuild and wins over the old style copy', () => {
+		const fake = createFakeMap();
+		const registry = new LayerRegistry();
+		registry.attach(fake.map);
+		registry.add(POINTS_ENTRY);
+		registry.styleLoaded();
+		registry.setPaintProperty(POINTS_SOURCE, POINTS_LAYER, 'circle-color', 'red');
+		expect(fake.paint(POINTS_LAYER)).toEqual({ 'circle-color': 'red' });
+
+		// Set while the next style loads: the carried layer and the replay both use it.
+		registry.styleLoading();
+		registry.setPaintProperty(POINTS_SOURCE, POINTS_LAYER, 'circle-color', 'blue');
+		const previous: StyleSpecification = {
+			version: 8,
+			sources: { [POINTS_SOURCE]: POINTS_ENTRY.source },
+			layers: [
+				{ ...POINTS_ENTRY.layers[0], paint: { 'circle-color': 'red' } } as LayerSpecification
+			]
+		};
+		const next = registry.transformStyle(previous, { version: 8, sources: {}, layers: [] });
+		expect(next.layers[0]).toMatchObject({ paint: { 'circle-color': 'blue' } });
+
+		fake.rebuild(['background']);
+		registry.styleLoaded();
+		expect(fake.paint(POINTS_LAYER)).toEqual({ 'circle-color': 'blue' });
+	});
+
+	test('setPaintProperty ignores layers the entry does not own', () => {
+		const fake = createFakeMap();
+		const registry = new LayerRegistry();
+		registry.attach(fake.map);
+		registry.add(POINTS_ENTRY);
+		registry.styleLoaded();
+		registry.setPaintProperty(POINTS_SOURCE, 'background', 'circle-color', 'red');
+		expect(fake.paint('background')).toBeUndefined();
 	});
 });

@@ -4,7 +4,10 @@ export {
 	LayerRegistry,
 	type LayerEntry,
 	type FeatureState,
-	type FeatureTarget
+	type FeatureTarget,
+	type GeoJSONData,
+	type PaintProperty,
+	type PaintValue
 } from './layer-registry.js';
 export {
 	DEFAULT_MAP_STYLE,
