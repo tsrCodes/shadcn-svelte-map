@@ -38,7 +38,7 @@ const TOKENS: Record<keyof ThemeColors, string> = {
 	chart5: '--chart-5'
 };
 
-const FALLBACK_COLOR = 'rgba(0, 0, 0, 1)';
+export const FALLBACK_COLOR = 'rgba(0, 0, 0, 1)';
 
 /**
  * Theme the page shows, read from `<html>`: `dark` / `light` class or `data-theme`

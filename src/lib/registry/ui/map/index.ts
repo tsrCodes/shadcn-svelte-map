@@ -5,6 +5,7 @@ export { default as MapMarkerLabel } from './map-marker-label.svelte';
 export { default as MapMarkerPopup } from './map-marker-popup.svelte';
 export { default as MapMarkerTooltip } from './map-marker-tooltip.svelte';
 export { default as MapPopup } from './map-popup.svelte';
+export { default as MapPointLayer } from './map-point-layer.svelte';
 export { MapContext, getMapContext } from './map-context.svelte.js';
 export { MarkerContext, getMarkerContext } from './marker-context.svelte.js';
 export {
