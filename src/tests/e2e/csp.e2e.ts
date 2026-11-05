@@ -45,6 +45,23 @@ test('map renders under strict CSP with no external script', async ({ page, base
 		'absolute'
 	);
 
+	// Markers, tooltips and popups are styled from JS and CSS files, never inline styles.
+	const marker = page.getByRole('button', { name: 'Museum Island' });
+	await map.locator('canvas').focus();
+	// Tab through the map's controls and markers until this one has focus, whatever the order.
+	await expect(async () => {
+		await page.keyboard.press('Tab');
+		await expect(marker).toBeFocused({ timeout: 250 });
+	}).toPass({ timeout: 10_000 });
+	await expect(page.getByRole('tooltip')).toHaveText('Five museums on the Spree');
+	await page.keyboard.press('Enter');
+	const dialog = page.getByRole('dialog', { name: 'Museum Island' });
+	await expect(dialog).toBeVisible();
+	await expect(marker).toHaveAttribute('aria-expanded', 'true');
+	await page.keyboard.press('Escape');
+	await expect(dialog).toBeHidden();
+	await expect(marker).toBeFocused();
+
 	const scripts = await page
 		.locator('script[src]')
 		.evaluateAll((elements) => elements.map((element) => (element as HTMLScriptElement).src));
