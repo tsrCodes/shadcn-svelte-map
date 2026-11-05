@@ -1,5 +1,11 @@
 export { default as Map, type MapOptionsInput } from './map.svelte';
+export { default as MapMarker } from './map-marker.svelte';
+export { default as MapMarkerContent } from './map-marker-content.svelte';
+export { default as MapMarkerLabel } from './map-marker-label.svelte';
+export { default as MapMarkerPopup } from './map-marker-popup.svelte';
+export { default as MapMarkerTooltip } from './map-marker-tooltip.svelte';
 export { MapContext, getMapContext } from './map-context.svelte.js';
+export { MarkerContext, getMarkerContext } from './marker-context.svelte.js';
 export {
 	LayerRegistry,
 	type LayerEntry,
@@ -9,6 +15,7 @@ export {
 	type PaintProperty,
 	type PaintValue
 } from './layer-registry.js';
+export { type PopupOffset } from './popup.svelte.js';
 export {
 	DEFAULT_MAP_STYLE,
 	OPENFREEMAP_ORIGIN,

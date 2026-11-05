@@ -23,6 +23,8 @@ export class MapContext {
 	map = $state.raw<MapLibreMap | null>(null);
 	/** Bumped on every `style.load`. */
 	styleVersion = $state(0);
+	/** The loaded MapLibre module, so components build markers and popups without importing it. */
+	maplibre = $state.raw<typeof import('maplibre-gl') | null>(null);
 	/** The element the map renders into. */
 	container = $state.raw<HTMLElement | null>(null);
 

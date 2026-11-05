@@ -166,6 +166,7 @@
 		});
 		ctx.layers.attach(map);
 		const subscriptions = listen(map);
+		ctx.maplibre = lib;
 		ctx.map = map;
 		ref = map;
 
@@ -174,6 +175,7 @@
 			ctx.layers.detach();
 			map.remove();
 			ctx.map = null;
+			ctx.maplibre = null;
 			ref = null;
 		};
 	}
@@ -299,5 +301,75 @@
 
 	:global(.dark) [data-slot='map'] :global(.maplibregl-ctrl-attrib-button) {
 		filter: invert(1);
+	}
+
+	/* Popups and tooltips use the shadcn popover and tooltip tokens. */
+	[data-slot='map'] :global(.map-popup) {
+		--map-popup-bg: var(--popover);
+		--map-popup-fg: var(--popover-foreground);
+		--map-popup-border: var(--border);
+	}
+
+	[data-slot='map'] :global(.map-popup.map-tooltip) {
+		--map-popup-bg: var(--foreground);
+		--map-popup-fg: var(--background);
+		--map-popup-border: transparent;
+		pointer-events: none;
+	}
+
+	[data-slot='map'] :global(.map-popup .maplibregl-popup-content) {
+		background-color: var(--map-popup-bg);
+		color: var(--map-popup-fg);
+		border: 1px solid var(--map-popup-border);
+		border-radius: var(--radius);
+		box-shadow:
+			0 4px 6px -1px rgb(0 0 0 / 0.1),
+			0 2px 4px -2px rgb(0 0 0 / 0.1);
+		padding: 0.75rem;
+		font-family: inherit;
+		font-size: 0.875rem;
+	}
+
+	[data-slot='map'] :global(.map-tooltip .maplibregl-popup-content) {
+		padding: 0.375rem 0.75rem;
+		font-size: 0.75rem;
+		box-shadow: none;
+	}
+
+	[data-slot='map'] :global(.map-popup .maplibregl-popup-close-button) {
+		color: var(--muted-foreground);
+		border-radius: calc(var(--radius) - 4px);
+		inset-inline-end: 0.25rem;
+		top: 0.25rem;
+		width: 1.5rem;
+		height: 1.5rem;
+		font-size: 1rem;
+		line-height: 1;
+	}
+
+	[data-slot='map'] :global(.map-popup .maplibregl-popup-close-button:hover) {
+		background-color: var(--accent);
+		color: var(--accent-foreground);
+	}
+
+	[data-slot='map'] :global(.map-popup .maplibregl-popup-close-button:focus-visible) {
+		outline: 2px solid var(--ring);
+		outline-offset: 1px;
+	}
+
+	[data-slot='map'] :global(.map-popup[class*='-anchor-top'] .maplibregl-popup-tip) {
+		border-bottom-color: var(--map-popup-bg);
+	}
+
+	[data-slot='map'] :global(.map-popup[class*='-anchor-bottom'] .maplibregl-popup-tip) {
+		border-top-color: var(--map-popup-bg);
+	}
+
+	[data-slot='map'] :global(.map-popup.maplibregl-popup-anchor-left .maplibregl-popup-tip) {
+		border-right-color: var(--map-popup-bg);
+	}
+
+	[data-slot='map'] :global(.map-popup.maplibregl-popup-anchor-right .maplibregl-popup-tip) {
+		border-left-color: var(--map-popup-bg);
 	}
 </style>
