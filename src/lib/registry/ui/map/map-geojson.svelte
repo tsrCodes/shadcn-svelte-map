@@ -9,7 +9,13 @@
 	} from 'maplibre-gl';
 	import type { GeoJSONData } from './layer-registry.js';
 	import { getMapContext } from './map-context.svelte.js';
-	import { plainGeoJSON, registerLayers, syncData, syncPaint } from './layer-sync.svelte.js';
+	import {
+		featuresAt,
+		plainGeoJSON,
+		registerLayers,
+		syncData,
+		syncPaint
+	} from './layer-sync.svelte.js';
 	import { FALLBACK_COLOR } from './theme.svelte.js';
 
 	interface Props {
@@ -157,10 +163,7 @@
 	});
 
 	function featureAt(event: MapMouseEvent): MapGeoJSONFeature | null {
-		const map = ctx.map;
-		const layers = layerIds.filter((layer) => map?.getLayer(layer));
-		if (!map || layers.length === 0) return null;
-		return map.queryRenderedFeatures(event.point, { layers })[0] ?? null;
+		return featuresAt(event.target, event.point, layerIds)[0] ?? null;
 	}
 
 	$effect(() => {

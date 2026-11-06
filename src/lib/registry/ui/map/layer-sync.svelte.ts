@@ -1,4 +1,5 @@
 import { untrack } from 'svelte';
+import type { Map as MapLibreMap, MapGeoJSONFeature, PointLike } from 'maplibre-gl';
 import type { GeoJSONData, LayerEntry, PaintProperty, PaintValue } from './layer-registry.js';
 import type { MapContext } from './map-context.svelte.js';
 
@@ -38,6 +39,16 @@ export function syncPaint(
 	value: () => PaintValue
 ): void {
 	$effect(() => ctx.layers.setPaintProperty(sourceId, layerId, name, value()));
+}
+
+/** Features under `point` in whichever of `layerIds` the current style has. */
+export function featuresAt(
+	map: MapLibreMap,
+	point: PointLike,
+	layerIds: string[]
+): MapGeoJSONFeature[] {
+	const layers = layerIds.filter((layer) => map.getLayer(layer));
+	return layers.length > 0 ? map.queryRenderedFeatures(point, { layers }) : [];
 }
 
 /** A plain copy of reactive GeoJSON. MapLibre posts data to a worker, which cannot take proxies. */

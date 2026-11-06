@@ -34,7 +34,13 @@
 	import type { LayerSpecification } from 'maplibre-gl';
 	import type { GeoJSONData } from './layer-registry.js';
 	import { getMapContext } from './map-context.svelte.js';
-	import { plainGeoJSON, registerLayers, syncData, syncPaint } from './layer-sync.svelte.js';
+	import {
+		featuresAt,
+		plainGeoJSON,
+		registerLayers,
+		syncData,
+		syncPaint
+	} from './layer-sync.svelte.js';
 	import { FALLBACK_COLOR } from './theme.svelte.js';
 
 	interface Props extends FilledShapeProps {
@@ -120,9 +126,7 @@
 		const handler = onclick;
 		if (!map || !handler) return;
 		const subscription = map.on('click', (event) => {
-			const layers = layerIds.filter((layer) => map.getLayer(layer));
-			if (layers.length === 0) return;
-			if (map.queryRenderedFeatures(event.point, { layers }).length > 0) handler(event);
+			if (featuresAt(map, event.point, layerIds).length > 0) handler(event);
 		});
 		return () => subscription.unsubscribe();
 	});
