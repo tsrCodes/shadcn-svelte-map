@@ -11,6 +11,7 @@ export { default as MapCircle } from './map-circle.svelte';
 export { default as MapPolygon } from './map-polygon.svelte';
 export { default as MapPolyline } from './map-polyline.svelte';
 export { default as MapRectangle } from './map-rectangle.svelte';
+export { default as MapRoute } from './map-route.svelte';
 export { MapContext, getMapContext } from './map-context.svelte.js';
 export { MarkerContext, getMarkerContext } from './marker-context.svelte.js';
 export {
