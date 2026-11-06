@@ -2,58 +2,52 @@
 	import MoonIcon from '@lucide/svelte/icons/moon';
 	import SunIcon from '@lucide/svelte/icons/sun';
 	import CoffeeIcon from '@lucide/svelte/icons/coffee';
-	import type { FeatureCollection, Point } from 'geojson';
 	import { toggleMode } from 'mode-watcher';
 	import { Button } from '#lib/registry/ui/button/index.js';
+	import { ButtonGroup } from '#lib/registry/ui/button-group/index.js';
 	import {
 		Map,
+		MapArc,
+		MapCircle,
+		MapClusterLayer,
+		MapGeoJSON,
+		MapHeatmap,
 		MapMarker,
 		MapMarkerContent,
 		MapMarkerLabel,
 		MapMarkerPopup,
 		MapMarkerTooltip,
 		MapPointLayer,
+		MapPolygon,
+		MapRectangle,
+		MapRoute,
 		type MapViewport
 	} from '#lib/registry/ui/map/index.js';
+	import {
+		DELIVERIES,
+		MUSEUM_ISLAND,
+		PLACES,
+		RIDE,
+		TEMPELHOF_BOUNDS,
+		ZONES,
+		spiralStops
+	} from './data.js';
 
-	interface Place {
-		name: string;
-		note: string;
-		lngLat: [number, number];
-	}
+	type StopsView = 'points' | 'clusters' | 'heatmap';
 
-	const PLACES: Place[] = [
-		{ name: 'Brandenburg Gate', note: 'Landmark, Pariser Platz', lngLat: [13.3777, 52.5163] },
-		{ name: 'Museum Island', note: 'Five museums on the Spree', lngLat: [13.3976, 52.5169] },
-		{ name: 'Tempelhofer Feld', note: 'Former airport, now a park', lngLat: [13.4017, 52.4732] }
+	const VIEWS: { value: StopsView; label: string }[] = [
+		{ value: 'points', label: 'Points' },
+		{ value: 'clusters', label: 'Clusters' },
+		{ value: 'heatmap', label: 'Heatmap' }
 	];
-
-	/** Spread points around the centre on a fixed spiral, so the demo looks the same every load. */
-	function spiralPoints(count: number): FeatureCollection<Point, { name: string }> {
-		return {
-			type: 'FeatureCollection',
-			features: Array.from({ length: count }, (_, index) => {
-				const angle = index * 2.4;
-				const distance = 0.012 * Math.sqrt(index + 1);
-				return {
-					type: 'Feature',
-					properties: { name: `Stop ${index + 1}` },
-					geometry: {
-						type: 'Point',
-						coordinates: [
-							13.4 + distance * Math.cos(angle) * 1.6,
-							52.5 + distance * Math.sin(angle)
-						]
-					}
-				};
-			})
-		};
-	}
 
 	let viewport = $state<MapViewport>({ center: [13.4, 52.5], zoom: 11, bearing: 0, pitch: 0 });
 	let lastError = $state<string | null>(null);
 	let cafe = $state<[number, number]>([13.4105, 52.5219]);
-	const stops = spiralPoints(150);
+	let ridePercent = $state(40);
+	let stopsView = $state<StopsView>('points');
+	let hoveredZone = $state<string | null>(null);
+	const stops = spiralStops(150);
 
 	const readout = $derived(
 		`${viewport.center[1].toFixed(4)}, ${viewport.center[0].toFixed(4)} · zoom ${viewport.zoom.toFixed(2)}`
@@ -76,18 +70,67 @@
 		</Button>
 	</header>
 
+	<div class="flex flex-wrap items-center gap-4 text-sm">
+		<ButtonGroup aria-label="Show stops as">
+			{#each VIEWS as view (view.value)}
+				<Button
+					variant={stopsView === view.value ? 'default' : 'outline'}
+					size="sm"
+					aria-pressed={stopsView === view.value}
+					onclick={() => (stopsView = view.value)}
+				>
+					{view.label}
+				</Button>
+			{/each}
+		</ButtonGroup>
+		<label class="flex items-center gap-2">
+			<span>Ride progress</span>
+			<input
+				class="w-36 accent-primary"
+				type="range"
+				min="0"
+				max="100"
+				bind:value={ridePercent}
+				data-testid="ride-progress"
+			/>
+			<span class="w-10 text-muted-foreground tabular-nums">{ridePercent}%</span>
+		</label>
+		<p class="text-muted-foreground" aria-live="polite">
+			{hoveredZone ? `Zone: ${hoveredZone}` : 'Hover a zone'}
+		</p>
+	</div>
+
 	<Map
 		class="h-[480px] w-full rounded-lg border"
 		aria-label="Map of Berlin"
 		bind:viewport
 		onerror={(error) => (lastError = error.message)}
 	>
-		<MapPointLayer data={stops} radius={4} popupLabel="Stop">
-			{#snippet popup(feature)}
-				<p class="font-medium">{feature.properties.name}</p>
-				<p class="text-muted-foreground">One of 150 points drawn on the canvas.</p>
-			{/snippet}
-		</MapPointLayer>
+		<MapGeoJSON
+			id="demo-zones"
+			data={ZONES}
+			fillOpacity={0.1}
+			hoverFillOpacity={0.3}
+			onhover={(feature) => (hoveredZone = feature ? String(feature.properties.name) : null)}
+		/>
+		<MapRectangle bounds={TEMPELHOF_BOUNDS} fillOpacity={0.15} />
+		<MapPolygon positions={MUSEUM_ISLAND} fillOpacity={0.3} />
+		<MapCircle center={PLACES[0].lngLat} radius={800} dashArray={[2, 2]} fillOpacity={0.08} />
+		<MapArc arcs={DELIVERIES} curvature={0.25} dashArray={[1, 2]} />
+		<MapRoute positions={RIDE} progress={ridePercent / 100} restDashArray={[1, 1.5]} />
+
+		{#if stopsView === 'points'}
+			<MapPointLayer data={stops} radius={4} popupLabel="Stop">
+				{#snippet popup(feature)}
+					<p class="font-medium">{feature.properties.name}</p>
+					<p class="text-muted-foreground">One of 150 points drawn on the canvas.</p>
+				{/snippet}
+			</MapPointLayer>
+		{:else if stopsView === 'clusters'}
+			<MapClusterLayer data={stops} />
+		{:else}
+			<MapHeatmap data={stops} weight="visits" radius={30} />
+		{/if}
 
 		{#each PLACES as place (place.name)}
 			<MapMarker lngLat={place.lngLat} aria-label={place.name}>
