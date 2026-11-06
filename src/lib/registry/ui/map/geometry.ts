@@ -11,6 +11,12 @@ const MIN_STEPS = 3;
 /** Share of a segment treated as "on its end vertex" when splitting a line. */
 const VERTEX_TOLERANCE = 1e-9;
 
+/** Throws unless `steps` is a whole number of at least `min`. */
+function assertSteps(steps: number, min: number, shape: string): void {
+	if (!Number.isInteger(steps) || steps < min)
+		throw new Error(`A ${shape} needs a whole number of steps, at least ${min}, got ${steps}.`);
+}
+
 const toRadians = (degrees: number): number => (degrees * Math.PI) / 180;
 const toDegrees = (radians: number): number => (radians * 180) / Math.PI;
 
@@ -46,8 +52,7 @@ export function circleRing(
 	steps = DEFAULT_STEPS
 ): LngLatTuple[] {
 	if (!(radius >= 0)) throw new Error(`Circle radius must be 0 or more, got ${radius}.`);
-	if (steps < MIN_STEPS)
-		throw new Error(`A circle needs at least ${MIN_STEPS} steps, got ${steps}.`);
+	assertSteps(steps, MIN_STEPS, 'circle');
 	const ring = Array.from({ length: steps }, (_, index) =>
 		destination(center, radius, (index / steps) * 360)
 	);
@@ -135,6 +140,7 @@ export function arcLine(
 	curvature = 0.2,
 	steps = DEFAULT_STEPS
 ): LngLatTuple[] {
+	assertSteps(steps, 1, 'curve');
 	const dLng = ((((to[0] - from[0]) % 360) + 540) % 360) - 180;
 	const end: LngLatTuple = [from[0] + dLng, to[1]];
 	const dLat = end[1] - from[1];

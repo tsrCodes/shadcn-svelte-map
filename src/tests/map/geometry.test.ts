@@ -32,6 +32,8 @@ describe('circleRing', () => {
 	test('rejects a negative radius or too few steps', () => {
 		expect(() => circleRing([0, 0], -1)).toThrow(/radius/);
 		expect(() => circleRing([0, 0], 10, 2)).toThrow(/steps/);
+		expect(() => circleRing([0, 0], 10, Number.NaN)).toThrow(/steps/);
+		expect(() => circleRing([0, 0], 10, 8.5)).toThrow(/steps/);
 	});
 });
 
@@ -111,6 +113,12 @@ describe('arcLine', () => {
 		const arc = arcLine([170, 0], [-170, 0], 0, 4);
 		expect(arc.at(-1)?.[0]).toBeCloseTo(190, 9);
 		for (const [lng] of arc) expect(lng).toBeGreaterThanOrEqual(170);
+	});
+
+	test('rejects a step count that is not a whole number above 0', () => {
+		for (const steps of [0, -4, 2.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+			expect(() => arcLine([0, 0], [10, 0], 0.2, steps)).toThrow(/steps/);
+		}
 	});
 
 	test('a curvature of 0 is a straight line', () => {
