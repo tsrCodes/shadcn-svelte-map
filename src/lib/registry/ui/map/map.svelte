@@ -303,6 +303,17 @@
 		filter: invert(1);
 	}
 
+	/* Cluster counts drawn as HTML on styles without glyphs. Clicks go to the canvas. */
+	[data-slot='map'] :global(.map-cluster-label) {
+		pointer-events: none;
+		color: var(--primary-foreground);
+		font-family: inherit;
+		font-size: 0.75rem;
+		font-weight: 600;
+		line-height: 1;
+		font-variant-numeric: tabular-nums;
+	}
+
 	/* Popups and tooltips use the shadcn popover and tooltip tokens. */
 	[data-slot='map'] :global(.map-popup) {
 		--map-popup-bg: var(--popover);

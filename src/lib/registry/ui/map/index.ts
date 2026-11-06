@@ -13,6 +13,12 @@ export { default as MapPolyline } from './map-polyline.svelte';
 export { default as MapRectangle } from './map-rectangle.svelte';
 export { default as MapRoute } from './map-route.svelte';
 export { default as MapArc, type MapArcItem } from './map-arc.svelte';
+export {
+	default as MapClusterLayer,
+	DEFAULT_CLUSTER_FONT,
+	type MapClusterClick
+} from './map-cluster-layer.svelte';
+export { type LngLatTuple, type LngLatBoundsTuple } from './geometry.js';
 export { MapContext, getMapContext } from './map-context.svelte.js';
 export { MarkerContext, getMarkerContext } from './marker-context.svelte.js';
 export {
