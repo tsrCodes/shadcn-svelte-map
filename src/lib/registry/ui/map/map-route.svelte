@@ -101,7 +101,7 @@
 			if (split.rest.length > 1) features.push(line('rest', split.rest));
 			if (split.done.length > 1) features.push(line('done', split.done));
 			if (showStops) features.push(dot('start', route[0]), dot('end', route[route.length - 1]));
-			if (showHead && progress > 0 && progress < 1) features.push(dot('head', split.at));
+			if (showHead && progress > 0 && progress < 1) features.push(dot('head', split.point));
 		}
 		return plainGeoJSON({ type: 'FeatureCollection', features });
 	}

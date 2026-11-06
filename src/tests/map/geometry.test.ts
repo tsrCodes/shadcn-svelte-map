@@ -76,24 +76,24 @@ describe('splitLine', () => {
 
 	test('splits at the given share of the length', () => {
 		const half = splitLine(line, 0.5);
-		expect(half.at[0]).toBeCloseTo(1, 6);
-		expect(half.done).toEqual([[0, 0], half.at]);
-		expect(half.rest).toEqual([half.at, [2, 0]]);
+		expect(half.point[0]).toBeCloseTo(1, 6);
+		expect(half.done).toEqual([[0, 0], half.point]);
+		expect(half.rest).toEqual([half.point, [2, 0]]);
 
 		const quarter = splitLine(line, 0.25);
-		expect(quarter.at[0]).toBeCloseTo(0.5, 6);
-		expect(quarter.rest).toEqual([quarter.at, [1, 0], [2, 0]]);
+		expect(quarter.point[0]).toBeCloseTo(0.5, 6);
+		expect(quarter.rest).toEqual([quarter.point, [1, 0], [2, 0]]);
 	});
 
 	test('clamps progress outside 0 to 1', () => {
 		expect(splitLine(line, -1).done).toEqual([[0, 0]]);
-		expect(splitLine(line, -1).at).toEqual([0, 0]);
+		expect(splitLine(line, -1).point).toEqual([0, 0]);
 		expect(splitLine(line, 2).rest).toEqual([[2, 0]]);
-		expect(splitLine(line, 2).at).toEqual([2, 0]);
+		expect(splitLine(line, 2).point).toEqual([2, 0]);
 	});
 
 	test('handles a line with one point or no length', () => {
-		expect(splitLine([[3, 4]], 0.5)).toEqual({ done: [[3, 4]], rest: [[3, 4]], at: [3, 4] });
+		expect(splitLine([[3, 4]], 0.5)).toEqual({ done: [[3, 4]], rest: [[3, 4]], point: [3, 4] });
 		expect(lineLength([[3, 4]])).toBe(0);
 		expect(() => splitLine([], 0.5)).toThrow(/at least one/);
 	});

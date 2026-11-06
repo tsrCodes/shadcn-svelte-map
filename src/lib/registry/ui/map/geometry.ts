@@ -88,12 +88,12 @@ export function lineLength(line: LngLatTuple[]): number {
 }
 
 export interface SplitLine {
-	/** From the start to `at`. */
+	/** From the start to `point`. */
 	done: LngLatTuple[];
-	/** From `at` to the end. */
+	/** From `point` to the end. */
 	rest: LngLatTuple[];
 	/** Where the line was split. */
-	at: LngLatTuple;
+	point: LngLatTuple;
 }
 
 function lerp(from: LngLatTuple, to: LngLatTuple, t: number): LngLatTuple {
@@ -107,8 +107,8 @@ export function splitLine(line: LngLatTuple[], progress: number): SplitLine {
 	const total = lineLength(line);
 	const first = line[0];
 	const last = line[line.length - 1];
-	if (total === 0 || share === 0) return { done: [first], rest: [...line], at: first };
-	if (share === 1) return { done: [...line], rest: [last], at: last };
+	if (total === 0 || share === 0) return { done: [first], rest: [...line], point: first };
+	if (share === 1) return { done: [...line], rest: [last], point: last };
 
 	const target = total * share;
 	let walked = 0;
@@ -118,15 +118,19 @@ export function splitLine(line: LngLatTuple[], progress: number): SplitLine {
 			const t = (target - walked) / segment;
 			// Landing on a vertex: split there instead of adding a copy of it.
 			if (t >= 1 - VERTEX_TOLERANCE) {
-				const at = line[index];
-				return { done: line.slice(0, index + 1), rest: line.slice(index), at };
+				const point = line[index];
+				return { done: line.slice(0, index + 1), rest: line.slice(index), point };
 			}
-			const at = lerp(line[index - 1], line[index], t);
-			return { done: [...line.slice(0, index), at], rest: [at, ...line.slice(index)], at };
+			const point = lerp(line[index - 1], line[index], t);
+			return {
+				done: [...line.slice(0, index), point],
+				rest: [point, ...line.slice(index)],
+				point
+			};
 		}
 		walked += segment;
 	}
-	return { done: [...line], rest: [last], at: last };
+	return { done: [...line], rest: [last], point: last };
 }
 
 /**
