@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, test } from 'vitest';
-import { ThemeObserver, readThemeColors, toRgba } from '#lib/registry/ui/map/theme.svelte.js';
+import {
+	ThemeObserver,
+	readThemeColors,
+	toRgba,
+	withAlpha
+} from '#lib/registry/ui/map/theme.svelte.js';
 
 describe('theme resolution', () => {
 	const root = document.documentElement;
@@ -39,6 +44,12 @@ describe('theme colours', () => {
 		expect(toRgba('oklch(1 0 0)')).toBe('rgba(255, 255, 255, 1)');
 		expect(toRgba('oklch(0 0 0 / 50%)')).toMatch(/^rgba\(0, 0, 0, 0\.5\d*\)$/);
 		expect(toRgba('#ff0000')).toBe('rgba(255, 0, 0, 1)');
+	});
+
+	test('withAlpha keeps the colour and replaces its opacity', () => {
+		expect(withAlpha('rgba(10, 20, 30, 1)', 0)).toBe('rgba(10, 20, 30, 0)');
+		expect(withAlpha('oklch(1 0 0)', 0.25)).toBe('rgba(255, 255, 255, 0.25)');
+		expect(withAlpha('rgba(10, 20, 30, 1)', 3)).toBe('rgba(10, 20, 30, 1)');
 	});
 
 	test('reads shadcn tokens from the element', () => {

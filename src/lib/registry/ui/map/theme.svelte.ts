@@ -106,6 +106,12 @@ export function toRgba(color: string): string {
 	return `rgba(${r}, ${g}, ${b}, ${Math.round((a / 255) * 1000) / 1000})`;
 }
 
+/** The same colour with its opacity replaced, as an `rgba(...)` string. */
+export function withAlpha(color: string, alpha: number): string {
+	const opacity = Math.min(1, Math.max(0, alpha));
+	return toRgba(color).replace(/,\s*[\d.]+\)$/, `, ${opacity})`);
+}
+
 /** Read the shadcn colour tokens as seen from `element`. */
 export function readThemeColors(element: HTMLElement): ThemeColors {
 	const probe = document.createElement('span');
