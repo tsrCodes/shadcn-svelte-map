@@ -4,7 +4,7 @@ import { LayerRegistry, type RegistryMap } from '#lib/registry/ui/map/layer-regi
 import { POINTS_ENTRY, POINTS_LAYER, POINTS_SOURCE } from './fixtures.js';
 
 /** In-memory stand-in for the parts of a MapLibre map the registry uses. */
-function createFakeMap(layerIds: string[] = ['background']) {
+function createFakeMap(layerIds: string[] = ['background'], glyphs: string | null = null) {
 	const sources = new Set<string>();
 	let layers = [...layerIds];
 	const layerSources = new Map<string, string>();
@@ -14,6 +14,7 @@ function createFakeMap(layerIds: string[] = ['background']) {
 	const key = (source: string, id: unknown) => `${source}/${String(id)}`;
 
 	const map = {
+		getGlyphs: () => glyphs,
 		getSource: (id: string) =>
 			sources.has(id) ? { setData: (value: unknown) => data.set(id, value) } : undefined,
 		addSource: (id: string) => sources.add(id),
@@ -56,15 +57,35 @@ function createFakeMap(layerIds: string[] = ['background']) {
 		data: (source: string) => data.get(source),
 		paint: (layer: string) => paint.get(layer),
 		/** A full style rebuild: everything user-added is gone. */
-		rebuild: (ids: string[]) => {
+		rebuild: (ids: string[], nextGlyphs: string | null = glyphs) => {
 			sources.clear();
 			states.clear();
 			layers = [...ids];
+			glyphs = nextGlyphs;
 		}
 	};
 }
 
 const LABELS: LayerSpecification = { id: 'labels', type: 'background' };
+
+const GLYPHS = 'https://example.test/fonts/{fontstack}/{range}.pbf';
+const COUNT_LAYER = 'test-points-count';
+const ICON_LAYER = 'test-points-icon';
+
+/** Points with a text label layer and an icon-only symbol layer. */
+const LABELLED_ENTRY = {
+	...POINTS_ENTRY,
+	layers: [
+		...POINTS_ENTRY.layers,
+		{
+			id: COUNT_LAYER,
+			type: 'symbol',
+			source: POINTS_SOURCE,
+			layout: { 'text-field': ['get', 'id'] }
+		},
+		{ id: ICON_LAYER, type: 'symbol', source: POINTS_SOURCE, layout: { 'icon-image': 'dot' } }
+	]
+} satisfies typeof POINTS_ENTRY;
 
 describe('LayerRegistry', () => {
 	test('waits for the style before adding, then adds in order', () => {
@@ -271,6 +292,32 @@ describe('LayerRegistry', () => {
 		fake.rebuild(['background']);
 		registry.styleLoaded();
 		expect(fake.paint(POINTS_LAYER)).toEqual({ 'circle-color': 'blue' });
+	});
+
+	test('leaves text layers out while the style has no glyphs, and adds them when it does', () => {
+		const fake = createFakeMap(['background'], null);
+		const registry = new LayerRegistry();
+		registry.attach(fake.map);
+		registry.styleLoaded();
+		registry.add(LABELLED_ENTRY);
+		expect(fake.layers()).toEqual(['background', POINTS_LAYER, ICON_LAYER]);
+
+		fake.rebuild(['background'], GLYPHS);
+		registry.styleLoaded();
+		expect(fake.layers()).toEqual(['background', POINTS_LAYER, COUNT_LAYER, ICON_LAYER]);
+	});
+
+	test('transformStyle drops text layers for a style without glyphs, and restores them', () => {
+		const registry = new LayerRegistry();
+		registry.add(LABELLED_ENTRY);
+		const withGlyphs: StyleSpecification = { version: 8, glyphs: GLYPHS, sources: {}, layers: [] };
+		const blank: StyleSpecification = { version: 8, sources: {}, layers: [] };
+
+		const toBlank = registry.transformStyle(registry.transformStyle(undefined, withGlyphs), blank);
+		expect(toBlank.layers.map((layer) => layer.id)).toEqual([POINTS_LAYER, ICON_LAYER]);
+
+		const back = registry.transformStyle(toBlank, withGlyphs);
+		expect(back.layers.map((layer) => layer.id)).toEqual([POINTS_LAYER, COUNT_LAYER, ICON_LAYER]);
 	});
 
 	test('setPaintProperty ignores layers the entry does not own', () => {

@@ -11,6 +11,7 @@ import type {
 /** The parts of a MapLibre map the registry talks to. */
 export type RegistryMap = Pick<
 	MapLibreMap,
+	| 'getGlyphs'
 	| 'getSource'
 	| 'addSource'
 	| 'removeSource'
@@ -71,6 +72,18 @@ function withPaint(layer: LayerSpecification, paint: PaintValues | undefined): L
 	return { ...layer, paint: { ...layer.paint, ...paint } } as LayerSpecification;
 }
 
+/**
+ * True for symbol layers that draw text. A style without a `glyphs` URL cannot draw
+ * them, and MapLibre reports an error for every tile that tries.
+ */
+function needsGlyphs(layer: LayerSpecification): boolean {
+	return layer.type === 'symbol' && layer.layout?.['text-field'] !== undefined;
+}
+
+function drawable(layers: LayerSpecification[], hasGlyphs: boolean): LayerSpecification[] {
+	return hasGlyphs ? layers : layers.filter((layer) => !needsGlyphs(layer));
+}
+
 function withoutKey(state: FeatureState, key: string): FeatureState {
 	return Object.fromEntries(Object.entries(state).filter(([name]) => name !== key));
 }
@@ -82,6 +95,9 @@ function withoutKey(state: FeatureState, key: string): FeatureState {
  * carries the registered sources and layers into the next style, and on
  * `style.load` anything still missing is added back and the saved feature-state
  * is applied again (a swap that cannot be diffed wipes it).
+ *
+ * Text layers are left out while the style has no glyphs and come back with a style
+ * that has them; see `needsGlyphs`.
  */
 export class LayerRegistry {
 	#map: RegistryMap | null = null;
@@ -216,7 +232,7 @@ export class LayerRegistry {
 		let layers = [...next.layers];
 		for (const entry of this.#entries.values()) {
 			sources = { ...sources, [entry.sourceId]: this.#carriedSource(entry, previous) };
-			for (const layer of entry.layers) {
+			for (const layer of drawable(entry.layers, Boolean(next.glyphs))) {
 				const carried = previous?.layers.find((item) => item.id === layer.id) ?? layer;
 				const current = withPaint(carried, this.#paint.get(layer.id));
 				const others = layers.filter((item) => item.id !== layer.id);
@@ -280,11 +296,19 @@ export class LayerRegistry {
 		const map = this.#map;
 		if (!map) return;
 		if (!map.getSource(entry.sourceId)) map.addSource(entry.sourceId, entry.source);
-		for (const layer of entry.layers) {
+		const layers = drawable(entry.layers, Boolean(map.getGlyphs()));
+		for (const [index, layer] of layers.entries()) {
 			if (map.getLayer(layer.id)) continue;
-			const before = entry.beforeId && map.getLayer(entry.beforeId) ? entry.beforeId : undefined;
-			map.addLayer(layer, before);
+			map.addLayer(layer, this.#insertBefore(entry, layers.slice(index + 1)));
 		}
+	}
+
+	/** Keep the entry's own order: go below its next layer on the map, else below `beforeId`. */
+	#insertBefore(entry: LayerEntry, following: LayerSpecification[]): string | undefined {
+		const map = this.#map;
+		const sibling = following.find((layer) => map?.getLayer(layer.id));
+		if (sibling) return sibling.id;
+		return entry.beforeId && map?.getLayer(entry.beforeId) ? entry.beforeId : undefined;
 	}
 
 	#removeFromMap(entry: LayerEntry): void {
