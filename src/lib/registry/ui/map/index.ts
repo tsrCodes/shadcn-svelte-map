@@ -7,6 +7,7 @@ export { default as MapMarkerTooltip } from './map-marker-tooltip.svelte';
 export { default as MapPopup } from './map-popup.svelte';
 export { default as MapPointLayer } from './map-point-layer.svelte';
 export { default as MapGeoJSON } from './map-geojson.svelte';
+export { default as MapCircle } from './map-circle.svelte';
 export { default as MapPolygon } from './map-polygon.svelte';
 export { default as MapPolyline } from './map-polyline.svelte';
 export { MapContext, getMapContext } from './map-context.svelte.js';
