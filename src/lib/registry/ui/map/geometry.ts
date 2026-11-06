@@ -65,6 +65,14 @@ export function rectangleRing([[west, south], [east, north]]: LngLatBoundsTuple)
 	];
 }
 
+/** The ring with its first position repeated at the end, as GeoJSON polygons need. */
+export function closeRing(ring: LngLatTuple[]): LngLatTuple[] {
+	const first = ring[0];
+	const last = ring.at(-1);
+	if (!first || !last || (first[0] === last[0] && first[1] === last[1])) return [...ring];
+	return [...ring, first];
+}
+
 /** Length of a line in metres. */
 export function lineLength(line: LngLatTuple[]): number {
 	let total = 0;

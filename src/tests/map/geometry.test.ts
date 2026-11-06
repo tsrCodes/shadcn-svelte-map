@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
 	arcLine,
 	circleRing,
+	closeRing,
 	distanceMeters,
 	lineLength,
 	rectangleRing,
@@ -48,6 +49,19 @@ describe('rectangleRing', () => {
 			[0, 1],
 			[0, 0]
 		]);
+	});
+});
+
+describe('closeRing', () => {
+	test('repeats the first position once, and leaves closed rings alone', () => {
+		const open: LngLatTuple[] = [
+			[0, 0],
+			[1, 0],
+			[1, 1]
+		];
+		expect(closeRing(open)).toEqual([...open, [0, 0]]);
+		expect(closeRing(closeRing(open))).toEqual([...open, [0, 0]]);
+		expect(closeRing([])).toEqual([]);
 	});
 });
 
