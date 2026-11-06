@@ -281,4 +281,11 @@
 			for (const label of labels.values()) label.remove();
 		};
 	});
+
+	// A new text colour alone does not make the map draw; ask for a frame so the labels
+	// pick it up on the next render.
+	$effect(() => {
+		const map = ctx.map;
+		if (map && htmlLabels && text) map.triggerRepaint();
+	});
 </script>

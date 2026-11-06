@@ -249,6 +249,16 @@ describe('MapClusterLayer', () => {
 		expect(labels()[0].getAttribute('aria-hidden')).toBe('true');
 	});
 
+	test('HTML counts take a new text colour without the map moving', async () => {
+		const { map, screen } = await mountData({ clusters: CLUSTERED });
+		const label = () => map.getContainer().querySelector<HTMLElement>('.map-cluster-label');
+		await expect.poll(() => label()?.textContent).toBe('3');
+		await expect.poll(() => map.loaded()).toBe(true);
+
+		await screen.rerender({ clusters: CLUSTERED, clusterTextColor: 'rgb(255, 0, 0)' });
+		await expect.poll(() => label()?.dataset.color).toBe('rgb(255, 0, 0)');
+	});
+
 	test('a single point click returns the original feature; a cluster click zooms in', async () => {
 		const onpointclick = vi.fn();
 		const onclusterclick = vi.fn();
