@@ -3,6 +3,7 @@ import GeofenceEditor from '#lib/registry/blocks/geofence-editor/geofence-editor
 import StoreLocator from '#lib/registry/blocks/store-locator/store-locator.svelte';
 import PlotMapper from '#lib/registry/blocks/plot-mapper/plot-mapper.svelte';
 import DeliveryZonePlanner from '#lib/registry/blocks/delivery-zone-planner/delivery-zone-planner.svelte';
+import FieldSurvey from '#lib/registry/blocks/field-survey/field-survey.svelte';
 import type { MapStyle } from '#lib/registry/ui/map/index.js';
 
 /** Props every block takes, so the preview pages and tests can render any of them. */
@@ -52,6 +53,14 @@ export const BLOCKS: readonly BlockEntry[] = [
 			'Draw delivery zones around a depot, price each one and see how many orders they cover.',
 		kind: 'editing',
 		component: DeliveryZonePlanner
+	},
+	{
+		name: 'field-survey',
+		title: 'Field survey',
+		description:
+			'Record observations and transects in a park, add notes, and copy the survey as GeoJSON.',
+		kind: 'editing',
+		component: FieldSurvey
 	}
 ];
 
