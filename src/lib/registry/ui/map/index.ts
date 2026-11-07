@@ -33,6 +33,14 @@ export {
 export { default as MapLocateControl, type LocateStatus } from './map-locate-control.svelte';
 export { default as MapBasemapControl, type MapOverlay } from './map-basemap-control.svelte';
 export { default as MapSearchControl } from './map-search-control.svelte';
+export { default as MapDrawControl } from './map-draw-control.svelte';
+export {
+	DRAW_MODES,
+	type DrawFeature,
+	type DrawGeometry,
+	type DrawMode,
+	type DrawTool
+} from './draw.js';
 export { scaleBar, type ScaleBar, type ScaleUnit } from './scale.js';
 export { type LngLatTuple, type LngLatBoundsTuple } from './geometry.js';
 export { MapContext, getMapContext } from './map-context.svelte.js';
