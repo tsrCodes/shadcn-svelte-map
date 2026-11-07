@@ -5,6 +5,7 @@ import { playwright } from '@vitest/browser-playwright';
 import adapter from '@sveltejs/adapter-vercel';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { DEFAULT_MAP_STYLE, styleOrigins } from './src/lib/registry/ui/map/styles.js';
+import { PHOTON_ORIGIN } from './src/lib/registry/ui/place-autocomplete/photon.js';
 
 /**
  * SvelteKit's route announcer renders with this inline `style` attribute. The CSP allows
@@ -47,7 +48,8 @@ export default defineConfig({
 					'img-src': ['self', 'data:', 'blob:'],
 					'font-src': ['self'],
 					// The default basemaps load styles, sprites, glyphs and tiles from these hosts.
-					'connect-src': ['self', ...styleOrigins(DEFAULT_MAP_STYLE)],
+					// Place search calls the public Photon geocoder.
+					'connect-src': ['self', ...styleOrigins(DEFAULT_MAP_STYLE), PHOTON_ORIGIN],
 					'object-src': ['none'],
 					'base-uri': ['self'],
 					'form-action': ['self'],
