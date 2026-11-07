@@ -19,6 +19,32 @@ export const DEFAULT_MAP_STYLE: MapStyle = {
 	dark: `${OPENFREEMAP_ORIGIN}/styles/dark`
 };
 
+/**
+ * An empty basemap for data-only maps. It has no layers, so the map shows its theme
+ * background, and it points at OpenFreeMap's fonts so text layers still render.
+ */
+export const BLANK_MAP_STYLE: StyleSpecification = {
+	version: 8,
+	glyphs: `${OPENFREEMAP_ORIGIN}/fonts/{fontstack}/{range}.pbf`,
+	sources: {},
+	layers: []
+};
+
+/** One entry in a basemap switcher. */
+export interface MapBasemap {
+	id: string;
+	label: string;
+	style: MapStyle;
+}
+
+/** OpenFreeMap basemaps. None of them needs an API key. */
+export const OPENFREEMAP_BASEMAPS: MapBasemap[] = [
+	{ id: 'default', label: 'Default', style: DEFAULT_MAP_STYLE },
+	{ id: 'streets', label: 'Streets', style: `${OPENFREEMAP_ORIGIN}/styles/liberty` },
+	{ id: 'bright', label: 'Bright', style: `${OPENFREEMAP_ORIGIN}/styles/bright` },
+	{ id: 'blank', label: 'Blank', style: BLANK_MAP_STYLE }
+];
+
 function isThemed(style: MapStyle): style is { light: StyleInput; dark: StyleInput } {
 	return typeof style === 'object' && 'light' in style && 'dark' in style;
 }

@@ -31,6 +31,7 @@ export {
 	type FullscreenMode
 } from './map-fullscreen-control.svelte';
 export { default as MapLocateControl, type LocateStatus } from './map-locate-control.svelte';
+export { default as MapBasemapControl, type MapOverlay } from './map-basemap-control.svelte';
 export { scaleBar, type ScaleBar, type ScaleUnit } from './scale.js';
 export { type LngLatTuple, type LngLatBoundsTuple } from './geometry.js';
 export { MapContext, getMapContext } from './map-context.svelte.js';
@@ -46,8 +47,11 @@ export {
 } from './layer-registry.js';
 export { type PopupOffset } from './popup.svelte.js';
 export {
+	BLANK_MAP_STYLE,
 	DEFAULT_MAP_STYLE,
+	OPENFREEMAP_BASEMAPS,
 	OPENFREEMAP_ORIGIN,
+	type MapBasemap,
 	resolveStyle,
 	styleOrigins,
 	type MapStyle,
