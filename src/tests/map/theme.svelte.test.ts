@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test } from 'vitest';
 import {
 	ThemeObserver,
 	readThemeColors,
+	toHex,
 	toRgba,
 	withAlpha
 } from '#lib/registry/ui/map/theme.svelte.js';
@@ -50,6 +51,12 @@ describe('theme colours', () => {
 		expect(withAlpha('rgba(10, 20, 30, 1)', 0)).toBe('rgba(10, 20, 30, 0)');
 		expect(withAlpha('oklch(1 0 0)', 0.25)).toBe('rgba(255, 255, 255, 0.25)');
 		expect(withAlpha('rgba(10, 20, 30, 1)', 3)).toBe('rgba(10, 20, 30, 1)');
+	});
+
+	test('toHex turns any CSS colour into #rrggbb', () => {
+		expect(toHex('oklch(1 0 0)')).toBe('#ffffff');
+		expect(toHex('rgba(10, 20, 30, 0.4)')).toBe('#0a141e');
+		expect(toHex('red')).toBe('#ff0000');
 	});
 
 	test('reads shadcn tokens from the element', () => {

@@ -112,6 +112,16 @@ export function withAlpha(color: string, alpha: number): string {
 	return toRgba(color).replace(/,\s*[\d.]+\)$/, `, ${opacity})`);
 }
 
+/** A colour as `#rrggbb`, dropping its opacity. For libraries that only take hex colours. */
+export function toHex(color: string): `#${string}` {
+	const channels = toRgba(color).match(/[\d.]+/g) ?? [];
+	const hex = channels
+		.slice(0, 3)
+		.map((channel) => Math.round(Number(channel)).toString(16).padStart(2, '0'))
+		.join('');
+	return `#${hex.padEnd(6, '0')}`;
+}
+
 /** Read the shadcn colour tokens as seen from `element`. */
 export function readThemeColors(element: HTMLElement): ThemeColors {
 	const probe = document.createElement('span');
