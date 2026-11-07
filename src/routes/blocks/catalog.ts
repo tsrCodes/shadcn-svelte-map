@@ -1,5 +1,6 @@
 import type { Component } from 'svelte';
 import GeofenceEditor from '#lib/registry/blocks/geofence-editor/geofence-editor.svelte';
+import StoreLocator from '#lib/registry/blocks/store-locator/store-locator.svelte';
 import type { MapStyle } from '#lib/registry/ui/map/index.js';
 
 /** Props every block takes, so the preview pages and tests can render any of them. */
@@ -27,6 +28,13 @@ export const BLOCKS: readonly BlockEntry[] = [
 		description: 'Draw fences around a harbour and see which assets sit inside them.',
 		kind: 'editing',
 		component: GeofenceEditor
+	},
+	{
+		name: 'store-locator',
+		title: 'Store locator',
+		description: 'Search an address to list the nearest stores, and pin spots for new ones.',
+		kind: 'editing',
+		component: StoreLocator
 	}
 ];
 
