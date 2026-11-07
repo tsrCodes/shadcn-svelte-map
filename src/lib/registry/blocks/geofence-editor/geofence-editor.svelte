@@ -43,7 +43,7 @@
 	let tool = $state<DrawTool>('none');
 	let drawings = $state.raw<DrawFeature[]>([]);
 	// Names are kept by feature id and never pruned, so undoing a delete brings the name back.
-	let names = $state<Record<string, string>>({});
+	let names = $state.raw<Record<string, string>>({});
 
 	const fences: Fence[] = $derived(
 		drawings.flatMap((feature, index): Fence[] => {
@@ -74,7 +74,7 @@
 	}
 
 	function rename(key: string, value: string) {
-		names[key] = value;
+		names = { ...names, [key]: value };
 	}
 </script>
 

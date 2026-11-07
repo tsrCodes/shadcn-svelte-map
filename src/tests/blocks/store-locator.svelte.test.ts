@@ -43,5 +43,13 @@ describe('Store locator block', () => {
 			.poll(() => container.querySelectorAll('input[aria-label="Proposed site name"]').length)
 			.toBe(1);
 		expect(listings()).toHaveLength(8);
+
+		const name = () =>
+			container.querySelector<HTMLInputElement>('input[aria-label="Proposed site name"]');
+		await userEvent.fill(name() as HTMLInputElement, 'Harbour kiosk');
+		await userEvent.click(button(map, 'Undo'));
+		await expect.poll(() => name()).toBeNull();
+		await userEvent.click(button(map, 'Redo'));
+		await expect.poll(() => name()?.value).toBe('Harbour kiosk');
 	});
 });

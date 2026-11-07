@@ -43,7 +43,7 @@
 	let tool = $state<DrawTool>('none');
 	let drawings = $state.raw<DrawFeature[]>([]);
 	// Crops are kept by drawing id and never pruned, so an undone delete gets its crop back.
-	let crops = $state<Record<string, Crop>>({});
+	let crops = $state.raw<Record<string, Crop>>({});
 	let hoveredParcel = $state<string | null>(null);
 
 	function parcelAt(point: LngLatTuple): string | null {
@@ -141,7 +141,8 @@
 						size="sm"
 						aria-label="Crop of {field.label}"
 						value={field.crop}
-						onchange={(event) => (crops[field.key] = event.currentTarget.value as Crop)}
+						onchange={(event) =>
+							(crops = { ...crops, [field.key]: event.currentTarget.value as Crop })}
 					>
 						{#each CROPS as crop (crop)}
 							<NativeSelect.Option value={crop}>{crop}</NativeSelect.Option>

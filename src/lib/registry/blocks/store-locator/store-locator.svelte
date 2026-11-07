@@ -50,7 +50,7 @@
 	let tool = $state<DrawTool>('none');
 	let proposals = $state.raw<DrawFeature[]>([]);
 	// Kept by drawing id and never pruned, so an undone delete gets its name back.
-	let proposalNames = $state<Record<string, string>>({});
+	let proposalNames = $state.raw<Record<string, string>>({});
 
 	const listings: Listing[] = $derived.by(() => {
 		const stores = STORES.map((store): Listing => ({
@@ -90,7 +90,7 @@
 	}
 
 	function rename(key: string, value: string) {
-		proposalNames[key] = value;
+		proposalNames = { ...proposalNames, [key]: value };
 	}
 </script>
 

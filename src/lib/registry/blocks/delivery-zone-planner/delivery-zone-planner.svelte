@@ -47,7 +47,7 @@
 	let tool = $state<DrawTool>('none');
 	let drawings = $state.raw<DrawFeature[]>([]);
 	// Tiers are kept by drawing id and never pruned, so an undone delete gets its tier back.
-	let tiers = $state<Record<string, TierId>>({});
+	let tiers = $state.raw<Record<string, TierId>>({});
 
 	const zoneShapes = $derived(
 		drawings.flatMap((feature) =>
@@ -152,7 +152,8 @@
 						size="sm"
 						aria-label="Service of {zone.label}"
 						value={zone.tier}
-						onchange={(event) => (tiers[zone.key] = event.currentTarget.value as TierId)}
+						onchange={(event) =>
+							(tiers = { ...tiers, [zone.key]: event.currentTarget.value as TierId })}
 					>
 						{#each TIERS as tier (tier.id)}
 							<NativeSelect.Option value={tier.id}>

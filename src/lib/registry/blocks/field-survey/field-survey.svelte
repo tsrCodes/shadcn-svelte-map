@@ -57,8 +57,8 @@
 	let tool = $state<DrawTool>('none');
 	let drawings = $state.raw<DrawFeature[]>([]);
 	// Kept by drawing id and never pruned, so undoing a delete brings the details back.
-	let categories = $state<Record<string, Category>>({});
-	let notes = $state<Record<string, string>>({});
+	let categories = $state.raw<Record<string, Category>>({});
+	let notes = $state.raw<Record<string, string>>({});
 	let copyStatus = $state<CopyStatus>('idle');
 
 	const area = [SURVEY_AREA];
@@ -194,7 +194,8 @@
 						size="sm"
 						aria-label="Category of {item.label}"
 						value={item.category}
-						onchange={(event) => (categories[item.key] = event.currentTarget.value as Category)}
+						onchange={(event) =>
+							(categories = { ...categories, [item.key]: event.currentTarget.value as Category })}
 					>
 						{#each CATEGORIES as category (category)}
 							<NativeSelect.Option value={category}>{category}</NativeSelect.Option>
@@ -205,7 +206,7 @@
 						value={item.note}
 						placeholder="Note"
 						aria-label="Note for {item.label}"
-						oninput={(event) => (notes[item.key] = event.currentTarget.value)}
+						oninput={(event) => (notes = { ...notes, [item.key]: event.currentTarget.value })}
 					/>
 				</div>
 			{/each}
