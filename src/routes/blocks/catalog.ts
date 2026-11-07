@@ -2,6 +2,7 @@ import type { Component } from 'svelte';
 import GeofenceEditor from '#lib/registry/blocks/geofence-editor/geofence-editor.svelte';
 import StoreLocator from '#lib/registry/blocks/store-locator/store-locator.svelte';
 import PlotMapper from '#lib/registry/blocks/plot-mapper/plot-mapper.svelte';
+import DeliveryZonePlanner from '#lib/registry/blocks/delivery-zone-planner/delivery-zone-planner.svelte';
 import type { MapStyle } from '#lib/registry/ui/map/index.js';
 
 /** Props every block takes, so the preview pages and tests can render any of them. */
@@ -43,6 +44,14 @@ export const BLOCKS: readonly BlockEntry[] = [
 		description: 'Trace fields over registry parcels, pick a crop for each and total the hectares.',
 		kind: 'editing',
 		component: PlotMapper
+	},
+	{
+		name: 'delivery-zone-planner',
+		title: 'Delivery zone planner',
+		description:
+			'Draw delivery zones around a depot, price each one and see how many orders they cover.',
+		kind: 'editing',
+		component: DeliveryZonePlanner
 	}
 ];
 
