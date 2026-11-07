@@ -6,6 +6,7 @@ import DeliveryZonePlanner from '#lib/registry/blocks/delivery-zone-planner/deli
 import FieldSurvey from '#lib/registry/blocks/field-survey/field-survey.svelte';
 import FleetTracker from '#lib/registry/blocks/fleet-tracker/fleet-tracker.svelte';
 import OrderTracker from '#lib/registry/blocks/order-tracker/order-tracker.svelte';
+import RegionAnalytics from '#lib/registry/blocks/region-analytics/region-analytics.svelte';
 import type { MapStyle } from '#lib/registry/ui/map/index.js';
 
 /** Props every block takes, so the preview pages and tests can render any of them. */
@@ -78,6 +79,13 @@ export const BLOCKS: readonly BlockEntry[] = [
 			'Follow a food order from the kitchen to the door, with stages and an arrival estimate.',
 		kind: 'data',
 		component: OrderTracker
+	},
+	{
+		name: 'region-analytics',
+		title: 'Region analytics',
+		description: 'Shade sales territories by revenue, orders or growth and rank them side by side.',
+		kind: 'data',
+		component: RegionAnalytics
 	}
 ];
 
