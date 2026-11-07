@@ -30,6 +30,7 @@ export {
 	default as MapFullscreenControl,
 	type FullscreenMode
 } from './map-fullscreen-control.svelte';
+export { default as MapLocateControl, type LocateStatus } from './map-locate-control.svelte';
 export { scaleBar, type ScaleBar, type ScaleUnit } from './scale.js';
 export { type LngLatTuple, type LngLatBoundsTuple } from './geometry.js';
 export { MapContext, getMapContext } from './map-context.svelte.js';
