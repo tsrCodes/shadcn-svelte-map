@@ -4,6 +4,7 @@ import StoreLocator from '#lib/registry/blocks/store-locator/store-locator.svelt
 import PlotMapper from '#lib/registry/blocks/plot-mapper/plot-mapper.svelte';
 import DeliveryZonePlanner from '#lib/registry/blocks/delivery-zone-planner/delivery-zone-planner.svelte';
 import FieldSurvey from '#lib/registry/blocks/field-survey/field-survey.svelte';
+import FleetTracker from '#lib/registry/blocks/fleet-tracker/fleet-tracker.svelte';
 import type { MapStyle } from '#lib/registry/ui/map/index.js';
 
 /** Props every block takes, so the preview pages and tests can render any of them. */
@@ -61,6 +62,13 @@ export const BLOCKS: readonly BlockEntry[] = [
 			'Record observations and transects in a park, add notes, and copy the survey as GeoJSON.',
 		kind: 'editing',
 		component: FieldSurvey
+	},
+	{
+		name: 'fleet-tracker',
+		title: 'Live fleet tracker',
+		description: 'Vans and trucks drive their rounds; pick one to see its loop or follow it.',
+		kind: 'data',
+		component: FleetTracker
 	}
 ];
 
