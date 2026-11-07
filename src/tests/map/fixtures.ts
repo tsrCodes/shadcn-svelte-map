@@ -48,3 +48,27 @@ export const POINTS_ENTRY: LayerEntry = {
 		}
 	]
 };
+
+/** A Photon search response with one area and one point, made up for tests. */
+export const PHOTON_BODY = {
+	type: 'FeatureCollection',
+	features: [
+		{
+			type: 'Feature',
+			properties: {
+				osm_type: 'W',
+				osm_id: 1,
+				type: 'locality',
+				name: 'Central Square',
+				city: 'Sample City',
+				extent: [20, 12, 22, 10]
+			},
+			geometry: { type: 'Point', coordinates: [21, 11] }
+		},
+		{
+			type: 'Feature',
+			properties: { osm_type: 'N', osm_id: 2, type: 'house', name: 'Corner Shop' },
+			geometry: { type: 'Point', coordinates: [30, 15] }
+		}
+	]
+};

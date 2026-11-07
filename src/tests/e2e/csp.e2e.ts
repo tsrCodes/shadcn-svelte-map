@@ -62,6 +62,14 @@ test('map renders under strict CSP with no external script', async ({ page, base
 	await expect(dialog).toBeHidden();
 	await expect(marker).toBeFocused();
 
+	// The layers menu is positioned from JS; it must open inside the map without inline styles.
+	await page.getByRole('button', { name: 'Map layers' }).click();
+	const bright = page.getByRole('menuitemradio', { name: 'Bright' });
+	await expect(bright).toBeVisible();
+	expect(await bright.evaluate((item) => item.closest('[data-slot="map"]') !== null)).toBe(true);
+	await page.keyboard.press('Escape');
+	await expect(bright).toBeHidden();
+
 	const scripts = await page
 		.locator('script[src]')
 		.evaluateAll((elements) => elements.map((element) => (element as HTMLScriptElement).src));
