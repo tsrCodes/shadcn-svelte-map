@@ -8,10 +8,15 @@
 	import {
 		Map,
 		MapArc,
+		MapBasemapControl,
 		MapCircle,
 		MapClusterLayer,
+		MapCompassControl,
+		MapControlContainer,
+		MapFullscreenControl,
 		MapGeoJSON,
 		MapHeatmap,
+		MapLocateControl,
 		MapMarker,
 		MapMarkerContent,
 		MapMarkerLabel,
@@ -21,6 +26,9 @@
 		MapPolygon,
 		MapRectangle,
 		MapRoute,
+		MapScaleControl,
+		MapSearchControl,
+		MapZoomControl,
 		type MapViewport
 	} from '#lib/registry/ui/map/index.js';
 	import {
@@ -47,7 +55,16 @@
 	let ridePercent = $state(40);
 	let stopsView = $state<StopsView>('points');
 	let hoveredZone = $state<string | null>(null);
+	let activeOverlays = $state(['zones', 'deliveries']);
+
+	const OVERLAYS = [
+		{ id: 'zones', label: 'Zones' },
+		{ id: 'deliveries', label: 'Deliveries' }
+	];
 	const stops = spiralStops(150);
+
+	// A hidden zones layer cannot be hovered, so its last label goes too.
+	const zoneLabel = $derived(activeOverlays.includes('zones') ? hoveredZone : null);
 
 	const readout = $derived(
 		`${viewport.center[1].toFixed(4)}, ${viewport.center[0].toFixed(4)} · zoom ${viewport.zoom.toFixed(2)}`
@@ -96,7 +113,7 @@
 			<span class="w-10 text-muted-foreground tabular-nums">{ridePercent}%</span>
 		</label>
 		<p class="text-muted-foreground" aria-live="polite">
-			{hoveredZone ? `Zone: ${hoveredZone}` : 'Hover a zone'}
+			{zoneLabel ? `Zone: ${zoneLabel}` : 'Hover a zone'}
 		</p>
 	</div>
 
@@ -106,17 +123,21 @@
 		bind:viewport
 		onerror={(error) => (lastError = error.message)}
 	>
-		<MapGeoJSON
-			id="demo-zones"
-			data={ZONES}
-			fillOpacity={0.1}
-			hoverFillOpacity={0.3}
-			onhover={(feature) => (hoveredZone = feature ? String(feature.properties.name) : null)}
-		/>
+		{#if activeOverlays.includes('zones')}
+			<MapGeoJSON
+				id="demo-zones"
+				data={ZONES}
+				fillOpacity={0.1}
+				hoverFillOpacity={0.3}
+				onhover={(feature) => (hoveredZone = feature ? String(feature.properties.name) : null)}
+			/>
+		{/if}
 		<MapRectangle bounds={TEMPELHOF_BOUNDS} fillOpacity={0.15} />
 		<MapPolygon positions={MUSEUM_ISLAND} fillOpacity={0.3} />
 		<MapCircle center={PLACES[0].lngLat} radius={800} dashArray={[2, 2]} fillOpacity={0.08} />
-		<MapArc arcs={DELIVERIES} curvature={0.25} dashArray={[1, 2]} />
+		{#if activeOverlays.includes('deliveries')}
+			<MapArc arcs={DELIVERIES} curvature={0.25} dashArray={[1, 2]} />
+		{/if}
 		<MapRoute positions={RIDE} progress={ridePercent / 100} restDashArray={[1, 1.5]} />
 
 		{#if stopsView === 'points'}
@@ -159,6 +180,20 @@
 				</p>
 			</MapMarkerPopup>
 		</MapMarker>
+
+		<MapControlContainer position="top-left">
+			<MapSearchControl onerror={(error) => (lastError = error.message)} />
+		</MapControlContainer>
+		<MapControlContainer position="top-right">
+			<MapZoomControl />
+			<MapCompassControl />
+			<MapFullscreenControl />
+			<MapLocateControl onerror={(error) => (lastError = error.message)} />
+			<MapBasemapControl overlays={OVERLAYS} bind:activeOverlays />
+		</MapControlContainer>
+		<MapControlContainer position="bottom-left">
+			<MapScaleControl />
+		</MapControlContainer>
 	</Map>
 
 	{#if lastError}
