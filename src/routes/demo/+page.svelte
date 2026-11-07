@@ -13,6 +13,7 @@
 		MapClusterLayer,
 		MapCompassControl,
 		MapControlContainer,
+		MapDrawControl,
 		MapFullscreenControl,
 		MapGeoJSON,
 		MapHeatmap,
@@ -29,6 +30,8 @@
 		MapScaleControl,
 		MapSearchControl,
 		MapZoomControl,
+		type DrawFeature,
+		type DrawTool,
 		type MapViewport
 	} from '#lib/registry/ui/map/index.js';
 	import {
@@ -56,6 +59,8 @@
 	let stopsView = $state<StopsView>('points');
 	let hoveredZone = $state<string | null>(null);
 	let activeOverlays = $state(['zones', 'deliveries']);
+	let drawTool = $state<DrawTool>('none');
+	let drawings = $state.raw<DrawFeature[]>([]);
 
 	const OVERLAYS = [
 		{ id: 'zones', label: 'Zones' },
@@ -65,6 +70,12 @@
 
 	// A hidden zones layer cannot be hovered, so its last label goes too.
 	const zoneLabel = $derived(activeOverlays.includes('zones') ? hoveredZone : null);
+
+	const drawingSummary = $derived.by(() => {
+		if (drawings.length === 0) return 'Nothing drawn yet';
+		const kinds = drawings.map((feature) => feature.properties.mode).join(', ');
+		return `${drawings.length} drawn: ${kinds}`;
+	});
 
 	const readout = $derived(
 		`${viewport.center[1].toFixed(4)}, ${viewport.center[0].toFixed(4)} · zoom ${viewport.zoom.toFixed(2)}`
@@ -114,6 +125,9 @@
 		</label>
 		<p class="text-muted-foreground" aria-live="polite">
 			{zoneLabel ? `Zone: ${zoneLabel}` : 'Hover a zone'}
+		</p>
+		<p class="text-muted-foreground" aria-live="polite" data-testid="drawings">
+			{drawingSummary}
 		</p>
 	</div>
 
@@ -183,6 +197,12 @@
 
 		<MapControlContainer position="top-left">
 			<MapSearchControl onerror={(error) => (lastError = error.message)} />
+			<MapDrawControl
+				orientation="horizontal"
+				bind:mode={drawTool}
+				onchange={(features) => (drawings = features)}
+				onerror={(error) => (lastError = error.message)}
+			/>
 		</MapControlContainer>
 		<MapControlContainer position="top-right">
 			<MapZoomControl />
