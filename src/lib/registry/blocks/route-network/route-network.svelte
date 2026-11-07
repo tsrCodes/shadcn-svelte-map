@@ -51,24 +51,28 @@
 
 	const legs: Leg[] = $derived(
 		ROUTES.filter((route) => route.from === hub)
-			.map((route) => {
-				const origin = airports[route.from];
-				const destination = airports[route.to];
-				return {
-					from: origin.lngLat,
-					to: destination.lngLat,
-					code: destination.code,
-					city: destination.city,
-					weekly: route.weekly,
-					km: Math.round(distanceMeters(origin.lngLat, destination.lngLat) / METRES_PER_KM)
-				};
+			.flatMap((route): Leg[] => {
+				const origin: Airport | undefined = airports[route.from];
+				const destination: Airport | undefined = airports[route.to];
+				// A route to an airport missing from the list is left out rather than breaking the map.
+				if (!origin || !destination) return [];
+				return [
+					{
+						from: origin.lngLat,
+						to: destination.lngLat,
+						code: destination.code,
+						city: destination.city,
+						weekly: route.weekly,
+						km: Math.round(distanceMeters(origin.lngLat, destination.lngLat) / METRES_PER_KM)
+					}
+				];
 			})
 			.sort((a, b) => b.weekly - a.weekly)
 	);
 
 	const selected = $derived(legs.find((leg) => leg.code === selectedCode) ?? null);
 	const weekly = $derived(legs.reduce((sum, leg) => sum + leg.weekly, 0));
-	const longest = $derived(Math.max(...legs.map((leg) => leg.km)));
+	const longest = $derived(legs.reduce((most, leg) => Math.max(most, leg.km), 0));
 
 	const destinations: FeatureCollection<Point, { code: string; city: string }> = {
 		type: 'FeatureCollection',
