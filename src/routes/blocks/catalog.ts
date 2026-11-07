@@ -7,6 +7,7 @@ import FieldSurvey from '#lib/registry/blocks/field-survey/field-survey.svelte';
 import FleetTracker from '#lib/registry/blocks/fleet-tracker/fleet-tracker.svelte';
 import OrderTracker from '#lib/registry/blocks/order-tracker/order-tracker.svelte';
 import RegionAnalytics from '#lib/registry/blocks/region-analytics/region-analytics.svelte';
+import DensityHeatmap from '#lib/registry/blocks/density-heatmap/density-heatmap.svelte';
 import type { MapStyle } from '#lib/registry/ui/map/index.js';
 
 /** Props every block takes, so the preview pages and tests can render any of them. */
@@ -86,6 +87,13 @@ export const BLOCKS: readonly BlockEntry[] = [
 		description: 'Shade sales territories by revenue, orders or growth and rank them side by side.',
 		kind: 'data',
 		component: RegionAnalytics
+	},
+	{
+		name: 'density-heatmap',
+		title: 'Density heatmap',
+		description: 'A day of ride pickups as a heatmap or clusters, filtered to the hour you pick.',
+		kind: 'data',
+		component: DensityHeatmap
 	}
 ];
 
