@@ -10,8 +10,8 @@ export type Pixel = [number, number];
 
 /** Toolbars sit along the top of the map; pointer input stays below this line. */
 const TOOLBAR_CLEARANCE = 56;
-/** Blocks are page-sized; tests give them a fixed desktop-ish box. */
-const BLOCK_CLASS = 'h-[640px] w-[900px]';
+/** Blocks are page-sized; this box fits the test browser's narrow viewport. */
+const BLOCK_CLASS = 'h-[720px] w-[400px]';
 
 interface BlockProps {
 	mapStyle?: MapStyle;
