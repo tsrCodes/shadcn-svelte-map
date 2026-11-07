@@ -24,6 +24,7 @@ export {
 	type MapControlPosition
 } from './map-control-container.svelte';
 export { default as MapZoomControl } from './map-zoom-control.svelte';
+export { default as MapCompassControl } from './map-compass-control.svelte';
 export { type LngLatTuple, type LngLatBoundsTuple } from './geometry.js';
 export { MapContext, getMapContext } from './map-context.svelte.js';
 export { MarkerContext, getMarkerContext } from './marker-context.svelte.js';
