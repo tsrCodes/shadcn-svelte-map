@@ -161,3 +161,53 @@ export function arcLine(
 		return [a * from[0] + b * control[0] + c * end[0], a * from[1] + b * control[1] + c * end[1]];
 	});
 }
+
+/**
+ * Area enclosed by a ring on the ground, in square metres. The ring may be open or
+ * closed and wind either way. Accurate for city- and field-sized shapes.
+ */
+export function ringArea(ring: LngLatTuple[]): number {
+	const closed = closeRing(ring);
+	if (closed.length < 4) return 0;
+	let sum = 0;
+	for (let index = 1; index < closed.length; index += 1) {
+		const [lng1, lat1] = closed[index - 1];
+		const [lng2, lat2] = closed[index];
+		sum += toRadians(lng2 - lng1) * (2 + Math.sin(toRadians(lat1)) + Math.sin(toRadians(lat2)));
+	}
+	return Math.abs((sum * EARTH_RADIUS ** 2) / 2);
+}
+
+/** Area of a polygon in square metres: its outer ring minus its holes. */
+export function polygonArea(rings: LngLatTuple[][]): number {
+	const [outer, ...holes] = rings;
+	if (!outer) return 0;
+	return holes.reduce((area, hole) => area - ringArea(hole), ringArea(outer));
+}
+
+/** True when `point` lies inside `ring`. Points exactly on an edge may go either way. */
+function insideRing([x, y]: LngLatTuple, ring: LngLatTuple[]): boolean {
+	let inside = false;
+	for (let index = 0, previous = ring.length - 1; index < ring.length; previous = index++) {
+		const [xi, yi] = ring[index];
+		const [xj, yj] = ring[previous];
+		if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+	}
+	return inside;
+}
+
+/** True when `point` lies inside the polygon's outer ring and outside all its holes. */
+export function pointInPolygon(point: LngLatTuple, rings: LngLatTuple[][]): boolean {
+	const [outer, ...holes] = rings;
+	if (!outer || !insideRing(point, outer)) return false;
+	return !holes.some((hole) => insideRing(point, hole));
+}
+
+/** Average of a ring's corners, a good label spot for convex shapes. */
+export function ringCenter(ring: LngLatTuple[]): LngLatTuple {
+	const closed = closeRing(ring);
+	const corners = closed.length > 1 ? closed.slice(0, -1) : closed;
+	if (corners.length === 0) throw new Error('A ring needs at least one position.');
+	const [lng, lat] = corners.reduce(([a, b], [x, y]) => [a + x, b + y], [0, 0]);
+	return [lng / corners.length, lat / corners.length];
+}

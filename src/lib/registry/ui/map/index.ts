@@ -42,7 +42,22 @@ export {
 	type DrawTool
 } from './draw.js';
 export { scaleBar, type ScaleBar, type ScaleUnit } from './scale.js';
-export { type LngLatTuple, type LngLatBoundsTuple } from './geometry.js';
+export {
+	arcLine,
+	circleRing,
+	closeRing,
+	distanceMeters,
+	lineLength,
+	pointInPolygon,
+	polygonArea,
+	rectangleRing,
+	ringArea,
+	ringCenter,
+	splitLine,
+	type LngLatTuple,
+	type LngLatBoundsTuple,
+	type SplitLine
+} from './geometry.js';
 export { MapContext, getMapContext } from './map-context.svelte.js';
 export { MarkerContext, getMarkerContext } from './marker-context.svelte.js';
 export {

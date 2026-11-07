@@ -5,7 +5,11 @@ import {
 	closeRing,
 	distanceMeters,
 	lineLength,
+	pointInPolygon,
+	polygonArea,
 	rectangleRing,
+	ringArea,
+	ringCenter,
 	splitLine,
 	type LngLatTuple
 } from '#lib/registry/ui/map/geometry.js';
@@ -124,5 +128,47 @@ describe('arcLine', () => {
 	test('a curvature of 0 is a straight line', () => {
 		const arc = arcLine([0, 0], [4, 4], 0, 4);
 		for (const [lng, lat] of arc) expect(lng).toBeCloseTo(lat, 9);
+	});
+});
+
+describe('polygon helpers', () => {
+	const square: LngLatTuple[] = [
+		[0, 0],
+		[1, 0],
+		[1, 1],
+		[0, 1]
+	];
+	const hole: LngLatTuple[] = [
+		[0.25, 0.25],
+		[0.75, 0.25],
+		[0.75, 0.75],
+		[0.25, 0.75]
+	];
+
+	test('ringArea measures a one-degree square at the equator', () => {
+		const expected = DEGREE_AT_EQUATOR ** 2;
+		expect(ringArea(square) / expected).toBeCloseTo(1, 2);
+		expect(ringArea(closeRing(square))).toBeCloseTo(ringArea(square), 6);
+		expect(ringArea([...square].reverse())).toBeCloseTo(ringArea(square), 6);
+		expect(ringArea([[0, 0]])).toBe(0);
+	});
+
+	test('polygonArea subtracts holes', () => {
+		expect(polygonArea([square, hole]) / ringArea(square)).toBeCloseTo(0.75, 2);
+		expect(polygonArea([])).toBe(0);
+	});
+
+	test('pointInPolygon respects the outer ring and holes', () => {
+		expect(pointInPolygon([0.1, 0.1], [square])).toBe(true);
+		expect(pointInPolygon([2, 0.5], [square])).toBe(false);
+		expect(pointInPolygon([0.5, 0.5], [square, hole])).toBe(false);
+		expect(pointInPolygon([0.1, 0.5], [square, hole])).toBe(true);
+		expect(pointInPolygon([0.5, 0.5], [])).toBe(false);
+	});
+
+	test('ringCenter averages the corners and ignores the closing copy', () => {
+		expect(ringCenter(closeRing(square))).toEqual([0.5, 0.5]);
+		expect(ringCenter([[3, 4]])).toEqual([3, 4]);
+		expect(() => ringCenter([])).toThrow();
 	});
 });
