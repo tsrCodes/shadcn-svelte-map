@@ -31,7 +31,10 @@ export async function mountBlock<P extends BlockProps>(
 	const root = () => screen.container.querySelector<HTMLElement>('[data-slot="map"]');
 	await expect.poll(() => root()?.dataset.status, { timeout: 15_000 }).toBe('ready');
 	const map = root() as HTMLElement;
-	const canvas = map.querySelector<HTMLCanvasElement>('canvas');
+	// MapLibre's own canvas takes the pointer; other canvases (overlays, icons) must not.
+	const canvas = map.querySelector<HTMLCanvasElement>(
+		'[data-slot="map-canvas"] canvas.maplibregl-canvas'
+	);
 	if (!canvas) throw new Error('map canvas not found');
 	return { screen, map, canvas, pointer: pointer(canvas) };
 }
