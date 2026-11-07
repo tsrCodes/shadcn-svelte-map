@@ -88,7 +88,7 @@
 	/** The style last handed to MapLibre, so a theme change only swaps when needed. */
 	let appliedStyle: StyleInput | null = null;
 
-	const activeStyle = $derived(resolveStyle(mapStyle, ctx.theme.resolved));
+	const activeStyle = $derived(resolveStyle(ctx.basemap ?? mapStyle, ctx.theme.resolved));
 
 	function prepareStyle(style: StyleInput): StyleInput {
 		return typeof style === 'string'
@@ -229,8 +229,9 @@
 </script>
 
 <div
+	bind:this={ctx.root}
 	{...restProps}
-	class={cn('relative isolate overflow-hidden', className)}
+	class={cn('relative isolate overflow-hidden bg-background', className)}
 	role="region"
 	aria-label={ariaLabel}
 	aria-describedby={hintId}
@@ -297,6 +298,27 @@
 
 	[data-slot='map'] :global(.maplibregl-ctrl-attrib.maplibregl-compact) {
 		border-radius: var(--radius);
+	}
+
+	/* Fullscreen: the real API, or a fixed overlay where the API is missing (iPhone Safari). */
+	[data-slot='map']:fullscreen,
+	[data-slot='map'][data-fullscreen='fallback'] {
+		border-radius: 0;
+		border-width: 0;
+	}
+
+	[data-slot='map'][data-fullscreen='fallback'] {
+		position: fixed;
+		inset: 0;
+		z-index: 50;
+		width: 100%;
+		height: 100%;
+		max-width: none;
+		margin: 0;
+	}
+
+	:global(html[data-map-fullscreen]) {
+		overflow: hidden;
 	}
 
 	:global(.dark) [data-slot='map'] :global(.maplibregl-ctrl-attrib-button) {

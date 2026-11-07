@@ -19,6 +19,10 @@ export {
 	type MapClusterClick
 } from './map-cluster-layer.svelte';
 export { default as MapHeatmap } from './map-heatmap.svelte';
+export {
+	default as MapControlContainer,
+	type MapControlPosition
+} from './map-control-container.svelte';
 export { type LngLatTuple, type LngLatBoundsTuple } from './geometry.js';
 export { MapContext, getMapContext } from './map-context.svelte.js';
 export { MarkerContext, getMarkerContext } from './marker-context.svelte.js';

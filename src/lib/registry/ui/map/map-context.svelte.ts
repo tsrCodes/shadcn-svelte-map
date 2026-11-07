@@ -9,6 +9,7 @@ import type {
 	Map as MapLibreMap
 } from 'maplibre-gl';
 import { LayerRegistry } from './layer-registry.js';
+import type { MapStyle } from './styles.js';
 import { readThemeColors, ThemeObserver, type ThemeColors } from './theme.svelte.js';
 
 /**
@@ -25,8 +26,12 @@ export class MapContext {
 	styleVersion = $state(0);
 	/** The loaded MapLibre module, so components build markers and popups without importing it. */
 	maplibre = $state.raw<typeof import('maplibre-gl') | null>(null);
-	/** The element the map renders into. */
+	/** The element MapLibre renders into. */
 	container = $state.raw<HTMLElement | null>(null);
+	/** The outer map element. Controls live here; fullscreen and dropdowns use it. */
+	root = $state.raw<HTMLElement | null>(null);
+	/** Basemap picked with a basemap control. Replaces the `mapStyle` prop while set. */
+	basemap = $state.raw<MapStyle | null>(null);
 
 	readonly layers = new LayerRegistry();
 	readonly theme = new ThemeObserver();
