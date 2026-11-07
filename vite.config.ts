@@ -65,6 +65,9 @@ export default defineConfig({
 				extends: './vite.config.ts',
 				test: {
 					name: 'client',
+					// Maps render on the CPU (SwiftShader) and many test files run at once, so a
+					// test with many pointer steps can need more than the default 15 seconds.
+					testTimeout: 30_000,
 					browser: {
 						enabled: true,
 						provider: playwright({ launchOptions: { args: WEBGL_ARGS } }),
