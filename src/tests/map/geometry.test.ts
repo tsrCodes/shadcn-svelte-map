@@ -153,8 +153,19 @@ describe('polygon helpers', () => {
 		expect(ringArea([[0, 0]])).toBe(0);
 	});
 
-	test('polygonArea subtracts holes', () => {
+	test('ringArea takes the short way across the antimeridian', () => {
+		const across: LngLatTuple[] = [
+			[179.5, 0],
+			[-179.5, 0],
+			[-179.5, 1],
+			[179.5, 1]
+		];
+		expect(ringArea(across)).toBeCloseTo(ringArea(square), -3);
+	});
+
+	test('polygonArea subtracts holes and never goes below 0', () => {
 		expect(polygonArea([square, hole]) / ringArea(square)).toBeCloseTo(0.75, 2);
+		expect(polygonArea([hole, square])).toBe(0);
 		expect(polygonArea([])).toBe(0);
 	});
 

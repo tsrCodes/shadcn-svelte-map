@@ -173,16 +173,19 @@ export function ringArea(ring: LngLatTuple[]): number {
 	for (let index = 1; index < closed.length; index += 1) {
 		const [lng1, lat1] = closed[index - 1];
 		const [lng2, lat2] = closed[index];
-		sum += toRadians(lng2 - lng1) * (2 + Math.sin(toRadians(lat1)) + Math.sin(toRadians(lat2)));
+		// The short way round, so an edge across the antimeridian is not read as 360° wide.
+		const dLng = ((((lng2 - lng1) % 360) + 540) % 360) - 180;
+		sum += toRadians(dLng) * (2 + Math.sin(toRadians(lat1)) + Math.sin(toRadians(lat2)));
 	}
 	return Math.abs((sum * EARTH_RADIUS ** 2) / 2);
 }
 
-/** Area of a polygon in square metres: its outer ring minus its holes. */
+/** Area of a polygon in square metres: its outer ring minus its holes, never below 0. */
 export function polygonArea(rings: LngLatTuple[][]): number {
 	const [outer, ...holes] = rings;
 	if (!outer) return 0;
-	return holes.reduce((area, hole) => area - ringArea(hole), ringArea(outer));
+	const area = holes.reduce((rest, hole) => rest - ringArea(hole), ringArea(outer));
+	return Math.max(0, area);
 }
 
 /** True when `point` lies inside `ring`. Points exactly on an edge may go either way. */
