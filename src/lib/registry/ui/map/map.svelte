@@ -171,6 +171,7 @@
 		ref = map;
 
 		return () => {
+			ctx.runBeforeRemove();
 			for (const subscription of subscriptions) subscription.unsubscribe();
 			ctx.layers.detach();
 			map.remove();

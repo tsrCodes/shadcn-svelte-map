@@ -49,6 +49,34 @@ export class MapContext {
 		this.basemap = this.#basemapClaims.at(-1)?.style ?? null;
 	}
 
+	#beforeRemove: readonly (() => void)[] = [];
+
+	/**
+	 * Run `callback` just before the map is removed, while its style is still there.
+	 * The map goes before its children clean up, so libraries that remove their own
+	 * layers need this. Returns a function that cancels it.
+	 */
+	beforeRemove(callback: () => void): () => void {
+		this.#beforeRemove = [...this.#beforeRemove, callback];
+		return () => {
+			this.#beforeRemove = this.#beforeRemove.filter((item) => item !== callback);
+		};
+	}
+
+	/** Called by `<Map>` right before `map.remove()`. */
+	runBeforeRemove(): void {
+		const callbacks = this.#beforeRemove;
+		this.#beforeRemove = [];
+		// One failing callback must not keep the others from cleaning up.
+		for (const callback of callbacks) {
+			try {
+				callback();
+			} catch (error) {
+				console.error(error);
+			}
+		}
+	}
+
 	readonly layers = new LayerRegistry();
 	readonly theme = new ThemeObserver();
 
