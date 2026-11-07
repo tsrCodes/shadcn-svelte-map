@@ -109,6 +109,8 @@ export class LayerRegistry {
 	#pendingData = new Set<string>();
 	/** Paint values set through the registry, by layer id; they win over any older style copy. */
 	#paint = new Map<string, PaintValues>();
+	/** Id prefixes of sources and layers added outside the registry that swaps must keep. */
+	#carried: readonly string[] = [];
 
 	/** True once the current style has loaded and can take sources and layers. */
 	get ready(): boolean {
@@ -223,6 +225,19 @@ export class LayerRegistry {
 		return { ...stored?.state };
 	}
 
+	/**
+	 * Keep sources and layers whose ids start with `prefix` across style swaps, for
+	 * libraries that add them to the map themselves. They are copied as they are from
+	 * the previous style and drawn on top. Returns a function that stops carrying them.
+	 */
+	carry(prefix: string): () => void {
+		if (!prefix) throw new Error('A carried prefix must not be empty.');
+		this.#carried = [...this.#carried, prefix];
+		return () => {
+			this.#carried = this.#carried.filter((item) => item !== prefix);
+		};
+	}
+
 	/** Pass to `map.setStyle(style, { transformStyle })` to carry registered layers across. */
 	transformStyle = (
 		previous: StyleSpecification | undefined,
@@ -239,8 +254,28 @@ export class LayerRegistry {
 				layers = insertLayer(others, current, entry.beforeId);
 			}
 		}
-		return { ...next, sources, layers };
+		return this.#withCarried(previous, { ...next, sources, layers });
 	};
+
+	#isCarried(id: string): boolean {
+		return this.#carried.some((prefix) => id.startsWith(prefix));
+	}
+
+	#withCarried(
+		previous: StyleSpecification | undefined,
+		next: StyleSpecification
+	): StyleSpecification {
+		if (!previous || this.#carried.length === 0) return next;
+		const carriedSources = Object.entries(previous.sources).filter(([id]) => this.#isCarried(id));
+		const carriedLayers = previous.layers.filter((layer) => this.#isCarried(layer.id));
+		if (carriedSources.length === 0 && carriedLayers.length === 0) return next;
+		const ids = new Set(carriedLayers.map((layer) => layer.id));
+		return {
+			...next,
+			sources: { ...next.sources, ...Object.fromEntries(carriedSources) },
+			layers: [...next.layers.filter((layer) => !ids.has(layer.id)), ...carriedLayers]
+		};
+	}
 
 	#carriedSource(entry: LayerEntry, previous: StyleSpecification | undefined): SourceSpecification {
 		// Data set through the registry is newer than whatever the old style holds.

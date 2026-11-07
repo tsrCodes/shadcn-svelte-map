@@ -329,4 +329,45 @@ describe('LayerRegistry', () => {
 		registry.setPaintProperty(POINTS_SOURCE, 'background', 'circle-color', 'red');
 		expect(fake.paint('background')).toBeUndefined();
 	});
+
+	test('carry keeps outside sources and layers with a prefix on top of the next style', () => {
+		const registry = new LayerRegistry();
+		registry.add(POINTS_ENTRY);
+		const release = registry.carry('draw-a-');
+		const drawData = { type: 'FeatureCollection' as const, features: [] };
+		const previous: StyleSpecification = {
+			version: 8,
+			sources: {
+				'draw-a-polygon': { type: 'geojson', data: drawData },
+				'draw-b-polygon': { type: 'geojson', data: drawData },
+				other: { type: 'geojson', data: drawData }
+			},
+			layers: [
+				{ id: 'draw-a-polygon', type: 'fill', source: 'draw-a-polygon' },
+				{ id: 'draw-a-polygon-outline', type: 'line', source: 'draw-a-polygon' },
+				{ id: 'draw-b-polygon', type: 'fill', source: 'draw-b-polygon' },
+				{ id: 'other', type: 'fill', source: 'other' }
+			]
+		};
+		const next: StyleSpecification = { version: 8, sources: {}, layers: [LABELS] };
+
+		const result = registry.transformStyle(previous, next);
+		expect(Object.keys(result.sources).sort()).toEqual(['draw-a-polygon', POINTS_SOURCE].sort());
+		expect(result.sources['draw-a-polygon']).toEqual({ type: 'geojson', data: drawData });
+		expect(result.layers.map((layer) => layer.id)).toEqual([
+			'labels',
+			POINTS_LAYER,
+			'draw-a-polygon',
+			'draw-a-polygon-outline'
+		]);
+
+		release();
+		const after = registry.transformStyle(previous, next);
+		expect(after.sources['draw-a-polygon']).toBeUndefined();
+		expect(after.layers.map((layer) => layer.id)).toEqual(['labels', POINTS_LAYER]);
+	});
+
+	test('carry rejects an empty prefix', () => {
+		expect(() => new LayerRegistry().carry('')).toThrow(/prefix/);
+	});
 });
