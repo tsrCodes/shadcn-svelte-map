@@ -26,6 +26,10 @@ export {
 export { default as MapZoomControl } from './map-zoom-control.svelte';
 export { default as MapCompassControl } from './map-compass-control.svelte';
 export { default as MapScaleControl } from './map-scale-control.svelte';
+export {
+	default as MapFullscreenControl,
+	type FullscreenMode
+} from './map-fullscreen-control.svelte';
 export { scaleBar, type ScaleBar, type ScaleUnit } from './scale.js';
 export { type LngLatTuple, type LngLatBoundsTuple } from './geometry.js';
 export { MapContext, getMapContext } from './map-context.svelte.js';
