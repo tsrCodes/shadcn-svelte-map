@@ -2,9 +2,9 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import type { MapContext } from '#lib/registry/ui/map/index.js';
+import { MapContext } from '#lib/registry/ui/map/index.js';
 import ControlsHarness from './ControlsHarness.svelte';
-import { PHOTON_BODY } from './fixtures.js';
+import { DARK_STYLE, LIGHT_STYLE, PHOTON_BODY } from './fixtures.js';
 
 type HarnessProps = NonNullable<Parameters<typeof render<typeof ControlsHarness>>[1]>;
 
@@ -302,6 +302,26 @@ describe('MapBasemapControl', () => {
 		await screen.rerender({ showBasemap: false });
 		await expect.poll(() => ctx.styleVersion).toBe(before + 2);
 		expect(map.getLayer('overlay')).toBeUndefined();
+		expect(ctx.basemap).toBeNull();
+	});
+});
+
+describe('basemap claims', () => {
+	test('removing one control never drops a basemap another control still shows', () => {
+		const ctx = new MapContext();
+		const first = Symbol('first');
+		const second = Symbol('second');
+
+		ctx.claimBasemap(first, LIGHT_STYLE);
+		ctx.claimBasemap(second, LIGHT_STYLE);
+		ctx.releaseBasemap(second);
+		expect(ctx.basemap).toBe(LIGHT_STYLE);
+
+		ctx.claimBasemap(second, DARK_STYLE);
+		expect(ctx.basemap).toBe(DARK_STYLE);
+		ctx.releaseBasemap(first);
+		expect(ctx.basemap).toBe(DARK_STYLE);
+		ctx.releaseBasemap(second);
 		expect(ctx.basemap).toBeNull();
 	});
 });

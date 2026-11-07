@@ -46,14 +46,13 @@
 	const chosen = $derived(basemaps.find((basemap) => basemap.id === value) ?? basemaps[0] ?? null);
 
 	// The chosen basemap replaces the map's own style until this control goes away.
+	const owner = Symbol('map-basemap-control');
+
 	$effect(() => {
 		const style = chosen?.style;
 		if (!style) return;
-		ctx.basemap = style;
-		return () => {
-			// Leave the override alone if something else has set it since.
-			if (ctx.basemap === style) ctx.basemap = null;
-		};
+		ctx.claimBasemap(owner, style);
+		return () => ctx.releaseBasemap(owner);
 	});
 
 	function choose(next: string) {

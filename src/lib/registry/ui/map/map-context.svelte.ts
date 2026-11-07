@@ -33,6 +33,22 @@ export class MapContext {
 	/** Basemap picked with a basemap control. Replaces the `mapStyle` prop while set. */
 	basemap = $state.raw<MapStyle | null>(null);
 
+	/** Every control's pick, newest last; the newest one is shown. */
+	#basemapClaims: readonly { owner: symbol; style: MapStyle }[] = [];
+
+	/** Show `style` on behalf of `owner`, replacing that owner's earlier pick. */
+	claimBasemap(owner: symbol, style: MapStyle): void {
+		const others = this.#basemapClaims.filter((claim) => claim.owner !== owner);
+		this.#basemapClaims = [...others, { owner, style }];
+		this.basemap = style;
+	}
+
+	/** Drop `owner`'s pick; the newest remaining pick, or the `mapStyle` prop, shows. */
+	releaseBasemap(owner: symbol): void {
+		this.#basemapClaims = this.#basemapClaims.filter((claim) => claim.owner !== owner);
+		this.basemap = this.#basemapClaims.at(-1)?.style ?? null;
+	}
+
 	readonly layers = new LayerRegistry();
 	readonly theme = new ThemeObserver();
 
