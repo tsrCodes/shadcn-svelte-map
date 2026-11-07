@@ -8,6 +8,7 @@ import FleetTracker from '#lib/registry/blocks/fleet-tracker/fleet-tracker.svelt
 import OrderTracker from '#lib/registry/blocks/order-tracker/order-tracker.svelte';
 import RegionAnalytics from '#lib/registry/blocks/region-analytics/region-analytics.svelte';
 import DensityHeatmap from '#lib/registry/blocks/density-heatmap/density-heatmap.svelte';
+import RouteNetwork from '#lib/registry/blocks/route-network/route-network.svelte';
 import type { MapStyle } from '#lib/registry/ui/map/index.js';
 
 /** Props every block takes, so the preview pages and tests can render any of them. */
@@ -94,6 +95,14 @@ export const BLOCKS: readonly BlockEntry[] = [
 		description: 'A day of ride pickups as a heatmap or clusters, filtered to the hour you pick.',
 		kind: 'data',
 		component: DensityHeatmap
+	},
+	{
+		name: 'route-network',
+		title: 'Flight route network',
+		description:
+			'An airline network as arcs from each hub, with flights a week and distance per route.',
+		kind: 'data',
+		component: RouteNetwork
 	}
 ];
 
