@@ -1,4 +1,5 @@
 import type { Component } from 'svelte';
+import GeofenceEditor from '#lib/registry/blocks/geofence-editor/geofence-editor.svelte';
 import type { MapStyle } from '#lib/registry/ui/map/index.js';
 
 /** Props every block takes, so the preview pages and tests can render any of them. */
@@ -19,7 +20,15 @@ export interface BlockEntry {
 	component: Component<BlockProps>;
 }
 
-export const BLOCKS: readonly BlockEntry[] = [];
+export const BLOCKS: readonly BlockEntry[] = [
+	{
+		name: 'geofence-editor',
+		title: 'Geofence editor',
+		description: 'Draw fences around a harbour and see which assets sit inside them.',
+		kind: 'editing',
+		component: GeofenceEditor
+	}
+];
 
 export function findBlock(name: string): BlockEntry | undefined {
 	return BLOCKS.find((block) => block.name === name);
