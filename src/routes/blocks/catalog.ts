@@ -5,6 +5,7 @@ import PlotMapper from '#lib/registry/blocks/plot-mapper/plot-mapper.svelte';
 import DeliveryZonePlanner from '#lib/registry/blocks/delivery-zone-planner/delivery-zone-planner.svelte';
 import FieldSurvey from '#lib/registry/blocks/field-survey/field-survey.svelte';
 import FleetTracker from '#lib/registry/blocks/fleet-tracker/fleet-tracker.svelte';
+import OrderTracker from '#lib/registry/blocks/order-tracker/order-tracker.svelte';
 import type { MapStyle } from '#lib/registry/ui/map/index.js';
 
 /** Props every block takes, so the preview pages and tests can render any of them. */
@@ -69,6 +70,14 @@ export const BLOCKS: readonly BlockEntry[] = [
 		description: 'Vans and trucks drive their rounds; pick one to see its loop or follow it.',
 		kind: 'data',
 		component: FleetTracker
+	},
+	{
+		name: 'order-tracker',
+		title: 'Order tracker',
+		description:
+			'Follow a food order from the kitchen to the door, with stages and an arrival estimate.',
+		kind: 'data',
+		component: OrderTracker
 	}
 ];
 
