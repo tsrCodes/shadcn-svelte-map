@@ -177,6 +177,19 @@ describe('polygon helpers', () => {
 		expect(pointInPolygon([0.5, 0.5], [])).toBe(false);
 	});
 
+	test('pointInPolygon works for a ring across the antimeridian', () => {
+		const across: LngLatTuple[] = [
+			[179.5, 0],
+			[-179.5, 0],
+			[-179.5, 1],
+			[179.5, 1]
+		];
+		expect(pointInPolygon([179.9, 0.5], [across])).toBe(true);
+		expect(pointInPolygon([-179.9, 0.5], [across])).toBe(true);
+		expect(pointInPolygon([0, 0.5], [across])).toBe(false);
+		expect(pointInPolygon([179, 0.5], [across])).toBe(false);
+	});
+
 	test('ringCenter averages the corners and ignores the closing copy', () => {
 		expect(ringCenter(closeRing(square))).toEqual([0.5, 0.5]);
 		expect(ringCenter([[3, 4]])).toEqual([3, 4]);

@@ -162,6 +162,11 @@ export function arcLine(
 	});
 }
 
+/** Longitude change from `from` to `to` the short way round, between -180 and 180. */
+function lngDelta(from: number, to: number): number {
+	return ((((to - from) % 360) + 540) % 360) - 180;
+}
+
 /**
  * Area enclosed by a ring on the ground, in square metres. The ring may be open or
  * closed and wind either way. Accurate for city- and field-sized shapes.
@@ -174,7 +179,7 @@ export function ringArea(ring: LngLatTuple[]): number {
 		const [lng1, lat1] = closed[index - 1];
 		const [lng2, lat2] = closed[index];
 		// The short way round, so an edge across the antimeridian is not read as 360° wide.
-		const dLng = ((((lng2 - lng1) % 360) + 540) % 360) - 180;
+		const dLng = lngDelta(lng1, lng2);
 		sum += toRadians(dLng) * (2 + Math.sin(toRadians(lat1)) + Math.sin(toRadians(lat2)));
 	}
 	return Math.abs((sum * EARTH_RADIUS ** 2) / 2);
@@ -199,11 +204,26 @@ function insideRing([x, y]: LngLatTuple, ring: LngLatTuple[]): boolean {
 	return inside;
 }
 
-/** True when `point` lies inside the polygon's outer ring and outside all its holes. */
+/**
+ * True when `point` lies inside the polygon's outer ring and outside all its holes.
+ * Rings may cross the antimeridian, as long as each is less than 180° wide.
+ */
 export function pointInPolygon(point: LngLatTuple, rings: LngLatTuple[][]): boolean {
-	const [outer, ...holes] = rings;
-	if (!outer || !insideRing(point, outer)) return false;
-	return !holes.some((hole) => insideRing(point, hole));
+	const reference = rings[0]?.[0]?.[0];
+	if (reference === undefined) return false;
+	// Walk each ring edge by edge the short way, so a ring across ±180° stays in one piece,
+	// then bring the point to the same side of the world as the rings.
+	const unwrap = (ring: LngLatTuple[]): LngLatTuple[] => {
+		let lng = reference;
+		return ring.map(([x, y], index): LngLatTuple => {
+			lng += lngDelta(index === 0 ? reference : ring[index - 1][0], x);
+			return [lng, y];
+		});
+	};
+	const [outer, ...holes] = rings.map(unwrap);
+	const at: LngLatTuple = [reference + lngDelta(reference, point[0]), point[1]];
+	if (!insideRing(at, outer)) return false;
+	return !holes.some((hole) => insideRing(at, hole));
 }
 
 /** Average of a ring's corners, a good label spot for convex shapes. */
