@@ -12,10 +12,12 @@ set -euo pipefail
 KIT="${1:?usage: scripts/install-test.sh <2|3> [out-dir]}"
 OUT="${2:-${TMPDIR:-/tmp}/shadcn-svelte-map-install/kit$KIT}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-PORT="${REGISTRY_PORT:-4319}"
+# A free port per run, so parallel runs never collide; REGISTRY_PORT pins one for debugging
+PORT="${REGISTRY_PORT:-$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1]); s.close()')}"
 REGISTRY="http://127.0.0.1:$PORT/r"
 SHADCN="shadcn-svelte@1.7.2"
 
+# shellcheck disable=SC2016 # `$lib` is the literal alias, not a variable
 case "$KIT" in
 	2) SV="sv@0.17.1" LIB='$lib' ;;
 	3) SV="sv@1.1.1" LIB='#lib' ;;
@@ -34,6 +36,7 @@ for (const i of require(process.argv[1]).items)
 	if (i.type === "registry:block") console.log(i.name);
 ' "$ROOT/registry.json")
 
+# shellcheck disable=SC2016 # the CLI's literal `$LIB$` placeholder
 if grep -l '\$LIB\$/registry' "$ROOT"/static/r/*.json; then
 	echo "Built items import app-only registry paths" >&2
 	exit 1
