@@ -62,9 +62,12 @@
 		})
 	);
 
-	const fencedIds: string[] = $derived(fences.flatMap((fence) => fence.inside));
+	// Looked up by asset id; an asset inside two fences counts once.
+	const fenced: Record<string, true> = $derived(
+		Object.fromEntries(fences.flatMap((fence) => fence.inside.map((id) => [id, true] as const)))
+	);
 
-	const fencedCount = $derived(ASSETS.filter((asset) => fencedIds.includes(asset.id)).length);
+	const fencedCount = $derived(Object.keys(fenced).length);
 
 	function formatArea(squareMetres: number): string {
 		if (squareMetres >= SQUARE_METRES_PER_KM2) {
@@ -86,7 +89,7 @@
 		viewport={VIEWPORT}
 	>
 		{#each ASSETS as asset (asset.id)}
-			{@const isFenced = fencedIds.includes(asset.id)}
+			{@const isFenced = fenced[asset.id] === true}
 			<MapMarker lngLat={asset.lngLat} aria-label="{asset.name}, {isFenced ? 'inside' : 'outside'}">
 				<MapMarkerContent>
 					<span
