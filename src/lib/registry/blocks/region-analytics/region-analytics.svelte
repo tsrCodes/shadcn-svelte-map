@@ -67,6 +67,8 @@
 	const focus = $derived(ranking.find((region) => region.id === focusId) ?? ranking[0]);
 	const total = $derived(values.reduce((sum, value) => sum + value, 0));
 	const isAdditive = $derived(metricId !== 'growth');
+	// With nothing to share out, every region holds 0% rather than NaN.
+	const share = $derived(total > 0 ? Math.round((focus[metricId] / total) * PERCENT) : 0);
 
 	function regionId(feature: { properties: Record<string, unknown> } | null): string | null {
 		return feature ? String(feature.properties.id) : null;
@@ -132,7 +134,7 @@
 			<Card.Title data-testid="focus-name">{focus.name}</Card.Title>
 			<Card.Description>
 				{#if isAdditive}
-					{Math.round((focus[metricId] / total) * PERCENT)}% of all {metric.label.toLowerCase()}
+					{share}% of all {metric.label.toLowerCase()}
 				{:else}
 					Change against last quarter
 				{/if}
