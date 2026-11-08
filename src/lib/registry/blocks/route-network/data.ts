@@ -7,8 +7,26 @@ export const VIEWPORT: MapViewport = {
 	pitch: 0
 };
 
+/** Every airport the network can fly to, so a route can only name one of these. */
+export type AirportCode =
+	| 'LHR'
+	| 'FRA'
+	| 'DXB'
+	| 'JFK'
+	| 'ORD'
+	| 'GRU'
+	| 'JNB'
+	| 'NBO'
+	| 'DEL'
+	| 'BOM'
+	| 'SIN'
+	| 'HND'
+	| 'SYD'
+	| 'IST'
+	| 'MAD';
+
 export interface Airport {
-	code: string;
+	code: AirportCode;
 	city: string;
 	lngLat: LngLatTuple;
 }
@@ -32,13 +50,13 @@ export const AIRPORTS: Airport[] = [
 ];
 
 /** Airports the airline runs its network from. */
-export const HUBS = ['LHR', 'FRA', 'DXB'] as const;
+export const HUBS = ['LHR', 'FRA', 'DXB'] as const satisfies readonly AirportCode[];
 
 export type Hub = (typeof HUBS)[number];
 
 export interface Route {
 	from: Hub;
-	to: string;
+	to: AirportCode;
 	/** Flights a week in each direction. */
 	weekly: number;
 }
