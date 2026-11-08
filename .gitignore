@@ -24,3 +24,6 @@ vite.config.ts.timestamp-*
 # Playwright
 test-results
 coverage/
+
+# Registry JSON, built by `pnpm registry:build`
+/static/r

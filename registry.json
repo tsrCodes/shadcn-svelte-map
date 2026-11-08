@@ -1,0 +1,442 @@
+{
+	"$schema": "https://shadcn-svelte.com/schema/registry.json",
+	"name": "shadcn-svelte-map",
+	"homepage": "https://shadcn-svelte-map.vercel.app",
+	"aliases": {
+		"lib": "#lib",
+		"ui": "#lib/registry/ui",
+		"components": "#lib/components",
+		"utils": "#lib/utils",
+		"hooks": "#lib/hooks"
+	},
+	"items": [
+		{
+			"name": "map",
+			"type": "registry:ui",
+			"title": "Map",
+			"description": "An interactive MapLibre GL map with markers, popups, data layers, controls and drawing, styled with shadcn-svelte theme colours.",
+			"dependencies": [
+				"@lucide/svelte@^1.61.0",
+				"maplibre-gl@^6.16.0",
+				"svelte@^5.40.0",
+				"terra-draw@^1.39.0",
+				"terra-draw-maplibre-gl-adapter@^1.5.0"
+			],
+			"devDependencies": ["@types/geojson@^7946.0.16"],
+			"registryDependencies": [
+				"button",
+				"button-group",
+				"dropdown-menu",
+				"local:place-autocomplete",
+				"spinner"
+			],
+			"files": [
+				{
+					"path": "src/lib/registry/ui/map/draw.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/geometry.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/index.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/layer-registry.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/layer-sync.svelte.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-arc.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-basemap-control.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-circle.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-cluster-layer.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-compass-control.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-context.svelte.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-control-container.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-draw-control.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-fullscreen-control.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-geojson.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-heatmap.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-locate-control.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-marker-content.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-marker-label.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-marker-popup.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-marker-tooltip.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-marker.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-point-layer.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-polygon.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-polyline.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-popup.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-rectangle.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-route.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-scale-control.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-search-control.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-shape.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-value.svelte.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map-zoom-control.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/map.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/marker-context.svelte.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/popup.svelte.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/scale.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/styles.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/theme.svelte.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/viewport.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map/webgl.ts",
+					"type": "registry:ui"
+				}
+			]
+		},
+		{
+			"name": "place-autocomplete",
+			"type": "registry:ui",
+			"title": "Place Autocomplete",
+			"description": "A place search box with debounced Photon geocoding, keyboard navigation and request cancelling.",
+			"dependencies": ["@lucide/svelte@^1.61.0"],
+			"registryDependencies": ["command", "spinner"],
+			"files": [
+				{
+					"path": "src/lib/registry/ui/place-autocomplete/index.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/place-autocomplete/photon.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/place-autocomplete/place-autocomplete.svelte",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/place-autocomplete/place-search.svelte.ts",
+					"type": "registry:ui"
+				}
+			]
+		},
+		{
+			"name": "geofence-editor",
+			"type": "registry:block",
+			"title": "Geofence editor",
+			"description": "Draw fences around a harbour and see which assets sit inside them.",
+			"dependencies": ["@lucide/svelte@^1.61.0"],
+			"devDependencies": ["@types/geojson@^7946.0.16"],
+			"registryDependencies": ["local:map", "badge", "card", "input"],
+			"files": [
+				{
+					"path": "src/lib/registry/blocks/geofence-editor/geofence-editor.svelte",
+					"type": "registry:component",
+					"target": "geofence-editor/geofence-editor.svelte"
+				},
+				{
+					"path": "src/lib/registry/blocks/geofence-editor/data.ts",
+					"type": "registry:component",
+					"target": "geofence-editor/data.ts"
+				}
+			]
+		},
+		{
+			"name": "store-locator",
+			"type": "registry:block",
+			"title": "Store locator",
+			"description": "Search an address to list the nearest stores, and pin spots for new ones.",
+			"dependencies": ["@lucide/svelte@^1.61.0"],
+			"devDependencies": ["@types/geojson@^7946.0.16"],
+			"registryDependencies": ["local:map", "badge", "card", "input"],
+			"files": [
+				{
+					"path": "src/lib/registry/blocks/store-locator/store-locator.svelte",
+					"type": "registry:component",
+					"target": "store-locator/store-locator.svelte"
+				},
+				{
+					"path": "src/lib/registry/blocks/store-locator/data.ts",
+					"type": "registry:component",
+					"target": "store-locator/data.ts"
+				}
+			]
+		},
+		{
+			"name": "plot-mapper",
+			"type": "registry:block",
+			"title": "Plot mapper",
+			"description": "Trace fields over registry parcels, pick a crop for each and total the hectares.",
+			"dependencies": ["@lucide/svelte@^1.61.0"],
+			"devDependencies": ["@types/geojson@^7946.0.16"],
+			"registryDependencies": ["local:map", "card", "native-select"],
+			"files": [
+				{
+					"path": "src/lib/registry/blocks/plot-mapper/plot-mapper.svelte",
+					"type": "registry:component",
+					"target": "plot-mapper/plot-mapper.svelte"
+				},
+				{
+					"path": "src/lib/registry/blocks/plot-mapper/data.ts",
+					"type": "registry:component",
+					"target": "plot-mapper/data.ts"
+				}
+			]
+		},
+		{
+			"name": "delivery-zone-planner",
+			"type": "registry:block",
+			"title": "Delivery zone planner",
+			"description": "Draw delivery zones around a depot, price each one and see how many orders they cover.",
+			"dependencies": ["@lucide/svelte@^1.61.0"],
+			"devDependencies": ["@types/geojson@^7946.0.16"],
+			"registryDependencies": ["local:map", "card", "native-select"],
+			"files": [
+				{
+					"path": "src/lib/registry/blocks/delivery-zone-planner/delivery-zone-planner.svelte",
+					"type": "registry:component",
+					"target": "delivery-zone-planner/delivery-zone-planner.svelte"
+				},
+				{
+					"path": "src/lib/registry/blocks/delivery-zone-planner/data.ts",
+					"type": "registry:component",
+					"target": "delivery-zone-planner/data.ts"
+				},
+				{
+					"path": "src/lib/registry/blocks/delivery-zone-planner/order-layers.svelte",
+					"type": "registry:component",
+					"target": "delivery-zone-planner/order-layers.svelte"
+				}
+			]
+		},
+		{
+			"name": "field-survey",
+			"type": "registry:block",
+			"title": "Field survey",
+			"description": "Record observations and transects in a park, add notes, and copy the survey as GeoJSON.",
+			"dependencies": ["@lucide/svelte@^1.61.0"],
+			"devDependencies": ["@types/geojson@^7946.0.16"],
+			"registryDependencies": ["local:map", "badge", "button", "card", "input", "native-select"],
+			"files": [
+				{
+					"path": "src/lib/registry/blocks/field-survey/field-survey.svelte",
+					"type": "registry:component",
+					"target": "field-survey/field-survey.svelte"
+				},
+				{
+					"path": "src/lib/registry/blocks/field-survey/data.ts",
+					"type": "registry:component",
+					"target": "field-survey/data.ts"
+				}
+			]
+		},
+		{
+			"name": "fleet-tracker",
+			"type": "registry:block",
+			"title": "Live fleet tracker",
+			"description": "Vans and trucks drive their rounds; pick one to see its loop or follow it.",
+			"dependencies": ["@lucide/svelte@^1.61.0"],
+			"devDependencies": ["@types/geojson@^7946.0.16"],
+			"registryDependencies": ["local:map", "badge", "button", "card", "label", "switch"],
+			"files": [
+				{
+					"path": "src/lib/registry/blocks/fleet-tracker/fleet-tracker.svelte",
+					"type": "registry:component",
+					"target": "fleet-tracker/fleet-tracker.svelte"
+				},
+				{
+					"path": "src/lib/registry/blocks/fleet-tracker/data.ts",
+					"type": "registry:component",
+					"target": "fleet-tracker/data.ts"
+				}
+			]
+		},
+		{
+			"name": "order-tracker",
+			"type": "registry:block",
+			"title": "Order tracker",
+			"description": "Follow a food order from the kitchen to the door, with stages and an arrival estimate.",
+			"dependencies": ["@lucide/svelte@^1.61.0"],
+			"devDependencies": ["@types/geojson@^7946.0.16"],
+			"registryDependencies": ["local:map", "badge", "button", "card"],
+			"files": [
+				{
+					"path": "src/lib/registry/blocks/order-tracker/order-tracker.svelte",
+					"type": "registry:component",
+					"target": "order-tracker/order-tracker.svelte"
+				},
+				{
+					"path": "src/lib/registry/blocks/order-tracker/data.ts",
+					"type": "registry:component",
+					"target": "order-tracker/data.ts"
+				}
+			]
+		},
+		{
+			"name": "region-analytics",
+			"type": "registry:block",
+			"title": "Region analytics",
+			"description": "Shade sales territories by revenue, orders or growth and rank them side by side.",
+			"dependencies": ["@lucide/svelte@^1.61.0"],
+			"devDependencies": ["@types/geojson@^7946.0.16"],
+			"registryDependencies": ["local:map", "button", "button-group", "card"],
+			"files": [
+				{
+					"path": "src/lib/registry/blocks/region-analytics/region-analytics.svelte",
+					"type": "registry:component",
+					"target": "region-analytics/region-analytics.svelte"
+				},
+				{
+					"path": "src/lib/registry/blocks/region-analytics/data.ts",
+					"type": "registry:component",
+					"target": "region-analytics/data.ts"
+				}
+			]
+		},
+		{
+			"name": "density-heatmap",
+			"type": "registry:block",
+			"title": "Density heatmap",
+			"description": "A day of ride pickups as a heatmap or clusters, filtered to the hour you pick.",
+			"dependencies": [],
+			"devDependencies": ["@types/geojson@^7946.0.16"],
+			"registryDependencies": ["local:map", "button", "button-group", "card", "label", "switch"],
+			"files": [
+				{
+					"path": "src/lib/registry/blocks/density-heatmap/density-heatmap.svelte",
+					"type": "registry:component",
+					"target": "density-heatmap/density-heatmap.svelte"
+				},
+				{
+					"path": "src/lib/registry/blocks/density-heatmap/data.ts",
+					"type": "registry:component",
+					"target": "density-heatmap/data.ts"
+				}
+			]
+		},
+		{
+			"name": "route-network",
+			"type": "registry:block",
+			"title": "Flight route network",
+			"description": "An airline network as arcs from each hub, with flights a week and distance per route.",
+			"dependencies": ["@lucide/svelte@^1.61.0"],
+			"devDependencies": ["@types/geojson@^7946.0.16"],
+			"registryDependencies": ["local:map", "button", "button-group", "card"],
+			"files": [
+				{
+					"path": "src/lib/registry/blocks/route-network/route-network.svelte",
+					"type": "registry:component",
+					"target": "route-network/route-network.svelte"
+				},
+				{
+					"path": "src/lib/registry/blocks/route-network/data.ts",
+					"type": "registry:component",
+					"target": "route-network/data.ts"
+				}
+			]
+		}
+	]
+}
