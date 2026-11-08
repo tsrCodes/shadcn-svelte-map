@@ -23,9 +23,11 @@ describe('Fleet tracker block', () => {
 		const start = progress();
 		await expect.poll(progress, { timeout: TWO_TICKS * 2 }).not.toBe(start);
 
+		const spies = { set: setIntervalSpy, clear: clearIntervalSpy };
 		await userEvent.click(button(container, 'Pause'));
 		const paused = progress();
-		await new Promise((resolve) => setTimeout(resolve, TWO_TICKS));
+		// With no clock left running nothing can move the fleet, so there is nothing to wait for.
+		expect(liveTimers(spies, TICK_MS)).toEqual([]);
 		expect(progress()).toBe(paused);
 
 		await userEvent.click(vehicles()[1]);
@@ -35,7 +37,6 @@ describe('Fleet tracker block', () => {
 		await userEvent.click(button(container, 'Play'));
 		await expect.poll(progress, { timeout: TWO_TICKS * 2 }).not.toBe(paused);
 
-		const spies = { set: setIntervalSpy, clear: clearIntervalSpy };
 		expect(liveTimers(spies, TICK_MS)).toHaveLength(1);
 		screen.unmount();
 		expect(liveTimers(spies, TICK_MS)).toEqual([]);
