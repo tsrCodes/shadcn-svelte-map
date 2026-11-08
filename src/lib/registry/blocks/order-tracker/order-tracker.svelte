@@ -40,8 +40,12 @@
 	let minutes = $state(0);
 
 	const delivered = $derived(minutes >= DELIVERED_AT);
+	const rideMinutes = DELIVERED_AT - RIDE_START;
+	// If the data gives the ride no time, the courier jumps to the door once the ride starts.
 	const rideProgress = $derived(
-		Math.min(1, Math.max(0, (minutes - RIDE_START) / (DELIVERED_AT - RIDE_START)))
+		rideMinutes > 0
+			? Math.min(1, Math.max(0, (minutes - RIDE_START) / rideMinutes))
+			: Number(minutes >= RIDE_START)
 	);
 	const courierAt = $derived(splitLine(ORDER.route, rideProgress).point);
 	const currentIndex = $derived(STAGES.findLastIndex((stage) => stage.at <= minutes));
