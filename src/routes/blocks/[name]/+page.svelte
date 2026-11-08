@@ -6,7 +6,7 @@
 
 	let { data }: PageProps = $props();
 
-	const Block = $derived(data.block.component);
+	const Block = $derived(data.component);
 </script>
 
 <svelte:head>
