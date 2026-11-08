@@ -101,14 +101,17 @@
 		})
 	);
 
-	const totals = $derived(
-		CROPS.map((crop) => ({
-			crop,
-			hectares: fields
-				.filter((field) => field.crop === crop)
-				.reduce((sum, field) => sum + field.hectares, 0)
-		})).filter((total) => total.hectares > 0)
-	);
+	const totals = $derived.by(() => {
+		// One pass over the fields, then crops in their usual order.
+		const byCrop = fields.reduce<Partial<Record<Crop, number>>>(
+			(sums, field) => ({ ...sums, [field.crop]: (sums[field.crop] ?? 0) + field.hectares }),
+			{}
+		);
+		return CROPS.flatMap((crop) => {
+			const hectares = byCrop[crop] ?? 0;
+			return hectares > 0 ? [{ crop, hectares }] : [];
+		});
+	});
 
 	const totalHectares = $derived(fields.reduce((sum, field) => sum + field.hectares, 0));
 </script>
