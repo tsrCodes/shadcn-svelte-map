@@ -14,10 +14,12 @@ describe('Route network block', () => {
 		const container = screen.container;
 		const legs = () => [...container.querySelectorAll<HTMLElement>('[data-testid="leg"]')];
 		const detail = () => container.querySelector('[data-testid="leg-detail"]')?.textContent;
+		// Hub markers carry the same codes, so pick hubs from the toolbar group only.
+		const hubs = map.querySelector('[role="group"][aria-label="Hub"]') as HTMLElement;
 		expect(legs()).toHaveLength(routesFrom('LHR'));
 		expect(legs()[0].textContent).toContain('JFK');
 
-		await userEvent.click(button(map, 'DXB'));
+		await userEvent.click(button(hubs, 'DXB'));
 		expect(legs()).toHaveLength(routesFrom('DXB'));
 		expect(legs()[0].textContent).toContain('BOM');
 
@@ -33,7 +35,7 @@ describe('Route network block', () => {
 		expect(km).toBeGreaterThan(11_000);
 		expect(km).toBeLessThan(13_000);
 
-		await userEvent.click(button(map, 'FRA'));
+		await userEvent.click(button(hubs, 'FRA'));
 		expect(detail()).toContain('Pick a route');
 	});
 });

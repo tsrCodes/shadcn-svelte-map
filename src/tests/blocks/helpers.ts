@@ -39,13 +39,15 @@ export async function mountBlock<P extends BlockProps>(
 	return { screen, map, canvas, pointer: pointer(canvas) };
 }
 
-/** The button with this accessible name, inside `root`. */
+/** The one button with this accessible name inside `root`; fails if none or several match. */
 export function button(root: ParentNode, name: string): HTMLButtonElement {
-	const found = [...root.querySelectorAll<HTMLButtonElement>('button')].find(
+	const found = [...root.querySelectorAll<HTMLButtonElement>('button')].filter(
 		(element) => element.getAttribute('aria-label') === name || element.textContent?.trim() === name
 	);
-	if (!found) throw new Error(`button "${name}" not found`);
-	return found;
+	if (found.length === 0) throw new Error(`button "${name}" not found`);
+	if (found.length > 1)
+		throw new Error(`${found.length} buttons named "${name}"; scope the search`);
+	return found[0];
 }
 
 /** Where an element's middle sits, in canvas pixels. */
