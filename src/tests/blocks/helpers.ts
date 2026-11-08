@@ -75,3 +75,16 @@ export function pointer(canvas: HTMLCanvasElement) {
 		}
 	};
 }
+
+interface TimerSpies {
+	set: { mock: { calls: unknown[][]; results: { value: unknown }[] } };
+	clear: { mock: { calls: unknown[][] } };
+}
+
+/** Interval ids started with this delay that nothing has cleared yet. */
+export function liveTimers({ set, clear }: TimerSpies, delay: number): unknown[] {
+	const cleared = clear.mock.calls.map((call) => call[0]);
+	return set.mock.calls
+		.flatMap((call, index) => (call[1] === delay ? [set.mock.results[index].value] : []))
+		.filter((timer) => !cleared.includes(timer));
+}

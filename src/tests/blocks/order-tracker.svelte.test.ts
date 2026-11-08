@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import OrderTracker from '#lib/registry/blocks/order-tracker/order-tracker.svelte';
 import { TICK_MS } from '#lib/registry/blocks/order-tracker/data.js';
-import { button, mountBlock } from './helpers.js';
+import { button, liveTimers, mountBlock } from './helpers.js';
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -26,12 +26,10 @@ describe('Order tracker block', () => {
 		expect(eta()).toBe('18 min');
 		expect(current()).toBe('Order placed');
 
-		const timer =
-			setIntervalSpy.mock.results[
-				setIntervalSpy.mock.calls.findIndex((call) => call[1] === TICK_MS)
-			]?.value;
-		expect(timer).toBeDefined();
+		// Every clock still running must stop, so a timer with the same delay can't stand in for it.
+		const spies = { set: setIntervalSpy, clear: clearIntervalSpy };
+		expect(liveTimers(spies, TICK_MS)).toHaveLength(1);
 		screen.unmount();
-		expect(clearIntervalSpy.mock.calls.map((call) => call[0])).toContain(timer);
+		expect(liveTimers(spies, TICK_MS)).toEqual([]);
 	});
 });
