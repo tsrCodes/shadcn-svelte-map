@@ -46,11 +46,42 @@
 	let crops = $state.raw<Record<string, Crop>>({});
 	let hoveredParcel = $state<string | null>(null);
 
+	interface ParcelEntry {
+		name: string;
+		rings: LngLatTuple[][];
+		west: number;
+		south: number;
+		east: number;
+		north: number;
+	}
+
+	// Parcels never change, so their bounds are worked out once. A field's centre is
+	// only tested against the polygons of parcels whose bounds contain it.
+	const parcelIndex: ParcelEntry[] = PARCELS.features.map((parcel) => {
+		const rings = parcel.geometry.coordinates as LngLatTuple[][];
+		const lngs = rings[0].map(([lng]) => lng);
+		const lats = rings[0].map(([, lat]) => lat);
+		return {
+			name: parcel.properties.name,
+			rings,
+			west: Math.min(...lngs),
+			south: Math.min(...lats),
+			east: Math.max(...lngs),
+			north: Math.max(...lats)
+		};
+	});
+
 	function parcelAt(point: LngLatTuple): string | null {
-		const found = PARCELS.features.find((parcel) =>
-			pointInPolygon(point, parcel.geometry.coordinates as LngLatTuple[][])
+		const [lng, lat] = point;
+		const found = parcelIndex.find(
+			(parcel) =>
+				lng >= parcel.west &&
+				lng <= parcel.east &&
+				lat >= parcel.south &&
+				lat <= parcel.north &&
+				pointInPolygon(point, parcel.rings)
 		);
-		return found?.properties.name ?? null;
+		return found?.name ?? null;
 	}
 
 	const fields: Field[] = $derived(
