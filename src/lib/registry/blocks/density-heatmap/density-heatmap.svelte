@@ -42,7 +42,8 @@
 		{ length: HOURS_PER_DAY },
 		(_, hour) => PICKUPS.filter((pickup) => pickup.properties.hour === hour).length
 	);
-	const busiest = Math.max(...hourly);
+	// At least 1, so a day with no pickups draws flat bars instead of dividing by 0.
+	const busiest = Math.max(1, ...hourly);
 
 	let hour = $state(START_HOUR);
 	let allDay = $state(false);
