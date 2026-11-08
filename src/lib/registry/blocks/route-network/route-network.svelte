@@ -43,7 +43,6 @@
 	const airports: Record<string, Airport> = Object.fromEntries(
 		AIRPORTS.map((airport) => [airport.code, airport])
 	);
-	const hubCodes: readonly string[] = HUBS;
 	const numbers = new Intl.NumberFormat('en');
 
 	let hub = $state<Hub>(HUBS[0]);
@@ -74,14 +73,15 @@
 	const weekly = $derived(legs.reduce((sum, leg) => sum + leg.weekly, 0));
 	const longest = $derived(legs.reduce((most, leg) => Math.max(most, leg.km), 0));
 
-	const destinations: FeatureCollection<Point, { code: string; city: string }> = {
+	// Only the current hub's destinations are shown, so every point on the map picks a route.
+	const destinations: FeatureCollection<Point, { code: string; city: string }> = $derived({
 		type: 'FeatureCollection',
-		features: AIRPORTS.filter((airport) => !hubCodes.includes(airport.code)).map((airport) => ({
+		features: legs.map((leg) => ({
 			type: 'Feature',
-			properties: { code: airport.code, city: airport.city },
-			geometry: { type: 'Point', coordinates: airport.lngLat }
+			properties: { code: leg.code, city: leg.city },
+			geometry: { type: 'Point', coordinates: leg.to }
 		}))
-	};
+	});
 
 	function pickHub(next: Hub) {
 		hub = next;
