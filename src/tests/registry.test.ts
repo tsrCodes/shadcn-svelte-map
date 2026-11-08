@@ -21,9 +21,12 @@ interface RegistryItem {
 }
 
 const registry: { items: RegistryItem[] } = JSON.parse(readFileSync('registry.json', 'utf8'));
-const repoDeps: Record<string, string> = JSON.parse(
-	readFileSync('package.json', 'utf8')
-).devDependencies;
+const pkg: {
+	dependencies?: Record<string, string>;
+	devDependencies?: Record<string, string>;
+} = JSON.parse(readFileSync('package.json', 'utf8'));
+/** Every package the repo builds with, wherever package.json lists it. */
+const repoDeps: Record<string, string> = { ...pkg.dependencies, ...pkg.devDependencies };
 
 const UI_DIR = 'src/lib/registry/ui';
 const UI_PREFIX = '#lib/registry/ui/';
