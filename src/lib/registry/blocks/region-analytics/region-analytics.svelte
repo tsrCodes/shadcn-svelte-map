@@ -64,11 +64,14 @@
 	);
 
 	const focusId = $derived(hoveredId ?? selectedId);
-	const focus = $derived(ranking.find((region) => region.id === focusId) ?? ranking[0]);
+	// Null only when there are no regions at all; the card then says so.
+	const focus: Region | null = $derived(
+		ranking.find((region) => region.id === focusId) ?? ranking.at(0) ?? null
+	);
 	const total = $derived(values.reduce((sum, value) => sum + value, 0));
 	const isAdditive = $derived(metricId !== 'growth');
 	// With nothing to share out, every region holds 0% rather than NaN.
-	const share = $derived(total > 0 ? Math.round((focus[metricId] / total) * PERCENT) : 0);
+	const share = $derived(focus && total > 0 ? Math.round((focus[metricId] / total) * PERCENT) : 0);
 
 	function regionId(feature: { properties: Record<string, unknown> } | null): string | null {
 		return feature ? String(feature.properties.id) : null;
@@ -130,25 +133,33 @@
 	</Map>
 
 	<Card.Root class="min-h-0 gap-4 overflow-y-auto">
-		<Card.Header>
-			<Card.Title data-testid="focus-name">{focus.name}</Card.Title>
-			<Card.Description>
-				{#if isAdditive}
-					{share}% of all {metric.label.toLowerCase()}
-				{:else}
-					Change against last quarter
-				{/if}
-			</Card.Description>
-		</Card.Header>
+		{#if focus}
+			<Card.Header>
+				<Card.Title data-testid="focus-name">{focus.name}</Card.Title>
+				<Card.Description>
+					{#if isAdditive}
+						{share}% of all {metric.label.toLowerCase()}
+					{:else}
+						Change against last quarter
+					{/if}
+				</Card.Description>
+			</Card.Header>
+		{:else}
+			<Card.Header>
+				<Card.Title>No regions to show</Card.Title>
+			</Card.Header>
+		{/if}
 		<Card.Content class="flex flex-col gap-4">
-			<dl class="grid grid-cols-3 gap-2 text-sm">
-				{#each METRICS as item (item.id)}
-					<div class="rounded-md border p-2">
-						<dt class="text-xs text-muted-foreground">{item.label}</dt>
-						<dd class="font-semibold tabular-nums">{item.format(focus[item.id])}</dd>
-					</div>
-				{/each}
-			</dl>
+			{#if focus}
+				<dl class="grid grid-cols-3 gap-2 text-sm">
+					{#each METRICS as item (item.id)}
+						<div class="rounded-md border p-2">
+							<dt class="text-xs text-muted-foreground">{item.label}</dt>
+							<dd class="font-semibold tabular-nums">{item.format(focus[item.id])}</dd>
+						</div>
+					{/each}
+				</dl>
+			{/if}
 			<ol class="flex flex-col gap-1" aria-label="Regions by {metric.label.toLowerCase()}">
 				{#each ranking as region, index (region.id)}
 					<li>
@@ -156,7 +167,7 @@
 							type="button"
 							class={[
 								'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent',
-								region.id === focus.id && 'bg-accent'
+								region.id === focus?.id && 'bg-accent'
 							]}
 							onclick={() => (selectedId = region.id)}
 							data-testid="rank"
