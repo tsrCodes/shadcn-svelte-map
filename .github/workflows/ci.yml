@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint, types, unit tests and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm check
+      - run: pnpm exec vitest --run --project server
+      - run: pnpm build
+
+  install:
+    name: Every registry item installs and builds in fresh SvelteKit ${{ matrix.kit }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        kit: [2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: sudo apt-get update && sudo apt-get install -y expect
+      - run: pnpm install --frozen-lockfile
+      - run: scripts/install-test.sh ${{ matrix.kit }} "$RUNNER_TEMP/kit${{ matrix.kit }}"
