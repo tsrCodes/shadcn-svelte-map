@@ -82,10 +82,13 @@ function declares(deps: string[] | undefined, name: string): boolean {
 	return (deps ?? []).some((dep) => splitDep(dep)[0] === name);
 }
 
-/** Module files an import path may land on: as written, `.js` for `.ts`, no extension, a folder index. */
+/**
+ * Module files an import path may land on, as Vite resolves them: as written, `.js` for `.ts`,
+ * no extension, a folder index. Vite never adds `.svelte`, so Svelte files need their extension.
+ */
 function candidatesOf(path: string): string[] {
 	const ts = path.endsWith('.js') ? [path.replace(/\.js$/, '.ts')] : [];
-	const bare = ['.ts', '.js', '.svelte'].map((ext) => path + ext);
+	const bare = ['.ts', '.js'].map((ext) => path + ext);
 	const index = ['index.ts', 'index.js'].map((name) => join(path, name));
 	return [path, ...ts, ...bare, ...index];
 }
