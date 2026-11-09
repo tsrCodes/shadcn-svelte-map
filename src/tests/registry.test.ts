@@ -82,9 +82,16 @@ function declares(deps: string[] | undefined, name: string): boolean {
 	return (deps ?? []).some((dep) => splitDep(dep)[0] === name);
 }
 
-/** TypeScript sources are imported as `.js`. */
+/** Module files an import path may land on: as written, `.js` for `.ts`, no extension, a folder index. */
+function candidatesOf(path: string): string[] {
+	const ts = path.endsWith('.js') ? [path.replace(/\.js$/, '.ts')] : [];
+	const bare = ['.ts', '.js', '.svelte'].map((ext) => path + ext);
+	const index = ['index.ts', 'index.js'].map((name) => join(path, name));
+	return [path, ...ts, ...bare, ...index];
+}
+
 function resolvesTo(path: string, files: Set<string>): boolean {
-	return files.has(path) || (path.endsWith('.js') && files.has(path.replace(/\.js$/, '.ts')));
+	return candidatesOf(path).some((candidate) => files.has(candidate));
 }
 
 function filesOf(item: RegistryItem): Set<string> {
