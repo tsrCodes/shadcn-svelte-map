@@ -45,7 +45,7 @@ fi
 python3 -m http.server "$PORT" --bind 127.0.0.1 --directory "$ROOT/static" > /dev/null 2>&1 &
 SERVER=$!
 ANSWER="$(mktemp)"
-trap 'kill "$SERVER" 2> /dev/null || true; rm -f "$ANSWER"' EXIT
+trap '{ kill "$SERVER" && wait "$SERVER"; } 2> /dev/null || true; rm -f "$ANSWER"' EXIT
 for _ in $(seq 50); do
 	curl -fsS "$REGISTRY/map.json" > /dev/null 2>&1 && break
 	sleep 0.1
@@ -63,7 +63,8 @@ printf 'packages:\n  - .\n\nallowBuilds:\n  esbuild: true\n' > pnpm-workspace.ya
 pnpm install
 
 # The CLI prompts even with flags (preset, CSS edits) and needs a TTY: `expect`
-# runs it in one and accepts the default answer of every prompt.
+# runs it in one and accepts the default answer of every prompt (the default
+# design system preset is Vega).
 cat > "$ANSWER" <<'EXP'
 set timeout 300
 spawn {*}$argv
@@ -78,7 +79,7 @@ EXP
 run_shadcn() { expect "$ANSWER" pnpm dlx "$SHADCN" "$@"; }
 
 step "shadcn-svelte init"
-run_shadcn init --preset vega --base-color neutral --css src/routes/layout.css \
+run_shadcn init --base-color neutral --css src/routes/layout.css \
 	--lib-alias "$LIB" --utils-alias "$LIB/utils" --components-alias "$LIB/components" \
 	--ui-alias "$LIB/components/ui" --hooks-alias "$LIB/hooks" --no-deps-install
 
