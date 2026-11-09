@@ -96,7 +96,8 @@ step "shadcn-svelte add $(echo "$ITEMS" | wc -l | tr -d ' ') items"
 URLS=()
 for i in $ITEMS; do URLS+=("$REGISTRY/$i.json"); done
 run_shadcn add "${URLS[@]}" --overwrite --no-deps-install -y
-pnpm install
+# `add` changed package.json; CI defaults to a frozen lockfile, so allow the update
+pnpm install --no-frozen-lockfile
 
 step "Writing a page with every block"
 {
