@@ -64,12 +64,14 @@ pnpm install
 
 # The CLI prompts even with flags (preset, CSS edits) and needs a TTY: `expect`
 # runs it in one and accepts the default answer of every prompt (the default
-# design system preset is Vega).
+# design system preset is Vega). A prompt shows as the active-step marker, `◆`
+# or `*` on terminals without unicode, or as a question line ending in `?`.
+# An extra Enter after a prompt is answered only accepts the next default.
 cat > "$ANSWER" <<'EXP'
 set timeout 300
 spawn {*}$argv
 expect {
-	-re {◆} { sleep 0.3; catch { send "\r" }; exp_continue }
+	-re {◆|(^|\n)\* |\?[ \t]*\r?\n} { sleep 0.3; catch { send "\r" }; exp_continue }
 	eof {}
 	timeout { puts "\nTimed out waiting for shadcn-svelte"; exit 1 }
 }
