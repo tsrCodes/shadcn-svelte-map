@@ -224,6 +224,24 @@
 			]
 		},
 		{
+			"name": "switch",
+			"type": "registry:ui",
+			"title": "Switch",
+			"description": "A toggle switch whose thumb slides the right way in right-to-left layouts.",
+			"dependencies": ["bits-ui@^2.20.0"],
+			"registryDependencies": [],
+			"files": [
+				{
+					"path": "src/lib/registry/ui/switch/index.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/switch/switch.svelte",
+					"type": "registry:ui"
+				}
+			]
+		},
+		{
 			"name": "geofence-editor",
 			"type": "registry:block",
 			"title": "Geofence editor",
@@ -340,7 +358,7 @@
 			"description": "Vans and trucks drive their rounds; pick one to see its loop or follow it.",
 			"dependencies": ["@lucide/svelte@^1.61.0"],
 			"devDependencies": ["@types/geojson@^7946.0.16"],
-			"registryDependencies": ["local:map", "badge", "button", "card", "label", "switch"],
+			"registryDependencies": ["local:map", "badge", "button", "card", "label", "local:switch"],
 			"files": [
 				{
 					"path": "src/lib/registry/blocks/fleet-tracker/fleet-tracker.svelte",
@@ -403,7 +421,14 @@
 			"description": "A day of ride pickups as a heatmap or clusters, filtered to the hour you pick.",
 			"dependencies": [],
 			"devDependencies": ["@types/geojson@^7946.0.16"],
-			"registryDependencies": ["local:map", "button", "button-group", "card", "label", "switch"],
+			"registryDependencies": [
+				"local:map",
+				"button",
+				"button-group",
+				"card",
+				"label",
+				"local:switch"
+			],
 			"files": [
 				{
 					"path": "src/lib/registry/blocks/density-heatmap/density-heatmap.svelte",

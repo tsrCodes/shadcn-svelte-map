@@ -220,11 +220,12 @@ describe('registry.json', () => {
 		expect(mismatched).toEqual([]);
 	});
 
-	test('ships every file of the map, place search and every block', () => {
+	test('ships every file of the map, place search, switch and every block', () => {
 		const listed = new Set(registry.items.flatMap((item) => [...filesOf(item)]));
 		const shipped = [
 			join(UI_DIR, 'map'),
 			join(UI_DIR, 'place-autocomplete'),
+			join(UI_DIR, 'switch'),
 			'src/lib/registry/blocks'
 		].flatMap(listFiles);
 		expect(shipped.filter((path) => !listed.has(path))).toEqual([]);
