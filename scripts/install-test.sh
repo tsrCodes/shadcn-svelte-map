@@ -53,11 +53,18 @@ done
 curl -fsS "$REGISTRY/map.json" > /dev/null || { echo "Registry not served at $REGISTRY" >&2; exit 1; }
 
 step "Creating Kit $KIT app in $OUT"
+# Only ever delete a folder this script made (it leaves a marker) or an empty one
+MARKER=".shadcn-svelte-map-install-test"
+if [ -e "$OUT" ] && [ ! -e "$OUT/$MARKER" ] && [ -n "$(ls -A "$OUT")" ]; then
+	echo "$OUT is not empty and was not made by this script; pick another out-dir" >&2
+	exit 1
+fi
 rm -rf "$OUT"
 mkdir -p "$(dirname "$OUT")"
 pnpm dlx "$SV" create "$OUT" --template minimal --types ts \
 	--add tailwindcss="plugins:none" --no-install
 cd "$OUT"
+touch "$MARKER"
 # pnpm 11 needs a workspace file that names the app and allows esbuild's build
 printf 'packages:\n  - .\n\nallowBuilds:\n  esbuild: true\n' > pnpm-workspace.yaml
 pnpm install
