@@ -16,4 +16,10 @@ export class Clipboard {
 		clearTimeout(this.#timer);
 		this.#timer = setTimeout(() => (this.copied = false), RESET_MS);
 	}
+
+	/** Stops the pending reset; call it when the owner unmounts. */
+	dispose(): void {
+		clearTimeout(this.#timer);
+		this.#timer = undefined;
+	}
 }

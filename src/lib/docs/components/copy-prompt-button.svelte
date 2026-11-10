@@ -8,6 +8,11 @@
 	let { prompt }: { prompt: string } = $props();
 
 	const clipboard = new Clipboard();
+
+	// Drop a pending icon reset when the button goes away.
+	$effect(() => () => {
+		clipboard.dispose();
+	});
 </script>
 
 <Button variant="secondary" size="sm" class="shadow-none" onclick={() => clipboard.copy(prompt)}>

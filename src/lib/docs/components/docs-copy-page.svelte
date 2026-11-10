@@ -15,6 +15,12 @@
 	const clipboard = new Clipboard();
 	const promptClipboard = new Clipboard();
 
+	// Drop a pending icon reset when the button goes away.
+	$effect(() => () => {
+		clipboard.dispose();
+		promptClipboard.dispose();
+	});
+
 	function promptUrl(baseUrl: string): string {
 		const prompt = `I’m looking at this shadcn-svelte map documentation: ${url}.
 Help me understand how to use it. Be ready to explain concepts, give examples, or help debug based on it.

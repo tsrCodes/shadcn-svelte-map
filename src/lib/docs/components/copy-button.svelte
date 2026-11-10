@@ -9,6 +9,11 @@
 	let { value, class: className }: { value: string; class?: string } = $props();
 
 	const clipboard = new Clipboard();
+
+	// Drop a pending icon reset when the button goes away.
+	$effect(() => () => {
+		clipboard.dispose();
+	});
 </script>
 
 <Tooltip.Root>

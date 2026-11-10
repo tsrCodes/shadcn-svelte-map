@@ -17,6 +17,11 @@
 	let { command }: { command: string } = $props();
 
 	const clipboard = new Clipboard();
+
+	// Drop a pending icon reset when the button goes away.
+	$effect(() => () => {
+		clipboard.dispose();
+	});
 </script>
 
 <figure data-rehype-pretty-code-figure>
