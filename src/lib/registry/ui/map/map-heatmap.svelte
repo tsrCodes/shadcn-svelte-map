@@ -61,8 +61,9 @@
 		] as ExpressionSpecification;
 	});
 
+	// `to-number` turns a missing property into 0, so check for it first.
 	const pointWeight = $derived<ExpressionSpecification | number>(
-		weight ? ['to-number', ['get', weight], 1] : 1
+		weight ? ['case', ['has', weight], ['to-number', ['get', weight], 1], 1] : 1
 	);
 
 	function sourceData(): GeoJSONData {

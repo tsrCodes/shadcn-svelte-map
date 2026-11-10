@@ -278,6 +278,18 @@ describe('MapClusterLayer', () => {
 });
 
 describe('MapHeatmap', () => {
+	test('heatmap points without the weight property count once', async () => {
+		const { map } = await mountData({ heat: CLUSTERED, heatWeight: 'riders' });
+		await layerReady(map, 'h-heat-heat');
+		// `to-number` turns a missing property into 0, so the property must be checked first.
+		expect(map.getPaintProperty('h-heat-heat', 'heatmap-weight')).toEqual([
+			'case',
+			['has', 'riders'],
+			['to-number', ['get', 'riders'], 1],
+			1
+		]);
+	});
+
 	test('draws a heatmap whose ramp starts see-through', async () => {
 		const { ctx, map } = await mountData({ heat: CLUSTERED });
 		await layerReady(map, 'h-heat-heat');

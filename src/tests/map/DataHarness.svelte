@@ -40,6 +40,7 @@
 		onpointclick?: (name: string, index: number) => void;
 		onclusterclick?: (cluster: MapClusterClick) => void;
 		heat?: FeatureCollection<Point>;
+		heatWeight?: string;
 		oncontext?: (context: MapContext) => void;
 	}
 
@@ -61,6 +62,7 @@
 		onpointclick,
 		onclusterclick,
 		heat,
+		heatWeight,
 		oncontext
 	}: Props = $props();
 </script>
@@ -120,7 +122,7 @@
 			/>
 		{/if}
 		{#if heat}
-			<MapHeatmap id="h-heat" data={heat} />
+			<MapHeatmap id="h-heat" data={heat} weight={heatWeight} />
 		{/if}
 	</Map>
 </div>
