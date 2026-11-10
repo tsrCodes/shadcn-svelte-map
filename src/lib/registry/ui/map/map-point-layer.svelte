@@ -35,8 +35,11 @@
 		popup?: Snippet<[PointFeature]>;
 		/** Accessible name of the popup. */
 		popupLabel?: string;
+		/** Pixel offset of the popup from the point. */
 		popupOffset?: PopupOffset;
+		/** Largest width of the popup, as CSS. */
 		popupMaxWidth?: string;
+		/** Classes for the popup content. */
 		popupClass?: string;
 	}
 

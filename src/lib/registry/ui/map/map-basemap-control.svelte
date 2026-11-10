@@ -27,6 +27,7 @@
 		/** Name of the menu button. */
 		label?: string;
 		class?: string;
+		/** Called with the id of the basemap the user picks. */
 		onvaluechange?: (value: string) => void;
 	}
 

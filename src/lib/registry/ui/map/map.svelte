@@ -49,6 +49,7 @@
 		workerUrl?: string;
 		/** The MapLibre map instance. */
 		ref?: MapLibreMap | null;
+		/** Called once with the map when its first style has loaded. */
 		onload?: (map: MapLibreMap) => void;
 		/** Style, tile and source errors. Without it, errors are logged to the console. */
 		onerror?: (error: Error) => void;

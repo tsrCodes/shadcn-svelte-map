@@ -9,6 +9,7 @@
 	interface Props {
 		/** Text in the search box. */
 		query?: string;
+		/** Hint shown in the empty search box. */
 		placeholder?: string;
 		/** Name of the search box for screen readers. */
 		label?: string;
@@ -26,6 +27,7 @@
 		timeout?: number;
 		/** Prefer results near this position, read when a search starts. */
 		near?: () => PlacePosition | undefined;
+		/** Called with the place the user picks. */
 		onselect?: (place: Place) => void;
 		/** Network and response errors. Logged when unset. */
 		onerror?: (error: Error) => void;

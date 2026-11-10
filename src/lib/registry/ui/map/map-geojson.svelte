@@ -27,6 +27,7 @@
 		promoteId?: string;
 		/** Polygon fill. Defaults to the theme's `--primary`. */
 		fillColor?: string;
+		/** Polygon fill opacity, 0 to 1. */
 		fillOpacity?: number;
 		/** Fill opacity of the hovered feature. */
 		hoverFillOpacity?: number;

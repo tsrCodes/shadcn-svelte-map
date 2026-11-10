@@ -28,6 +28,7 @@
 		showMarker?: boolean;
 		/** Passed to the Geolocation API. */
 		positionOptions?: PositionOptions;
+		/** Called with every position fix. */
 		onlocationfound?: (position: GeolocationPosition) => void;
 		/** Permission denied, no fix, timeout, or no Geolocation API. Logged when unset. */
 		onerror?: (error: LocateError) => void;

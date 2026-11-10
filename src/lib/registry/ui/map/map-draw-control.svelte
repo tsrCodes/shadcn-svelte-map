@@ -39,6 +39,7 @@
 		mode?: DrawTool;
 		/** Shapes offered as buttons, in this order. */
 		modes?: readonly DrawMode[];
+		/** Lay the tool buttons out in a column or a row. */
 		orientation?: 'vertical' | 'horizontal';
 		/** Every finished drawing, after each create, edit, delete, undo or redo. */
 		onchange?: (features: DrawFeature[]) => void;

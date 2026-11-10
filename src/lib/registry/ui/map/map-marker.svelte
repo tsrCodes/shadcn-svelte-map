@@ -22,13 +22,17 @@
 		anchor?: PositionAnchor;
 		/** Pixel offset from `lngLat`. */
 		offset?: PointLike;
+		/** Let users drag the marker. Bind `lngLat` to follow it. */
 		draggable?: boolean;
 		/** Rotation in degrees, clockwise. */
 		rotation?: number;
 		/** The MapLibre marker instance. */
 		ref?: Marker | null;
+		/** Called with the position when a drag starts. */
 		ondragstart?: DragHandler;
+		/** Called with the position on every move while dragging. */
 		ondrag?: DragHandler;
+		/** Called with the final position when a drag ends. */
 		ondragend?: DragHandler;
 		children?: Snippet;
 	}

@@ -10,6 +10,7 @@
 	interface Props extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'style'> {
 		/** Longest the bar may get, in pixels. */
 		maxWidth?: number;
+		/** Show kilometres and metres, or miles and feet. */
 		unit?: ScaleUnit;
 	}
 

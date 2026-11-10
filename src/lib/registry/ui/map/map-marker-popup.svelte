@@ -24,7 +24,9 @@
 		closeButton?: boolean;
 		/** The MapLibre popup instance. */
 		ref?: Popup | null;
+		/** Called when the popup opens. */
 		onopen?: () => void;
+		/** Called when the popup closes. */
 		onclose?: () => void;
 		children?: Snippet;
 	}
