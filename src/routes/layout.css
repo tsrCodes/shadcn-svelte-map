@@ -2,6 +2,7 @@
 @import 'tw-animate-css';
 @import 'shadcn-svelte/tailwind.css';
 @import '@fontsource-variable/inter';
+@import '../lib/docs/shiki-colors.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -38,6 +39,13 @@
 	--sidebar-accent-foreground: oklch(0.205 0 0);
 	--sidebar-border: oklch(0.922 0 0);
 	--sidebar-ring: oklch(0.708 0 0);
+	/* Docs site surfaces and code blocks */
+	--surface: oklch(0.98 0 0);
+	--surface-foreground: var(--foreground);
+	--code: var(--surface);
+	--code-foreground: var(--surface-foreground);
+	--code-highlight: oklch(0.96 0 0);
+	--code-number: oklch(0.56 0 0);
 }
 
 .dark {
@@ -72,9 +80,21 @@
 	--sidebar-accent-foreground: oklch(0.985 0 0);
 	--sidebar-border: oklch(1 0 0 / 10%);
 	--sidebar-ring: oklch(0.556 0 0);
+	--surface: oklch(0.2 0 0);
+	--surface-foreground: oklch(0.708 0 0);
+	--code: var(--surface);
+	--code-foreground: var(--surface-foreground);
+	--code-highlight: oklch(0.27 0 0);
+	--code-number: oklch(0.72 0 0);
 }
 
 @theme inline {
+	--color-surface: var(--surface);
+	--color-surface-foreground: var(--surface-foreground);
+	--color-code: var(--code);
+	--color-code-foreground: var(--code-foreground);
+	--color-code-highlight: var(--code-highlight);
+	--color-code-number: var(--code-number);
 	--font-sans: 'Inter Variable', sans-serif;
 	--color-sidebar-ring: var(--sidebar-ring);
 	--color-sidebar-border: var(--sidebar-border);
@@ -125,5 +145,95 @@
 	}
 	html {
 		@apply font-sans;
+	}
+}
+
+/* Docs site layout and markdown */
+@utility container-wrapper {
+	@apply mx-auto w-full px-2;
+}
+
+@utility no-scrollbar {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+
+	&::-webkit-scrollbar {
+		display: none;
+	}
+}
+
+@utility extend-touch-target {
+	@media (pointer: coarse) {
+		@apply relative touch-manipulation after:absolute after:-inset-2;
+	}
+}
+
+@layer components {
+	[data-rehype-pretty-code-figure] {
+		position: relative;
+		margin-top: calc(var(--spacing) * 6);
+		overflow: hidden;
+		border-radius: var(--radius-lg);
+		background-color: var(--color-code);
+		color: var(--color-code-foreground);
+		font-size: var(--text-sm);
+		outline: none;
+		@apply -mx-1;
+
+		pre.shiki {
+			@apply no-scrollbar min-w-0 overflow-x-auto px-4 py-3.5 [tab-size:4] outline-none;
+		}
+
+		code {
+			@apply font-mono text-[0.8rem];
+		}
+	}
+
+	[data-line] {
+		display: inline-block;
+		width: 100%;
+		min-height: calc(var(--spacing) * 1);
+		padding-block: calc(var(--spacing) * 0.5);
+	}
+
+	[data-slot='docs-content'] {
+		@apply relative *:[figure]:first:mt-0;
+
+		h2 {
+			@apply mt-8 scroll-m-28 text-xl font-medium tracking-tight first:mt-0 lg:mt-8 [&+p]:mt-4! *:[code]:text-xl;
+		}
+		h3 {
+			@apply mt-8 scroll-m-28 text-lg font-medium tracking-tight *:[code]:text-xl;
+		}
+		a {
+			@apply font-medium underline underline-offset-4;
+		}
+		p {
+			@apply leading-relaxed [&:not(:first-child)]:mt-6;
+		}
+		strong {
+			@apply font-medium;
+		}
+		ul {
+			@apply my-6 ml-6 list-disc;
+		}
+		:not(pre) > code {
+			@apply relative rounded-md bg-muted px-[0.3rem] py-[0.2rem] font-mono text-[0.8rem] break-words outline-none;
+		}
+		table {
+			@apply relative w-full overflow-hidden border-none text-sm;
+		}
+		> table {
+			@apply my-6 block overflow-y-auto rounded-lg border;
+		}
+		tr {
+			@apply m-0 border-b last:border-b-0;
+		}
+		th {
+			@apply px-4 py-2 text-left font-bold;
+		}
+		td {
+			@apply px-4 py-2 text-left;
+		}
 	}
 }

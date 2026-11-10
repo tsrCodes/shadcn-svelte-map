@@ -7,3 +7,6 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# Generated from the code themes by a test
+src/lib/docs/shiki-colors.css

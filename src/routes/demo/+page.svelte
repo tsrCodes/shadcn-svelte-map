@@ -1,8 +1,5 @@
 <script lang="ts">
-	import MoonIcon from '@lucide/svelte/icons/moon';
-	import SunIcon from '@lucide/svelte/icons/sun';
 	import CoffeeIcon from '@lucide/svelte/icons/coffee';
-	import { toggleMode } from 'mode-watcher';
 	import { Button } from '#lib/registry/ui/button/index.js';
 	import { ButtonGroup } from '#lib/registry/ui/button-group/index.js';
 	import {
@@ -84,18 +81,16 @@
 
 <svelte:head>
 	<title>Map demo</title>
+	<!-- A test fixture for the strict CSP check, not a docs page -->
+	<meta name="robots" content="noindex" />
 </svelte:head>
 
-<main class="mx-auto flex max-w-5xl flex-col gap-4 p-4 sm:p-8">
+<div class="mx-auto flex w-full max-w-5xl flex-col gap-4 p-4 sm:p-8">
 	<header class="flex items-center justify-between gap-4">
 		<div>
 			<h1 class="text-xl font-semibold">Map</h1>
 			<p class="text-sm text-muted-foreground" data-testid="readout">{readout}</p>
 		</div>
-		<Button variant="outline" size="icon" onclick={toggleMode} aria-label="Toggle theme">
-			<SunIcon class="dark:hidden" />
-			<MoonIcon class="hidden dark:block" />
-		</Button>
 	</header>
 
 	<div class="flex flex-wrap items-center gap-4 text-sm">
@@ -219,4 +214,4 @@
 	{#if lastError}
 		<p class="text-sm text-destructive" role="alert">{lastError}</p>
 	{/if}
-</main>
+</div>

@@ -1,4 +1,6 @@
 import { createHash } from 'node:crypto';
+import { mdsvex } from 'mdsvex';
+import rehypeSlug from 'rehype-slug';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
@@ -6,6 +8,7 @@ import adapter from '@sveltejs/adapter-vercel';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { DEFAULT_MAP_STYLE, styleOrigins } from './src/lib/registry/ui/map/styles.js';
 import { PHOTON_ORIGIN } from './src/lib/registry/ui/place-autocomplete/photon.js';
+import { highlightMarkdownCode } from './src/lib/docs/highlight.js';
 
 /**
  * SvelteKit's route announcer renders with this inline `style` attribute. The CSP allows
@@ -33,6 +36,15 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 			adapter: adapter({ runtime: 'nodejs24.x' }),
+			// Docs pages are markdown with Svelte components in them
+			preprocess: [
+				mdsvex({
+					extensions: ['.md'],
+					highlight: { highlighter: highlightMarkdownCode },
+					rehypePlugins: [rehypeSlug]
+				})
+			],
+			extensions: ['.svelte', '.md'],
 			// Strict policy: no inline script or style, no CDN. Kit adds nonces or hashes for its own
 			// scripts. The map worker is a same-origin module worker, so `worker-src 'self'` is enough.
 			csp: {
