@@ -18,7 +18,7 @@ async function fetchStars(fetchFn: typeof fetch): Promise<number | null> {
 		if (!response.ok) return null;
 		const json: unknown = await response.json();
 		const stars = (json as { stargazers_count?: unknown }).stargazers_count;
-		return typeof stars === 'number' && stars > 0 ? stars : null;
+		return typeof stars === 'number' && stars >= 0 ? stars : null;
 	} catch {
 		return null;
 	}

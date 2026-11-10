@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
 import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
 
@@ -17,8 +18,16 @@ let fonts: Promise<{ name: string; data: Buffer; weight: 400 | 600 }[]> | undefi
 
 function loadFonts() {
 	const require = createRequire(import.meta.url);
-	const file = (weight: number) =>
-		readFile(require.resolve(`@fontsource/inter/files/inter-latin-${weight}-normal.woff`));
+	// Satori reads WOFF, not WOFF2. Resolve the package once and fail with a clear message.
+	const fontDir = join(dirname(require.resolve('@fontsource/inter/package.json')), 'files');
+	const file = async (weight: number) => {
+		const path = join(fontDir, `inter-latin-${weight}-normal.woff`);
+		try {
+			return await readFile(path);
+		} catch (cause) {
+			throw new Error(`Open Graph images need ${path} from @fontsource/inter`, { cause });
+		}
+	};
 	fonts ??= Promise.all([file(400), file(600)]).then(([normal, semibold]) => [
 		{ name: 'Inter', data: normal, weight: 400 as const },
 		{ name: 'Inter', data: semibold, weight: 600 as const }

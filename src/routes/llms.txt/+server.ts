@@ -4,10 +4,16 @@ import type { RequestHandler } from './$types';
 
 export const prerender = true;
 
+/** One line of markdown text: no line breaks, and link brackets escaped. */
+function inline(text: string): string {
+	return text.replace(/\s*\n\s*/g, ' ').replace(/[[\]()\\]/g, (character) => `\\${character}`);
+}
+
 export const GET: RequestHandler = () => {
 	const sections = [...new Set(DOC_PAGES.map((page) => page.section))].map((section) => {
 		const links = DOC_PAGES.filter((page) => page.section === section).map(
-			(page) => `- [${page.title}](${siteConfig.url}${page.url}.md): ${page.description}`
+			(page) =>
+				`- [${inline(page.title)}](${siteConfig.url}${page.url}.md): ${inline(page.description)}`
 		);
 		return `## ${section}\n\n${links.join('\n')}`;
 	});

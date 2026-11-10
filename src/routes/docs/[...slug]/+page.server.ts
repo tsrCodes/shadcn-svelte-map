@@ -19,11 +19,15 @@ export const load: PageServerLoad = async ({ params }) => {
 	if (!page) error(404, 'Not found');
 
 	// Highlighted at build time, so Shiki never ships to the browser
-	const previews: Record<string, { code: string; html: string }> = {};
-	for (const name of getPreviewNames(page)) {
-		const code = getExampleSource(name);
-		if (code) previews[name] = { code, html: await highlightCode(code, 'svelte') };
-	}
+	const highlighted = await Promise.all(
+		getPreviewNames(page).map(async (name) => {
+			const code = getExampleSource(name);
+			return code ? ([name, { code, html: await highlightCode(code, 'svelte') }] as const) : null;
+		})
+	);
+	const previews: Record<string, { code: string; html: string }> = Object.fromEntries(
+		highlighted.filter((entry) => entry !== null)
+	);
 
 	const api: Record<string, ApiEntry> = {};
 	for (const name of getApiNames(page)) {

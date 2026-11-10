@@ -82,6 +82,10 @@
 						<!-- eslint-disable-next-line svelte/no-at-html-tags -- Shiki output, built from our own sources -->
 						{@html source.html}
 					</figure>
+				{:else}
+					<p class="p-4 text-sm text-muted-foreground">
+						The code for this example is not available.
+					</p>
 				{/if}
 			</div>
 		</div>

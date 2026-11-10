@@ -88,7 +88,7 @@ export function getNeighbours(page: DocPage): { previous?: DocLink; next?: DocLi
 
 /** Names of the examples a page shows, in order. */
 export function getPreviewNames(page: DocPage): string[] {
-	return [...page.body.matchAll(/<ComponentPreview name="([^"]+)"/g)].map((m) => m[1]);
+	return [...page.body.matchAll(/<ComponentPreview\s+name="([^"]+)"/g)].map((m) => m[1]);
 }
 
 /** An example's source as users get it: imports point at `$lib/components/ui`. */
@@ -99,18 +99,18 @@ export function getExampleSource(name: string): string | undefined {
 
 /** Component files whose API tables a page shows, in order. */
 export function getApiNames(page: DocPage): string[] {
-	return [...page.body.matchAll(/<ApiTable component="([^"]+)"/g)].map((m) => m[1]);
+	return [...page.body.matchAll(/<ApiTable\s+component="([^"]+)"/g)].map((m) => m[1]);
 }
 
 /** The page as plain markdown for "Copy Page", `/docs/<slug>.md` and `llms.txt`. */
 export function toMarkdown(page: DocPage): string {
 	const body = page.body
 		.replace(/<script>[\s\S]*?<\/script>\n*/, '')
-		.replace(/<ComponentPreview name="([^"]+)"[^>]*\/>/g, (_, name: string) => {
+		.replace(/<ComponentPreview\s+name="([^"]+)"[^>]*\/>/g, (_, name: string) => {
 			const source = getExampleSource(name);
 			return source ? `\`\`\`svelte\n${source.trimEnd()}\n\`\`\`` : '';
 		})
-		.replace(/<ApiTable component="([^"]+)" \/>/g, (_, name: string) => apiMarkdown(name))
-		.replace(/<CodeBlockCommand command="([^"]+)" \/>/g, '```bash\n$1\n```');
+		.replace(/<ApiTable\s+component="([^"]+)"\s*\/>/g, (_, name: string) => apiMarkdown(name))
+		.replace(/<CodeBlockCommand\s+command="([^"]+)"\s*\/>/g, '```bash\n$1\n```');
 	return `# ${page.title}\n\n${page.description}\n\n${body.trim()}\n`;
 }

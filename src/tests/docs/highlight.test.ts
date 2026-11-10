@@ -38,6 +38,14 @@ describe('code highlighting', () => {
 		await expect(codeThemeCss()).toMatchFileSnapshot('../../lib/docs/shiki-colors.css');
 	});
 
+	test('an unknown or missing language falls back to plain text', async () => {
+		for (const lang of ['cobol', null, undefined]) {
+			const html = await highlightCode('plain <words>', lang);
+			expect(html).toContain('plain &#x3C;words>');
+			expect(html).not.toMatch(/\sstyle=/);
+		}
+	});
+
 	test('unknown token styles fail loudly instead of being dropped', () => {
 		expect(styleToClasses('--shiki-light:#24292E;--shiki-dark-font-style:italic')).toEqual([
 			'sl-24292e',

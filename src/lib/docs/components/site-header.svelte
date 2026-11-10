@@ -17,6 +17,12 @@
 		blocks,
 		stars
 	}: { sections: DocsNavSection[]; blocks: DocLink[]; stars: number | null } = $props();
+
+	/** A nav item is active on its own page and the pages below it, not on look-alike paths. */
+	function isActive(href: string): boolean {
+		const path = page.url.pathname;
+		return path === href || path.startsWith(`${href}/`);
+	}
 </script>
 
 <header class="sticky top-0 z-1001 w-full bg-background">
@@ -33,9 +39,7 @@
 						href={resolve(item.href as Path)}
 						variant="ghost"
 						size="sm"
-						class={cn(
-							page.url.pathname.startsWith(item.href) ? 'text-primary' : 'text-muted-foreground'
-						)}
+						class={cn(isActive(item.href) ? 'text-primary' : 'text-muted-foreground')}
 					>
 						{item.label}
 					</Button>
