@@ -3,3 +3,7 @@ packages:
 
 allowBuilds:
   esbuild: true
+
+# satori pins fflate 0.7.3, which has a known advisory; 0.8 keeps the same API.
+overrides:
+  fflate: ^0.8.2
