@@ -73,6 +73,7 @@ export type Heading = { depth: number; title: string; id: string };
 
 /** The prerendered Open Graph image of a page: `/` → `/og/index.png`, `/docs/api` → `/og/docs-api.png`. */
 export function ogImagePath(pathname: string): string {
-	const name = pathname.replace(/^\/|\/$/g, '').replaceAll('/', '-') || 'index';
+	const path = pathname.split(/[?#]/)[0];
+	const name = path.replace(/^\/|\/$/g, '').replaceAll('/', '-') || 'index';
 	return `/og/${name}.png`;
 }

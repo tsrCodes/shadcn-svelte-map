@@ -12,6 +12,7 @@ import { getApiEntry, type ApiEntry } from '#lib/docs/api.server.js';
 import { highlightCode } from '#lib/docs/highlight.js';
 import type { EntryGenerator, PageServerLoad } from './$types';
 
+// The empty slug is `/docs` itself: this catch-all route serves the docs root too.
 export const entries: EntryGenerator = () => DOC_PAGES.map((page) => ({ slug: page.slug }));
 
 export const load: PageServerLoad = async ({ params }) => {

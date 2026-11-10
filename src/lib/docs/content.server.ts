@@ -39,13 +39,13 @@ function parseFrontmatter(raw: string): { data: Record<string, string>; body: st
 }
 
 /** h2/h3 headings with the ids rehype-slug gives them (both use github-slugger). */
-function getHeadings(body: string): Heading[] {
+export function getHeadings(body: string): Heading[] {
 	const slugger = new GithubSlugger();
 	const headings: Heading[] = [];
 	let inFence = false;
 	for (const line of body.split('\n')) {
 		if (line.startsWith('```')) inFence = !inFence;
-		const match = !inFence && /^(#{2,3}) (.+)$/.exec(line);
+		const match = !inFence && /^(#{2,3})\s+(.+?)\s*$/.exec(line);
 		if (!match) continue;
 		const title = match[2].replace(/`/g, '');
 		headings.push({ depth: match[1].length, title, id: slugger.slug(title) });
@@ -105,7 +105,7 @@ export function getApiNames(page: DocPage): string[] {
 /** The page as plain markdown for "Copy Page", `/docs/<slug>.md` and `llms.txt`. */
 export function toMarkdown(page: DocPage): string {
 	const body = page.body
-		.replace(/<script>[\s\S]*?<\/script>\n*/, '')
+		.replace(/<script\b[^>]*>[\s\S]*?<\/script>\n*/, '')
 		.replace(/<ComponentPreview\s+name="([^"]+)"[^>]*\/>/g, (_, name: string) => {
 			const source = getExampleSource(name);
 			return source ? `\`\`\`svelte\n${source.trimEnd()}\n\`\`\`` : '';
