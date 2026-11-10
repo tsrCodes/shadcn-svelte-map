@@ -86,6 +86,14 @@ describe('MapMarker', () => {
 		expect(button.querySelector('[data-slot="map-marker-label"]')?.textContent).toBe('Cafe');
 	});
 
+	test('blank aria-label falls back to a generic name and warns', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const { markerButton, refs } = await mountMarkers({ markerLabel: '   ' });
+		const button = await readyMarker(refs, markerButton);
+		expect(button.getAttribute('aria-label')).toBe('Map marker');
+		expect(warn).toHaveBeenCalledWith(expect.stringContaining('MapMarker'));
+	});
+
 	test('marker content replaces the default dot', async () => {
 		const { markerButton, refs } = await mountMarkers({ customContent: true });
 		const button = await readyMarker(refs, markerButton);

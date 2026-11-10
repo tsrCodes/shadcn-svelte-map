@@ -8,6 +8,8 @@
 
 	type DragHandler = (lngLat: LngLat) => void;
 
+	const FALLBACK_LABEL = 'Map marker';
+
 	interface Props extends Omit<
 		HTMLButtonAttributes,
 		'children' | 'style' | 'ondragstart' | 'ondrag' | 'ondragend'
@@ -50,6 +52,16 @@
 
 	const ctx = getMapContext();
 	const marker = setMarkerContext(new MarkerContext());
+
+	// A blank name leaves screen readers with nothing to announce.
+	const label = $derived(ariaLabel?.trim() || FALLBACK_LABEL);
+
+	$effect(() => {
+		if (ariaLabel?.trim()) return;
+		console.warn(
+			`MapMarker: aria-label is empty, using "${FALLBACK_LABEL}". Give each marker a name people can tell apart.`
+		);
+	});
 
 	const describedByIds = $derived(
 		[describedBy, marker.tooltipId].filter(Boolean).join(' ') || undefined
@@ -123,7 +135,7 @@
 				'group/map-marker relative grid cursor-pointer place-items-center rounded-full outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50',
 				className
 			)}
-			aria-label={ariaLabel}
+			aria-label={label}
 			aria-describedby={describedByIds}
 			aria-haspopup={marker.hasPopup ? 'dialog' : undefined}
 			aria-expanded={marker.hasPopup ? marker.popupOpen : undefined}

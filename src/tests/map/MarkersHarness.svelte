@@ -33,6 +33,7 @@
 	interface Props {
 		mapStyle?: MapStyle;
 		showMarker?: boolean;
+		markerLabel?: string;
 		markerLngLat?: LngLatLike;
 		customContent?: boolean;
 		popupOffset?: PopupOffset;
@@ -49,6 +50,7 @@
 	let {
 		mapStyle = LIGHT_STYLE,
 		showMarker = true,
+		markerLabel = 'Cafe',
 		markerLngLat = [0, 0],
 		customContent = false,
 		popupOffset = 18,
@@ -76,7 +78,7 @@
 	<Map class="size-full" {mapStyle} viewport={{ center: [0, 0], zoom: 2, bearing: 0, pitch: 0 }}>
 		<ContextProbe {oncontext} />
 		{#if showMarker}
-			<MapMarker lngLat={markerLngLat} aria-label="Cafe" bind:ref={marker}>
+			<MapMarker lngLat={markerLngLat} aria-label={markerLabel} bind:ref={marker}>
 				{#if customContent}
 					<MapMarkerContent><span data-testid="custom">★</span></MapMarkerContent>
 				{/if}
