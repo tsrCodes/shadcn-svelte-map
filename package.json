@@ -16,7 +16,8 @@
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
 		"test:e2e": "playwright install && playwright test",
-		"test:install": "scripts/install-test.sh"
+		"test:install": "scripts/install-test.sh",
+		"thumbnails": "node scripts/block-thumbnails.ts"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",

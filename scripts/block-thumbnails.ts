@@ -1,0 +1,61 @@
+/**
+ * Screenshots every block in light and dark mode for the gallery.
+ * Run against a running dev or preview server: `pnpm thumbnails [base-url]`.
+ */
+import { mkdir } from 'node:fs/promises';
+import { chromium, type Page } from 'playwright';
+import { BLOCKS } from '../src/routes/blocks/catalog.ts';
+
+const BASE_URL = process.argv[2] ?? 'http://localhost:5174';
+const OUT_DIR = 'static/thumbnails';
+// Desktop width so blocks show their side-by-side layout, scaled down to card size.
+const VIEWPORT = { width: 1360, height: 980 };
+const SCALE = 0.62;
+// Card aspect ratio in the gallery (16:10).
+const SIZE = { width: 16, height: 10 };
+const READY_TIMEOUT_MS = 60_000;
+// Tiles and HTML overlays keep settling for a moment after the map reports ready.
+const SETTLE_MS = 2500;
+const JPEG_QUALITY = 82;
+const WEBGL_ARGS = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'];
+
+async function shoot(page: Page, name: string, mode: 'light' | 'dark'): Promise<void> {
+	await page.emulateMedia({ colorScheme: mode, reducedMotion: 'reduce' });
+	await page.goto(`${BASE_URL}/blocks/${name}`, { waitUntil: 'load' });
+	const preview = page.locator('section[aria-label$="preview"]');
+	await preview
+		.locator('[data-slot="map"][data-status="ready"]')
+		.first()
+		.waitFor({ timeout: READY_TIMEOUT_MS });
+	await page.waitForTimeout(SETTLE_MS);
+	const box = await preview.boundingBox();
+	if (!box) throw new Error(`${name}: preview not visible`);
+	const height = Math.min(box.height, (box.width * SIZE.height) / SIZE.width);
+	await page.screenshot({
+		path: `${OUT_DIR}/${name}-${mode}.jpg`,
+		type: 'jpeg',
+		quality: JPEG_QUALITY,
+		clip: { x: box.x, y: box.y, width: box.width, height }
+	});
+}
+
+async function main(): Promise<void> {
+	await mkdir(OUT_DIR, { recursive: true });
+	const browser = await chromium.launch({ args: WEBGL_ARGS });
+	try {
+		const page = await browser.newPage({ viewport: VIEWPORT, deviceScaleFactor: SCALE });
+		for (const block of BLOCKS) {
+			for (const mode of ['light', 'dark'] as const) {
+				await shoot(page, block.name, mode);
+				process.stdout.write(`${block.name}-${mode}.jpg\n`);
+			}
+		}
+	} finally {
+		await browser.close();
+	}
+}
+
+main().catch((error: unknown) => {
+	process.stderr.write(`${error instanceof Error ? error.stack : String(error)}\n`);
+	process.exit(1);
+});
