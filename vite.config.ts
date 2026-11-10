@@ -72,6 +72,18 @@ export default defineConfig({
 	],
 	test: {
 		expect: { requireAssertions: true },
+		// Coverage counts what ships to users: the registry components and blocks.
+		coverage: {
+			provider: 'v8',
+			include: ['src/lib/registry/**/*.{ts,svelte}'],
+			// shadcn-svelte's own items come from upstream; only our items are measured.
+			exclude: [
+				'src/lib/registry/ui/!(map|place-autocomplete|switch)/**',
+				'src/lib/registry/**/index.ts'
+			],
+			reporter: ['text-summary', 'html'],
+			thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 }
+		},
 		projects: [
 			{
 				extends: './vite.config.ts',

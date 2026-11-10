@@ -138,6 +138,26 @@ describe('LayerRegistry', () => {
 		expect(registry.getFeatureState(target)).toEqual({});
 	});
 
+	test('removing state for a whole source forgets every feature in it', () => {
+		const registry = new LayerRegistry();
+		registry.setFeatureState({ source: POINTS_SOURCE, id: 1 }, { hover: true });
+		registry.setFeatureState({ source: POINTS_SOURCE, id: 2 }, { selected: true });
+		registry.removeFeatureState({ source: POINTS_SOURCE });
+		expect(registry.getFeatureState({ source: POINTS_SOURCE, id: 1 })).toEqual({});
+		expect(registry.getFeatureState({ source: POINTS_SOURCE, id: 2 })).toEqual({});
+	});
+
+	test('removing unknown entries and state is a no-op', () => {
+		const registry = new LayerRegistry();
+		registry.setFeatureState({ source: POINTS_SOURCE, id: 1 }, { hover: true });
+		expect(() => {
+			registry.remove('no-such-source');
+			registry.removeFeatureState({ source: 'no-such-source', id: 1 });
+			registry.removeFeatureState({ source: POINTS_SOURCE, id: 99 }, 'hover');
+		}).not.toThrow();
+		expect(registry.getFeatureState({ source: POINTS_SOURCE, id: 1 })).toEqual({ hover: true });
+	});
+
 	test('a feature whose last key was removed is not replayed', () => {
 		const fake = createFakeMap();
 		const registry = new LayerRegistry();
