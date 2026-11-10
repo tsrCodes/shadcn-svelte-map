@@ -29,13 +29,15 @@
 		isMac = navigator.platform.toUpperCase().includes('MAC');
 	});
 
+	/** True when the key went to a form field or anywhere inside an editable region. */
 	function isTyping(target: EventTarget | null): boolean {
+		if (!(target instanceof Element)) return false;
+		if (target instanceof HTMLElement && target.isContentEditable) return true;
+		// Rich editors send key events from plain children of an editable element.
 		return (
-			target instanceof HTMLElement &&
-			(target.isContentEditable ||
-				target instanceof HTMLInputElement ||
-				target instanceof HTMLTextAreaElement ||
-				target instanceof HTMLSelectElement)
+			target.closest(
+				'input, textarea, select, [contenteditable]:not([contenteditable="false"])'
+			) !== null
 		);
 	}
 
