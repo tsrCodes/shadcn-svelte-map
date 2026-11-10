@@ -40,7 +40,7 @@ sveltekit({
 });
 ```
 
-`styleOrigins` returns the hosts a style URL needs. Pass it every basemap you offer. If a custom style loads sprites, fonts or tiles from other hosts, add those too.
+SvelteKit adds the quotes around keywords such as `self` and `none`, so write them without quotes here. `styleOrigins` returns the hosts a style URL needs. Pass it every basemap you offer. If a custom style loads sprites, fonts or tiles from other hosts, add those too.
 
 ## Theme switching without inline script
 
