@@ -19,9 +19,10 @@ describe('API reference extraction', () => {
 		expect(circle?.props.map((prop) => prop.name)).toEqual(
 			expect.arrayContaining(['radius', 'fillOpacity', 'color', 'onclick'])
 		);
-		const search = getApiEntry('map-search-control');
-		expect(search?.props.length).toBeGreaterThan(2);
-		expect(search?.props.map((prop) => prop.name)).not.toContain('near');
+		const search = getApiEntry('map-search-control')?.props.map((prop) => prop.name) ?? [];
+		// Forwarded through a named import from the place search barrel.
+		expect(search).toEqual(expect.arrayContaining(['zoom', 'placeholder', 'onselect']));
+		expect(search).not.toContain('near');
 	});
 
 	test('every public component has a description for every prop', () => {

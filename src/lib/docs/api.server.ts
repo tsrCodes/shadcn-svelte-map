@@ -65,17 +65,69 @@ function parse(code: string): ts.SourceFile {
 	return ts.createSourceFile('component.ts', code, ts.ScriptTarget.Latest, true);
 }
 
+/** Every interface in a file, nested ones included. */
 function interfaces(file: ts.SourceFile): Map<string, ts.InterfaceDeclaration> {
 	const found = new Map<string, ts.InterfaceDeclaration>();
-	file.forEachChild((node) => {
+	const visit = (node: ts.Node) => {
 		if (ts.isInterfaceDeclaration(node)) found.set(node.name.text, node);
-	});
+		node.forEachChild(visit);
+	};
+	visit(file);
 	return found;
 }
 
-const ALL_INTERFACES = new Map<string, ts.InterfaceDeclaration>(
-	Object.values(SOURCES).flatMap((source) => [...interfaces(parse(scripts(source)))])
-);
+const PARSED = new Map<string, ts.SourceFile>();
+
+function parsedFile(path: string): ts.SourceFile | undefined {
+	const source = SOURCES[path];
+	if (source === undefined) return undefined;
+	let file = PARSED.get(path);
+	if (!file) {
+		file = parse(scripts(source));
+		PARSED.set(path, file);
+	}
+	return file;
+}
+
+/** The source path a relative import points at, e.g. `./map-shape.svelte`. */
+function resolveImport(fromPath: string, specifier: string): string | undefined {
+	if (!specifier.startsWith('.')) return undefined;
+	const base = fromPath.slice(0, fromPath.lastIndexOf('/'));
+	const parts = `${base}/${specifier}`.split('/');
+	const resolved: string[] = [];
+	for (const part of parts) {
+		if (part === '..') resolved.pop();
+		else if (part !== '.') resolved.push(part);
+	}
+	const path = resolved.join('/');
+	return SOURCES[path] === undefined ? undefined : path;
+}
+
+/** The source path of the file a node was parsed from. */
+function declaringPath(node: ts.Node): string | undefined {
+	const file = node.getSourceFile();
+	for (const [path, parsed] of PARSED) if (parsed === file) return path;
+	return undefined;
+}
+
+/** An interface by name as seen from a file: declared there, or imported into it. */
+function findInterface(name: string, fromPath: string): ts.InterfaceDeclaration | undefined {
+	const file = parsedFile(fromPath);
+	if (!file) return undefined;
+	const local = interfaces(file).get(name);
+	if (local) return local;
+	for (const statement of file.statements) {
+		if (!ts.isImportDeclaration(statement)) continue;
+		const bindings = statement.importClause?.namedBindings;
+		if (!bindings || !ts.isNamedImports(bindings)) continue;
+		const imported = bindings.elements.find((element) => element.name.text === name);
+		if (!imported) continue;
+		const target = resolveImport(fromPath, (statement.moduleSpecifier as ts.StringLiteral).text);
+		const original = imported.propertyName?.text ?? name;
+		return target ? findInterface(original, target) : undefined;
+	}
+	return undefined;
+}
 
 function jsDoc(node: ts.Node): string {
 	return ts
@@ -108,7 +160,11 @@ function omittedKeys(type: ts.TypeNode | undefined): string[] {
 	return [];
 }
 
-function collectHeritage(type: ts.TypeNode | ts.ExpressionWithTypeArguments, out: Collected): void {
+function collectHeritage(
+	type: ts.TypeNode | ts.ExpressionWithTypeArguments,
+	out: Collected,
+	fromPath: string
+): void {
 	const name = ts.isExpressionWithTypeArguments(type)
 		? type.expression.getText()
 		: ts.isTypeReferenceNode(type)
@@ -120,7 +176,7 @@ function collectHeritage(type: ts.TypeNode | ts.ExpressionWithTypeArguments, out
 			: [];
 	if (name === 'Omit' && args[0]) {
 		for (const key of omittedKeys(args[1])) out.omitted.add(key);
-		collectHeritage(args[0], out);
+		collectHeritage(args[0], out, fromPath);
 		return;
 	}
 	if (/Attributes$/.test(name)) {
@@ -133,13 +189,14 @@ function collectHeritage(type: ts.TypeNode | ts.ExpressionWithTypeArguments, out
 		out.forwarded.push(args[0].getText().replace(/^typeof\s+/, ''));
 		return;
 	}
-	const parent = ALL_INTERFACES.get(name);
-	if (parent) collect(parent, out);
+	const parent = findInterface(name, fromPath);
+	if (parent) collect(parent, out, fromPath);
 }
 
-function collect(node: ts.InterfaceDeclaration, out: Collected): void {
+function collect(node: ts.InterfaceDeclaration, out: Collected, fromPath: string): void {
+	const path = declaringPath(node) ?? fromPath;
 	for (const clause of node.heritageClauses ?? []) {
-		for (const type of clause.types) collectHeritage(type, out);
+		for (const type of clause.types) collectHeritage(type, out, path);
 	}
 	for (const member of node.members) {
 		if (ts.isPropertySignature(member)) out.members.push(member);
@@ -158,7 +215,9 @@ function defaultsOf(file: ts.SourceFile): Defaults {
 		if (
 			ts.isVariableDeclaration(node) &&
 			ts.isObjectBindingPattern(node.name) &&
-			node.initializer?.getText() === '$props()'
+			node.initializer !== undefined &&
+			ts.isCallExpression(node.initializer) &&
+			node.initializer.expression.getText() === '$props'
 		) {
 			for (const element of node.name.elements) {
 				if (element.dotDotDotToken) continue;
@@ -181,13 +240,19 @@ function fileOf(component: string): string | undefined {
 	return Object.keys(SOURCES).find((path) => path.endsWith(`/${component}.svelte`));
 }
 
-function importedFile(file: ts.SourceFile, name: string): string | undefined {
+const FILES_BY_EXPORT = new Map([...EXPORT_NAMES].map(([file, name]) => [name, file]));
+
+/** The component file a local name refers to: a default `.svelte` import or a barrel export. */
+function importedComponent(file: ts.SourceFile, name: string): string | undefined {
 	for (const statement of file.statements) {
 		if (!ts.isImportDeclaration(statement)) continue;
 		const clause = statement.importClause;
-		if (clause?.name?.text !== name) continue;
 		const from = (statement.moduleSpecifier as ts.StringLiteral).text;
-		return /([^/]+)\.svelte$/.exec(from)?.[1];
+		if (clause?.name?.text === name) return /([^/]+)\.svelte$/.exec(from)?.[1];
+		const bindings = clause?.namedBindings;
+		if (!bindings || !ts.isNamedImports(bindings)) continue;
+		const imported = bindings.elements.find((element) => element.name.text === name);
+		if (imported) return FILES_BY_EXPORT.get(imported.propertyName?.text ?? name);
 	}
 	return undefined;
 }
@@ -196,11 +261,11 @@ function readEntry(component: string, seen: Set<string>): ApiEntry | undefined {
 	const path = fileOf(component);
 	if (!path || seen.has(component)) return undefined;
 	seen.add(component);
-	const file = parse(scripts(SOURCES[path]));
-	const props = interfaces(file).get('Props');
+	const file = parsedFile(path);
+	const props = file && interfaces(file).get('Props');
 	if (!props) return undefined;
 	const out: Collected = { members: [], forwarded: [], omitted: new Set() };
-	collect(props, out);
+	collect(props, out, path);
 	const { values, bindable } = defaultsOf(file);
 
 	const own = new Map<string, ApiProp>();
@@ -218,7 +283,7 @@ function readEntry(component: string, seen: Set<string>): ApiEntry | undefined {
 		});
 	}
 	for (const forwarded of out.forwarded) {
-		const target = importedFile(file, forwarded);
+		const target = importedComponent(file, forwarded);
 		const inner = target ? readEntry(target, seen) : undefined;
 		for (const prop of inner?.props ?? []) {
 			if (out.omitted.has(prop.name) || own.has(prop.name)) continue;
