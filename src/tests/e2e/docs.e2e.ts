@@ -53,7 +53,8 @@ test('search opens with the keyboard and goes to a page', async ({ page }) => {
 	await input.fill('heatmap');
 	await expect(page.getByRole('option').first()).toHaveText('Heatmap');
 	await page.keyboard.press('Enter');
-	await expect(page).toHaveURL(/\/docs\/components\/heatmap$/);
+	// A cold dev server compiles the target page on first visit, which can take seconds.
+	await expect(page).toHaveURL(/\/docs\/components\/heatmap$/, { timeout: 20_000 });
 	await expect(page.locator('h1')).toHaveText('Heatmap');
 });
 
