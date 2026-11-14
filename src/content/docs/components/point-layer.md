@@ -49,6 +49,12 @@ Replace or change `data` and the points update in place. The layer is not rebuil
 
 Points use the theme's `--primary` colour with a `--background` outline, and follow the theme when it changes. Set `color`, `radius`, `strokeColor` and `strokeWidth` to change them. The layer survives a basemap or theme swap.
 
+## Keyboard
+
+Points drawn on the canvas are not elements, so the layer also lists them for keyboard and screen reader users. The list is one tab stop on the map: Tab to it, move with the arrow keys, Page Up and Page Down, Home and End, and press Enter to open a point's popup. Escape closes the popup and puts focus back on the list. The list stays hidden until it has focus, then shows a few points around the current one in the bottom-left corner. The current point gets a thicker outline and is panned into view. Only those few rows are in the page, so the list stays light with thousands of points, and screen readers still hear the position, such as 12 of 4,000.
+
+Each point is named by its `name` property. Pass `featureLabel` to name it another way, and `listLabel` to name the list, such as "Stores". If you make the points reachable another way, such as a list beside the map, turn it off with `keyboard={false}`.
+
 ## Layer ids
 
 The source id comes from `id`, or a unique id from `$props.id()` if you leave it out. The circle layer is `<id>-circles`. Pass `beforeId` to draw the points below another layer; changing it moves them.

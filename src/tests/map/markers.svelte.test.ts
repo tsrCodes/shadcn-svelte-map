@@ -266,6 +266,100 @@ describe('MapPointLayer', () => {
 			.toBe(1);
 	});
 
+	function pointList(root: ParentNode) {
+		const list = root.querySelector<HTMLElement>('[role="listbox"][data-slot="map-feature-list"]');
+		if (!list) throw new Error('feature list not found');
+		return {
+			list,
+			options: () => [...list.querySelectorAll<HTMLElement>('[role="option"]')],
+			active: () => {
+				const id = list.getAttribute('aria-activedescendant');
+				return id ? document.getElementById(id) : null;
+			},
+			activeLabel: () => {
+				const id = list.getAttribute('aria-activedescendant');
+				return id ? document.getElementById(id)?.textContent?.trim() : undefined;
+			}
+		};
+	}
+
+	test('keyboard: one tab stop, arrows move, Enter opens the popup, Esc returns focus', async () => {
+		const onpointclick = vi.fn();
+		const { screen, map } = await mountMarkers({ showMarker: false, points: POINTS, onpointclick });
+		await expect.poll(() => Boolean(map.getLayer(POINT_LAYER))).toBe(true);
+		const { list, options, active, activeLabel } = pointList(screen.container);
+		expect(list.getAttribute('aria-label')).toBe('Cafes');
+		expect(list.tabIndex).toBe(0);
+		expect(options().map((option) => option.textContent?.trim())).toEqual(['North', 'South']);
+
+		list.focus();
+		await expect.poll(activeLabel).toBe('North');
+		await userEvent.keyboard('{ArrowDown}');
+		await expect.poll(activeLabel).toBe('South');
+		expect(active()?.getAttribute('aria-posinset')).toBe('2');
+		await expect
+			.poll(() => map.getFeatureState({ source: POINT_SOURCE, id: 1 }).focused)
+			.toBe(true);
+
+		await userEvent.keyboard('{Enter}');
+		await expect.poll(() => onpointclick.mock.calls[0]).toEqual(['South', 1]);
+		await expect.poll(pointPopupText).toBe('South');
+
+		await userEvent.keyboard('{Escape}');
+		await expect.poll(pointPopupText).toBeUndefined();
+		expect(document.activeElement).toBe(list);
+	});
+
+	test('a large layer renders only a few options but announces the full count', async () => {
+		const many: typeof POINTS = {
+			type: 'FeatureCollection',
+			features: Array.from({ length: 1000 }, (_, index) => ({
+				type: 'Feature' as const,
+				properties: { name: `Cafe ${index + 1}` },
+				geometry: {
+					type: 'Point' as const,
+					coordinates: [(index % 100) - 50, Math.floor(index / 100)]
+				}
+			}))
+		};
+		const { screen } = await mountMarkers({ showMarker: false, points: many });
+		const { list, options, activeLabel } = pointList(screen.container);
+		expect(options().length).toBeLessThanOrEqual(7);
+		expect(options()[0].getAttribute('aria-setsize')).toBe('1000');
+
+		list.focus();
+		await userEvent.keyboard('{End}');
+		await expect.poll(activeLabel).toBe('Cafe 1000');
+		expect(options().length).toBeLessThanOrEqual(7);
+	});
+
+	test('focusing a point off screen brings it into view', async () => {
+		const far: typeof POINTS = {
+			type: 'FeatureCollection',
+			features: [
+				{
+					type: 'Feature',
+					properties: { name: 'Far' },
+					geometry: { type: 'Point', coordinates: [150, 60] }
+				}
+			]
+		};
+		const { screen, map } = await mountMarkers({ showMarker: false, points: far });
+		expect(map.getBounds().contains([150, 60])).toBe(false);
+		pointList(screen.container).list.focus();
+		await expect.poll(() => map.getBounds().contains([150, 60])).toBe(true);
+	});
+
+	test('keyboard={false} leaves the list out', async () => {
+		const { screen, map } = await mountMarkers({
+			showMarker: false,
+			points: POINTS,
+			pointsKeyboard: false
+		});
+		await expect.poll(() => Boolean(map.getLayer(POINT_LAYER))).toBe(true);
+		expect(screen.container.querySelector('[data-slot="map-feature-list"]')).toBeNull();
+	});
+
 	test('a new beforeId moves the live layer', async () => {
 		const { screen, map } = await mountMarkers({
 			showMarker: false,

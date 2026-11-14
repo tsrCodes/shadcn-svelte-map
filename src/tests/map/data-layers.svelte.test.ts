@@ -271,6 +271,25 @@ describe('MapClusterLayer', () => {
 		expect(map.getSource('h-clusters')).toBe(source);
 	});
 
+	test('keyboard: Enter on a listed point zooms past clustering and reports it', async () => {
+		const onpointclick = vi.fn();
+		const { map, screen } = await mountData({ clusters: CLUSTERED, onpointclick });
+		await layerReady(map, 'h-clusters-clusters');
+		const list = screen.container.querySelector<HTMLElement>('[data-slot="map-feature-list"]');
+		if (!list) throw new Error('feature list not found');
+		const labels = [...list.querySelectorAll('[role="option"]')].map((option) =>
+			option.textContent?.trim()
+		);
+		expect(labels).toEqual(['A', 'B', 'C', 'Lone']);
+
+		list.focus();
+		await userEvent.keyboard('{ArrowDown}{Enter}');
+		expect(onpointclick).toHaveBeenCalledWith('B', 1);
+		await expect.poll(() => map.getZoom()).toBeGreaterThan(14);
+		await expect.poll(() => Math.abs(map.getCenter().lng - 0.5)).toBeLessThan(0.001);
+		expect(Math.abs(map.getCenter().lat - 0.5)).toBeLessThan(0.001);
+	});
+
 	test('a single point click returns the original feature; a cluster click zooms in', async () => {
 		const onpointclick = vi.fn();
 		const onclusterclick = vi.fn();

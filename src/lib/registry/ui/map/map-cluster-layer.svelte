@@ -34,6 +34,7 @@
 		syncPaint
 	} from './layer-sync.svelte.js';
 	import { FALLBACK_COLOR } from './theme.svelte.js';
+	import MapFeatureList, { pointItems } from './map-feature-list.svelte';
 
 	type PointFeature = Feature<Point, P>;
 	type MapLibreModule = typeof import('maplibre-gl');
@@ -68,6 +69,15 @@
 		onclick?: (feature: PointFeature, index: number) => void;
 		/** Called when a cluster is clicked. */
 		onclusterclick?: (cluster: MapClusterClick) => void;
+		/**
+		 * Offer the single points to keyboard and screen reader users as a list, one tab
+		 * stop on the map. Choosing one zooms in until it stands alone and calls `onclick`.
+		 */
+		keyboard?: boolean;
+		/** Accessible name of the keyboard list, such as "Stores". */
+		listLabel?: string;
+		/** Name of a point in the keyboard list. Defaults to its `name` property. */
+		featureLabel?: (feature: PointFeature, index: number) => string;
 	}
 
 	let {
@@ -83,7 +93,10 @@
 		zoomOnClick = true,
 		beforeId,
 		onclick,
-		onclusterclick
+		onclusterclick,
+		keyboard = true,
+		listLabel = 'Points',
+		featureLabel
 	}: Props = $props();
 
 	/** Each point carries its index in `data`, so a click maps back to the original feature. */
@@ -221,6 +234,18 @@
 		ctx.easeTo({ center: [lng, lat], zoom });
 	}
 
+	const listItems = $derived(keyboard ? pointItems(data.features, featureLabel) : []);
+
+	/** Keyboard choice of a point: zoom in past clustering so it shows on its own. */
+	function selectFromList(index: number) {
+		const feature = data.features[index];
+		const map = ctx.map;
+		if (!feature || !map) return;
+		const [lng, lat] = feature.geometry.coordinates;
+		ctx.easeTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), clusterMaxZoom + 1) });
+		onclick?.(feature, index);
+	}
+
 	function handleClick(map: MapLibreMap, event: MapMouseEvent) {
 		const hit = featuresAt(map, event.point, [clustersId, pointsId])[0];
 		if (!hit) return;
@@ -315,3 +340,7 @@
 		if (map && htmlLabels && text) map.triggerRepaint();
 	});
 </script>
+
+{#if keyboard && ctx.map}
+	<MapFeatureList items={listItems} label={listLabel} onselect={selectFromList} />
+{/if}

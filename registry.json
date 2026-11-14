@@ -64,6 +64,10 @@
 					"type": "registry:ui"
 				},
 				{
+					"path": "src/lib/registry/ui/map/map-feature-list.svelte",
+					"type": "registry:ui"
+				},
+				{
 					"path": "src/lib/registry/ui/map/map-fullscreen-control.svelte",
 					"type": "registry:ui"
 				},

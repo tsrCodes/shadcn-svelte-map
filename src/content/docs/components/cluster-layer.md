@@ -42,6 +42,10 @@ Clicking a cluster zooms in until it splits. Set `zoomOnClick={false}` to keep t
 
 Clicking a single point calls `onclick` with the original feature from `data` and its index, so any properties you stored come back as you passed them. The cursor turns into a pointer over clusters and points.
 
+## Keyboard
+
+The single points are offered to keyboard and screen reader users as a list, one tab stop on the map. Choosing a point with Enter zooms in until it stands on its own and calls `onclick`, the same as a click. Name points with `featureLabel` and the list with `listLabel`, or turn it off with `keyboard={false}`.
+
 ## Labels
 
 On styles that ship glyphs, which includes every built-in basemap, the counts are drawn by MapLibre in the font stack from `font`. It defaults to `DEFAULT_CLUSTER_FONT`, which is `['Noto Sans Regular']`, a font OpenFreeMap serves. If you use another style, pass a font stack that style's glyph server has.

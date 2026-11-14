@@ -44,6 +44,7 @@
 		points?: FeatureCollection<Point, { name: string }>;
 		pointColor?: string;
 		pointsBeforeId?: string;
+		pointsKeyboard?: boolean;
 		onpointclick?: (name: string, index: number) => void;
 		onrefs?: (refs: MarkerRefs) => void;
 		oncontext?: (context: MapContext) => void;
@@ -63,6 +64,7 @@
 		points,
 		pointColor,
 		pointsBeforeId,
+		pointsKeyboard = true,
 		onpointclick,
 		onrefs,
 		oncontext
@@ -110,6 +112,8 @@
 				data={points}
 				color={pointColor}
 				beforeId={pointsBeforeId}
+				keyboard={pointsKeyboard}
+				listLabel="Cafes"
 				popupLabel="Point"
 				onclick={(feature, index) => onpointclick?.(feature.properties.name, index)}
 			>
