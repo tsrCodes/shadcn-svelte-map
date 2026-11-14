@@ -53,7 +53,7 @@
 		<div data-tab={tab} class="relative rounded-lg border data-[tab=code]:border-code md:-mx-1">
 			<div
 				role="region"
-				aria-label={description}
+				aria-label={description ?? `${name} example`}
 				data-slot="preview"
 				data-active={tab === 'preview'}
 				class="invisible data-[active=true]:visible"

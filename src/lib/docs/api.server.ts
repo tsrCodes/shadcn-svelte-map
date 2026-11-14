@@ -43,10 +43,10 @@ const BARRELS = import.meta.glob<string>(
 	{ query: '?raw', import: 'default', eager: true }
 );
 
-/** Exported names by file, from `export { default as Name } from './file.svelte'`. */
+/** Exported names by file, from `export { default as Name } from './file.svelte'` (either quote). */
 const EXPORT_NAMES = new Map(
 	Object.values(BARRELS).flatMap((barrel) =>
-		[...barrel.matchAll(/default as (\w+)[^}]*\}\s*from '\.\/([\w-]+)\.svelte'/g)].map(
+		[...barrel.matchAll(/default as (\w+)[^}]*\}\s*from ['"]\.\/([\w-]+)\.svelte['"]/g)].map(
 			(match) => [match[2], match[1]] as const
 		)
 	)

@@ -7,6 +7,7 @@
 	import { Separator } from '#lib/registry/ui/separator/index.js';
 	import SparklesIcon from '@lucide/svelte/icons/sparkles';
 	import { aiPrompt } from '../ai-prompt.js';
+	import { siteConfig } from '../config.js';
 	import { Clipboard } from '../clipboard.svelte.js';
 
 	/** `page` is the markdown to copy; `url` the absolute page URL; `title` the page title. */
@@ -22,7 +23,7 @@
 	});
 
 	function promptUrl(baseUrl: string): string {
-		const prompt = `I’m looking at this shadcn-svelte map documentation: ${url}.
+		const prompt = `I’m looking at this ${siteConfig.name} documentation: ${url}.
 Help me understand how to use it. Be ready to explain concepts, give examples, or help debug based on it.
   `;
 		return `${baseUrl}?q=${encodeURIComponent(prompt)}`;
