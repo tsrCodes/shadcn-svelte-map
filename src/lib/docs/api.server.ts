@@ -207,7 +207,9 @@ function collectHeritage(
 		return;
 	}
 	if (name === 'ComponentProps' && args[0]) {
-		out.forwarded.push(args[0].getText().replace(/^typeof\s+/, ''));
+		// `typeof Map`, also written `typeof (Map)`, names the component whose props are forwarded.
+		const target = args[0].getText().replace(/^typeof\s*/, '');
+		out.forwarded.push(target.replace(/^\(\s*(.*?)\s*\)$/s, '$1'));
 		return;
 	}
 	const parent = findInterface(name, fromPath);
