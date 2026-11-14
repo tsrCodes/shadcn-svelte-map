@@ -11,13 +11,13 @@
 				<a
 					href="https://github.com/tsrCodes"
 					target="_blank"
-					rel="noreferrer"
+					rel="noopener noreferrer"
 					class="font-medium underline underline-offset-4">Oggy</a
 				>. The source code is on
 				<a
 					href="https://github.com/tsrCodes/shadcn-svelte-map"
 					target="_blank"
-					rel="noreferrer"
+					rel="noopener noreferrer"
 					class="font-medium underline underline-offset-4">GitHub</a
 				>.
 			</p>
