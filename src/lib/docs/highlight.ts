@@ -34,6 +34,20 @@ const styleToClassTransformer: ShikiTransformer = {
 	}
 };
 
+// Shiki escapes the code itself, so its output is only these tags with these attributes.
+const ALLOWED_TAG = /^<\/?(pre|code|span)\b/i;
+const EVENT_OR_SCRIPT_URL = /\son[a-z]+\s*=|javascript:/i;
+
+/** Throws if highlighted HTML holds anything but Shiki's own markup, before it reaches `{@html}`. */
+export function assertHighlightMarkup(html: string): string {
+	for (const tag of html.match(/<[^>]+>/g) ?? []) {
+		if (!ALLOWED_TAG.test(tag) || EVENT_OR_SCRIPT_URL.test(tag)) {
+			throw new Error(`Unexpected markup in highlighted code: ${tag}`);
+		}
+	}
+	return html;
+}
+
 /** Shiki HTML with light and dark colours as classes. */
 export async function highlightCode(code: string, lang?: string | null): Promise<string> {
 	highlighter ??= createHighlighter({
@@ -41,12 +55,13 @@ export async function highlightCode(code: string, lang?: string | null): Promise
 		langs: LANGS
 	});
 	const shiki = await highlighter;
-	return shiki.codeToHtml(code, {
+	const html = shiki.codeToHtml(code, {
 		lang: lang && LANGS.includes(lang) ? lang : 'text',
 		themes: { light: CODE_THEMES.light.name ?? 'light', dark: CODE_THEMES.dark.name ?? 'dark' },
 		defaultColor: false,
 		transformers: [styleToClassTransformer]
 	});
+	return assertHighlightMarkup(html);
 }
 
 /** mdsvex `highlighter`: a code figure with a copy button, as Svelte markup. */

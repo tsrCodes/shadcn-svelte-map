@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { highlightCode } from '#lib/docs/highlight.js';
+import { assertHighlightMarkup, highlightCode } from '#lib/docs/highlight.js';
 import { codeThemeCss, styleToClasses } from '#lib/docs/shiki-theme.js';
 
 const SAMPLE = `<script lang="ts">
@@ -44,6 +44,18 @@ describe('code highlighting', () => {
 			expect(html).toContain('plain &#x3C;words>');
 			expect(html).not.toMatch(/\sstyle=/);
 		}
+	});
+
+	test('only Shiki markup may reach {@html}', () => {
+		expect(
+			assertHighlightMarkup('<pre class="shiki"><code><span>ok</span></code></pre>')
+		).toContain('ok');
+		expect(() => assertHighlightMarkup('<img src=x onerror="alert(1)">')).toThrow(
+			/Unexpected markup/
+		);
+		expect(() => assertHighlightMarkup('<span onclick="x()">a</span>')).toThrow(
+			/Unexpected markup/
+		);
 	});
 
 	test('unknown token styles fail loudly instead of being dropped', () => {

@@ -27,6 +27,18 @@ const EXAMPLE_SOURCES = import.meta.glob<string>('/src/lib/docs/examples/*.svelt
 	eager: true
 });
 
+/**
+ * A self-closing docs tag with one attribute, e.g. `<ApiTable component="map" />`, with
+ * either quote and any other attributes around it. Group 2 is the attribute's value.
+ */
+function tagPattern(tag: string, attribute: string): RegExp {
+	return new RegExp(`<${tag}\\b[^>]*?\\s${attribute}=(["'])(.*?)\\1[^>]*?\\/>`, 'g');
+}
+
+// Frontmatter is a flat list of one-line `key: value` pairs; anything richer is rejected.
+const FRONTMATTER_LINE = /^([A-Za-z_][\w-]*):[ \t]*(.*)$/;
+const UNSUPPORTED_VALUE = /^([|>[{&*!]|-\s|$)/;
+
 /** A YAML-style value without its matching surrounding quotes. */
 function unquote(value: string): string {
 	const quoted = /^(['"])(.*)\1$/.exec(value);
@@ -38,8 +50,14 @@ export function parseFrontmatter(raw: string): { data: Record<string, string>; b
 	if (!match) throw new Error('Docs page without frontmatter');
 	const data: Record<string, string> = {};
 	for (const line of match[1].split(/\r?\n/)) {
-		const colon = line.indexOf(':');
-		if (colon > 0) data[line.slice(0, colon).trim()] = unquote(line.slice(colon + 1).trim());
+		if (!line.trim() || line.trimStart().startsWith('#')) continue;
+		const entry = FRONTMATTER_LINE.exec(line);
+		const value = entry?.[2].trim() ?? '';
+		// Multiline values, lists and nested keys would be misread, so fail loudly instead.
+		if (!entry || UNSUPPORTED_VALUE.test(value)) {
+			throw new Error(`Unsupported frontmatter line: "${line}". Use one-line key: value pairs.`);
+		}
+		data[entry[1]] = unquote(value);
 	}
 	return { data, body: raw.slice(match[0].length) };
 }
@@ -94,7 +112,7 @@ export function getNeighbours(page: DocPage): { previous?: DocLink; next?: DocLi
 
 /** Names of the examples a page shows, in order. */
 export function getPreviewNames(page: DocPage): string[] {
-	return [...page.body.matchAll(/<ComponentPreview\s+name="([^"]+)"/g)].map((m) => m[1]);
+	return [...page.body.matchAll(tagPattern('ComponentPreview', 'name'))].map((m) => m[2]);
 }
 
 /** An example's source as users get it: imports point at `$lib/components/ui`. */
@@ -105,18 +123,20 @@ export function getExampleSource(name: string): string | undefined {
 
 /** Component files whose API tables a page shows, in order. */
 export function getApiNames(page: DocPage): string[] {
-	return [...page.body.matchAll(/<ApiTable\s+component="([^"]+)"/g)].map((m) => m[1]);
+	return [...page.body.matchAll(tagPattern('ApiTable', 'component'))].map((m) => m[2]);
 }
 
 /** The page as plain markdown for "Copy Page", `/docs/<slug>.md` and `llms.txt`. */
 export function toMarkdown(page: DocPage): string {
 	const body = page.body
 		.replace(/<script\b[^>]*>[\s\S]*?<\/script>\n*/, '')
-		.replace(/<ComponentPreview\s+name="([^"]+)"[^>]*\/>/g, (_, name: string) => {
+		.replace(tagPattern('ComponentPreview', 'name'), (_, _quote: string, name: string) => {
 			const source = getExampleSource(name);
 			return source ? `\`\`\`svelte\n${source.trimEnd()}\n\`\`\`` : '';
 		})
-		.replace(/<ApiTable\s+component="([^"]+)"\s*\/>/g, (_, name: string) => apiMarkdown(name))
-		.replace(/<CodeBlockCommand\s+command="([^"]+)"\s*\/>/g, '```bash\n$1\n```');
+		.replace(tagPattern('ApiTable', 'component'), (_, _quote: string, name: string) =>
+			apiMarkdown(name)
+		)
+		.replace(tagPattern('CodeBlockCommand', 'command'), '```bash\n$2\n```');
 	return `# ${page.title}\n\n${page.description}\n\n${body.trim()}\n`;
 }

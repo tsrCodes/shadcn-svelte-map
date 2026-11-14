@@ -43,4 +43,20 @@ describe('docs helpers', () => {
 			other: 'plain'
 		});
 	});
+
+	test('frontmatter it cannot read fails instead of guessing', () => {
+		expect(() =>
+			parseFrontmatter('---\ntitle: Map\ndescription: |\n  two lines\n---\nBody')
+		).toThrow(/Unsupported frontmatter line/);
+		expect(() => parseFrontmatter('---\ntags:\n  - map\n---\nBody')).toThrow(/Unsupported/);
+		expect(parseFrontmatter('---\n# note\ntitle: Map\n\n---\nBody').data).toEqual({ title: 'Map' });
+	});
+
+	test('docs tags work with either quote and extra attributes', () => {
+		const page = {
+			...DOC_PAGES[0],
+			body: `<CodeBlockCommand class="x" command='npx shadcn-svelte@latest add map' />`
+		};
+		expect(toMarkdown(page)).toContain('```bash\nnpx shadcn-svelte@latest add map\n```');
+	});
 });
