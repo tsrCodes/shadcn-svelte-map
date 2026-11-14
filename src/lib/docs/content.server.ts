@@ -27,13 +27,19 @@ const EXAMPLE_SOURCES = import.meta.glob<string>('/src/lib/docs/examples/*.svelt
 	eager: true
 });
 
+/** A YAML-style value without its matching surrounding quotes. */
+function unquote(value: string): string {
+	const quoted = /^(['"])(.*)\1$/.exec(value);
+	return quoted ? quoted[2] : value;
+}
+
 export function parseFrontmatter(raw: string): { data: Record<string, string>; body: string } {
 	const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n/.exec(raw);
 	if (!match) throw new Error('Docs page without frontmatter');
 	const data: Record<string, string> = {};
 	for (const line of match[1].split(/\r?\n/)) {
 		const colon = line.indexOf(':');
-		if (colon > 0) data[line.slice(0, colon).trim()] = line.slice(colon + 1).trim();
+		if (colon > 0) data[line.slice(0, colon).trim()] = unquote(line.slice(colon + 1).trim());
 	}
 	return { data, body: raw.slice(match[0].length) };
 }

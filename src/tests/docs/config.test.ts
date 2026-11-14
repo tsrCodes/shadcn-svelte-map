@@ -34,4 +34,13 @@ describe('docs helpers', () => {
 		expect(data).toEqual({ title: 'Map', description: 'Root' });
 		expect(body).toBe('Body');
 	});
+
+	test('frontmatter values lose their surrounding quotes', () => {
+		const raw = `---\ntitle: "Map: root"\ndescription: 'It\u2019s the root'\nother: plain\n---\nBody`;
+		expect(parseFrontmatter(raw).data).toEqual({
+			title: 'Map: root',
+			description: 'It\u2019s the root',
+			other: 'plain'
+		});
+	});
 });
