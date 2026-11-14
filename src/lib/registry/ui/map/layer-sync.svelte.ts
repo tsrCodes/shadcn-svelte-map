@@ -30,6 +30,23 @@ export function syncData(ctx: MapContext, sourceId: string, data: () => GeoJSOND
 	});
 }
 
+/** Move the source's layers whenever `beforeId` changes. The first value went in with `registerLayers`. */
+export function syncBeforeId(
+	ctx: MapContext,
+	sourceId: string,
+	beforeId: () => string | undefined
+): void {
+	let initial = true;
+	$effect(() => {
+		const next = beforeId();
+		if (initial) {
+			initial = false;
+			return;
+		}
+		ctx.layers.setBeforeId(sourceId, next);
+	});
+}
+
 /** Keep one paint property of a layer in step with `value`. */
 export function syncPaint(
 	ctx: MapContext,

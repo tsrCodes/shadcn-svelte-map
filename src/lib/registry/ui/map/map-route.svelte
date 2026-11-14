@@ -8,6 +8,7 @@
 		featuresAt,
 		plainGeoJSON,
 		registerLayers,
+		syncBeforeId,
 		syncData,
 		syncPaint
 	} from './layer-sync.svelte.js';
@@ -37,7 +38,7 @@
 		showStops?: boolean;
 		/** Draw a dot where the travelled part ends, while the trip is under way. */
 		showHead?: boolean;
-		/** Draw below this layer when it exists. Read once. */
+		/** Draw below this layer when it exists; changing it moves the layers. */
 		beforeId?: string;
 		/** Called when the route line is clicked. */
 		onclick?: (event: MapMouseEvent) => void;
@@ -151,6 +152,7 @@
 		],
 		beforeId
 	}));
+	syncBeforeId(ctx, sourceId, () => beforeId);
 
 	syncData(ctx, sourceId, routeData);
 	syncPaint(ctx, sourceId, casingId, 'line-color', () => background);

@@ -13,7 +13,7 @@
 <script lang="ts">
 	import '../../routes/layout.css';
 	import type { FeatureCollection, Point } from 'geojson';
-	import type { LngLatLike } from 'maplibre-gl';
+	import type { LngLatLike, PositionAnchor } from 'maplibre-gl';
 	import {
 		Map,
 		MapMarker,
@@ -35,6 +35,7 @@
 		showMarker?: boolean;
 		markerLabel?: string;
 		markerLngLat?: LngLatLike;
+		markerAnchor?: PositionAnchor;
 		customContent?: boolean;
 		popupOffset?: PopupOffset;
 		tooltipMaxWidth?: string;
@@ -42,6 +43,7 @@
 		popupLngLat?: LngLatLike;
 		points?: FeatureCollection<Point, { name: string }>;
 		pointColor?: string;
+		pointsBeforeId?: string;
 		onpointclick?: (name: string, index: number) => void;
 		onrefs?: (refs: MarkerRefs) => void;
 		oncontext?: (context: MapContext) => void;
@@ -52,6 +54,7 @@
 		showMarker = true,
 		markerLabel = 'Cafe',
 		markerLngLat = [0, 0],
+		markerAnchor = 'center',
 		customContent = false,
 		popupOffset = 18,
 		tooltipMaxWidth = '240px',
@@ -59,6 +62,7 @@
 		popupLngLat = [10, 10],
 		points,
 		pointColor,
+		pointsBeforeId,
 		onpointclick,
 		onrefs,
 		oncontext
@@ -78,7 +82,12 @@
 	<Map class="size-full" {mapStyle} viewport={{ center: [0, 0], zoom: 2, bearing: 0, pitch: 0 }}>
 		<ContextProbe {oncontext} />
 		{#if showMarker}
-			<MapMarker lngLat={markerLngLat} aria-label={markerLabel} bind:ref={marker}>
+			<MapMarker
+				lngLat={markerLngLat}
+				anchor={markerAnchor}
+				aria-label={markerLabel}
+				bind:ref={marker}
+			>
 				{#if customContent}
 					<MapMarkerContent><span data-testid="custom">★</span></MapMarkerContent>
 				{/if}
@@ -100,6 +109,7 @@
 				id="harness-points"
 				data={points}
 				color={pointColor}
+				beforeId={pointsBeforeId}
 				popupLabel="Point"
 				onclick={(feature, index) => onpointclick?.(feature.properties.name, index)}
 			>

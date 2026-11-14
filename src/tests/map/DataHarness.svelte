@@ -37,6 +37,7 @@
 		onarcclick?: (name: string, index: number) => void;
 		clusters?: FeatureCollection<Point, { name: string }>;
 		clusterTextColor?: string;
+		clusterRadius?: number;
 		onpointclick?: (name: string, index: number) => void;
 		onclusterclick?: (cluster: MapClusterClick) => void;
 		heat?: FeatureCollection<Point>;
@@ -59,6 +60,7 @@
 		onarcclick,
 		clusters,
 		clusterTextColor,
+		clusterRadius = 40,
 		onpointclick,
 		onclusterclick,
 		heat,
@@ -115,7 +117,7 @@
 			<MapClusterLayer
 				id="h-clusters"
 				data={clusters}
-				clusterRadius={40}
+				{clusterRadius}
 				textColor={clusterTextColor}
 				{onclusterclick}
 				onclick={(feature, index) => onpointclick?.(feature.properties.name, index)}

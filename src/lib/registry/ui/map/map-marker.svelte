@@ -22,7 +22,7 @@
 		lngLat: LngLatLike;
 		/** Name read by screen readers. */
 		'aria-label': string;
-		/** Which part of the marker sits on `lngLat`. Read once. */
+		/** Which part of the marker sits on `lngLat`. MapLibre has no setter, so a change rebuilds the marker. */
 		anchor?: PositionAnchor;
 		/** Pixel offset from `lngLat`. */
 		offset?: PointLike;
@@ -77,15 +77,23 @@
 		[describedBy, marker.tooltipId].filter(Boolean).join(' ') || undefined
 	);
 
-	// Build the marker once the map exists; props after that go through setters.
+	// A derived only signals a real change; reading the prop directly would rebuild the
+	// marker every time the parent passes its props again.
+	const markerAnchor = $derived(anchor);
+
+	// Build the marker once the map exists; props after that go through setters, except
+	// `anchor`, which MapLibre only takes in the constructor.
 	$effect(() => {
 		const map = ctx.map;
 		const lib = ctx.maplibre;
 		const element = marker.button;
+		const nextAnchor = markerAnchor;
 		if (!map || !lib || !element) return;
 
 		const instance = untrack(() =>
-			new lib.Marker({ element, anchor, offset, draggable, rotation }).setLngLat(lngLat).addTo(map)
+			new lib.Marker({ element, anchor: nextAnchor, offset, draggable, rotation })
+				.setLngLat(lngLat)
+				.addTo(map)
 		);
 		const subscriptions = [
 			instance.on('dragstart', () => ondragstart?.(instance.getLngLat())),

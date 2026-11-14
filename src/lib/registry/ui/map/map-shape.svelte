@@ -13,7 +13,7 @@
 		opacity?: number;
 		/** Dash pattern in line widths, such as `[2, 2]`. */
 		dashArray?: number[];
-		/** Draw below this layer when it exists. Read once. */
+		/** Draw below this layer when it exists; changing it moves the layers. */
 		beforeId?: string;
 		/** Called when the shape is clicked. */
 		onclick?: (event: MapMouseEvent) => void;
@@ -38,6 +38,7 @@
 		featuresAt,
 		plainGeoJSON,
 		registerLayers,
+		syncBeforeId,
 		syncData,
 		syncPaint
 	} from './layer-sync.svelte.js';
@@ -110,6 +111,7 @@
 		layers: layers(),
 		beforeId
 	}));
+	syncBeforeId(ctx, sourceId, () => beforeId);
 
 	syncData(ctx, sourceId, feature);
 	syncPaint(ctx, sourceId, lineId, 'line-color', () => stroke);

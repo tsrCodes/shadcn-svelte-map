@@ -4,7 +4,13 @@
 	import type { ExpressionSpecification } from 'maplibre-gl';
 	import type { GeoJSONData } from './layer-registry.js';
 	import { getMapContext } from './map-context.svelte.js';
-	import { plainGeoJSON, registerLayers, syncData, syncPaint } from './layer-sync.svelte.js';
+	import {
+		plainGeoJSON,
+		registerLayers,
+		syncBeforeId,
+		syncData,
+		syncPaint
+	} from './layer-sync.svelte.js';
 	import { FALLBACK_COLOR, withAlpha } from './theme.svelte.js';
 
 	interface Props {
@@ -22,7 +28,7 @@
 		opacity?: number;
 		/** Colours from low to high density. Defaults to the theme's chart colours. */
 		colors?: string[];
-		/** Draw below this layer when it exists. Read once. */
+		/** Draw below this layer when it exists; changing it moves the layers. */
 		beforeId?: string;
 	}
 
@@ -89,6 +95,7 @@
 		],
 		beforeId
 	}));
+	syncBeforeId(ctx, sourceId, () => beforeId);
 
 	syncData(ctx, sourceId, sourceData);
 	syncPaint(ctx, sourceId, heatId, 'heatmap-color', () => ramp);

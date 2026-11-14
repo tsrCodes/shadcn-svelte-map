@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest';
+import type { FeatureCollection } from 'geojson';
 import type { LayerSpecification, StyleSpecification } from 'maplibre-gl';
-import { LayerRegistry, type RegistryMap } from '#lib/registry/ui/map/layer-registry.js';
+import {
+	LayerRegistry,
+	type LayerEntry,
+	type RegistryMap
+} from '#lib/registry/ui/map/layer-registry.js';
 import { POINTS_ENTRY, POINTS_LAYER, POINTS_SOURCE } from './fixtures.js';
 
 /** In-memory stand-in for the parts of a MapLibre map the registry uses. */
@@ -11,12 +16,20 @@ function createFakeMap(layerIds: string[] = ['background'], glyphs: string | nul
 	const states = new Map<string, Record<string, unknown>>();
 	const data = new Map<string, unknown>();
 	const paint = new Map<string, Record<string, unknown>>();
+	const clusterOptions = new Map<string, unknown>();
 	const key = (source: string, id: unknown) => `${source}/${String(id)}`;
 
 	const map = {
 		getGlyphs: () => glyphs,
 		getSource: (id: string) =>
-			sources.has(id) ? { setData: (value: unknown) => data.set(id, value) } : undefined,
+			sources.has(id)
+				? {
+						setData: (value: unknown) => data.set(id, value),
+						setClusterOptions: async (value: unknown) => {
+							clusterOptions.set(id, value);
+						}
+					}
+				: undefined,
 		addSource: (id: string) => sources.add(id),
 		removeSource: (id: string) => {
 			if (
@@ -38,6 +51,11 @@ function createFakeMap(layerIds: string[] = ['background'], glyphs: string | nul
 			}
 		},
 		removeLayer: (id: string) => (layers = layers.filter((item) => item !== id)),
+		moveLayer: (id: string, before?: string) => {
+			const rest = layers.filter((item) => item !== id);
+			const index = before ? rest.indexOf(before) : -1;
+			layers = index < 0 ? [...rest, id] : rest.toSpliced(index, 0, id);
+		},
 		setFeatureState: (target: { source: string; id: unknown }, state: Record<string, unknown>) =>
 			states.set(key(target.source, target.id), {
 				...states.get(key(target.source, target.id)),
@@ -56,6 +74,7 @@ function createFakeMap(layerIds: string[] = ['background'], glyphs: string | nul
 		state: (source: string, id: unknown) => states.get(key(source, id)),
 		data: (source: string) => data.get(source),
 		paint: (layer: string) => paint.get(layer),
+		clusterOptions: (source: string) => clusterOptions.get(source),
 		/** A full style rebuild: everything user-added is gone. */
 		rebuild: (ids: string[], nextGlyphs: string | null = glyphs) => {
 			sources.clear();
@@ -65,6 +84,8 @@ function createFakeMap(layerIds: string[] = ['background'], glyphs: string | nul
 		}
 	};
 }
+
+const EMPTY_POINTS: FeatureCollection = { type: 'FeatureCollection', features: [] };
 
 const LABELS: LayerSpecification = { id: 'labels', type: 'background' };
 
@@ -389,5 +410,75 @@ describe('LayerRegistry', () => {
 
 	test('carry rejects an empty prefix', () => {
 		expect(() => new LayerRegistry().carry('')).toThrow(/prefix/);
+	});
+	test('moves its layers when beforeId changes, keeping their order', () => {
+		const fake = createFakeMap(['background', 'roads', 'labels']);
+		const registry = new LayerRegistry();
+		registry.attach(fake.map);
+		registry.styleLoaded();
+		registry.add(LABELLED_ENTRY);
+		expect(fake.layers()).toEqual(['background', 'roads', 'labels', POINTS_LAYER, ICON_LAYER]);
+
+		registry.setBeforeId(POINTS_SOURCE, 'roads');
+		expect(fake.layers()).toEqual(['background', POINTS_LAYER, ICON_LAYER, 'roads', 'labels']);
+
+		registry.setBeforeId(POINTS_SOURCE, 'missing');
+		expect(fake.layers()).toEqual(['background', 'roads', 'labels', POINTS_LAYER, ICON_LAYER]);
+	});
+
+	test('keeps a changed beforeId through a style rebuild', () => {
+		const fake = createFakeMap(['background', 'labels']);
+		const registry = new LayerRegistry();
+		registry.attach(fake.map);
+		registry.styleLoaded();
+		registry.add(POINTS_ENTRY);
+		registry.setBeforeId(POINTS_SOURCE, 'labels');
+
+		fake.rebuild(['background', 'labels']);
+		registry.styleLoaded();
+		expect(fake.layers()).toEqual(['background', POINTS_LAYER, 'labels']);
+	});
+
+	test('keeps a changed beforeId when a style swap carries the layers', () => {
+		const registry = new LayerRegistry();
+		registry.add(POINTS_ENTRY);
+		registry.setBeforeId(POINTS_SOURCE, 'labels');
+		const next: StyleSpecification = {
+			version: 8,
+			sources: {},
+			layers: [{ id: 'background', type: 'background' }, LABELS]
+		};
+		const ids = registry.transformStyle(undefined, next).layers.map((layer) => layer.id);
+		expect(ids).toEqual(['background', POINTS_LAYER, 'labels']);
+	});
+
+	test('changes cluster options on the live source and keeps them for rebuilds', async () => {
+		const fake = createFakeMap();
+		const registry = new LayerRegistry();
+		registry.attach(fake.map);
+		registry.styleLoaded();
+		const clustered: LayerEntry = {
+			...POINTS_ENTRY,
+			source: { type: 'geojson', data: EMPTY_POINTS, cluster: true, clusterRadius: 50 }
+		};
+		registry.add(clustered);
+
+		await registry.setClusterOptions(POINTS_SOURCE, { clusterRadius: 80, clusterMaxZoom: 10 });
+		expect(fake.clusterOptions(POINTS_SOURCE)).toEqual({
+			cluster: true,
+			clusterRadius: 80,
+			clusterMaxZoom: 10
+		});
+
+		const style = registry.transformStyle(undefined, { version: 8, sources: {}, layers: [] });
+		expect(style.sources[POINTS_SOURCE]).toMatchObject({ clusterRadius: 80, clusterMaxZoom: 10 });
+	});
+
+	test('rejects cluster options for a source that is not GeoJSON', async () => {
+		const registry = new LayerRegistry();
+		registry.add({ sourceId: 'tiles', source: { type: 'vector', url: 'x' }, layers: [] });
+		await expect(registry.setClusterOptions('tiles', { clusterRadius: 10 })).rejects.toThrow(
+			'not a GeoJSON source'
+		);
 	});
 });

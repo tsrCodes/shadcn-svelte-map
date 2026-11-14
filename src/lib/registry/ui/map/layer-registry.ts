@@ -19,6 +19,7 @@ export type RegistryMap = Pick<
 	| 'getLayersOrder'
 	| 'addLayer'
 	| 'removeLayer'
+	| 'moveLayer'
 	| 'setFeatureState'
 	| 'removeFeatureState'
 	| 'setPaintProperty'
@@ -36,6 +37,11 @@ export interface LayerEntry {
 export type FeatureState = Record<string, unknown>;
 
 export type GeoJSONData = GeoJSONSourceSpecification['data'];
+
+/** Clustering settings of a GeoJSON source that can change after it was added. */
+export type ClusterOptions = Partial<
+	Pick<GeoJSONSourceSpecification, 'cluster' | 'clusterRadius' | 'clusterMaxZoom'>
+>;
 
 /** Name of a paint property, as `map.setPaintProperty` takes it. */
 export type PaintProperty = Parameters<MapLibreMap['setPaintProperty']>[1];
@@ -107,6 +113,8 @@ export class LayerRegistry {
 	#pendingRemoval = new Map<string, LayerEntry>();
 	/** Data set while a style was loading, sent to the map once it is ready. */
 	#pendingData = new Set<string>();
+	/** Sources whose spec changed through the registry; a swap must not take the old copy. */
+	#changedSources = new Set<string>();
 	/** Paint values set through the registry, by layer id; they win over any older style copy. */
 	#paint = new Map<string, PaintValues>();
 	/** Id prefixes of sources and layers added outside the registry that swaps must keep. */
@@ -164,6 +172,7 @@ export class LayerRegistry {
 		this.#entries.delete(sourceId);
 		this.#featureState.delete(sourceId);
 		this.#pendingData.delete(sourceId);
+		this.#changedSources.delete(sourceId);
 		for (const layer of entry.layers) this.#paint.delete(layer.id);
 		if (this.#ready) this.#removeFromMap(entry);
 		else this.#pendingRemoval.set(sourceId, entry);
@@ -179,6 +188,41 @@ export class LayerRegistry {
 		this.#entries.set(sourceId, { ...entry, source: { ...entry.source, data } });
 		this.#pendingData.add(sourceId);
 		if (this.#ready) this.#flushData();
+	}
+
+	/**
+	 * Move the entry's layers below `beforeId`, or to the top when it is left out or
+	 * missing from the style. Kept for style swaps.
+	 */
+	setBeforeId(sourceId: string, beforeId: string | undefined): void {
+		const entry = this.#entries.get(sourceId);
+		if (!entry || entry.beforeId === beforeId) return;
+		this.#entries.set(sourceId, { ...entry, beforeId });
+		const map = this.#map;
+		if (!this.#ready || !map) return;
+		const target = beforeId && map.getLayer(beforeId) ? beforeId : undefined;
+		// Moving each layer below the same target in turn keeps the entry's own order.
+		for (const layer of entry.layers) {
+			if (map.getLayer(layer.id)) map.moveLayer(layer.id, target);
+		}
+	}
+
+	/** Change how a registered GeoJSON source clusters its points. Kept for style swaps. */
+	async setClusterOptions(sourceId: string, options: ClusterOptions): Promise<void> {
+		const entry = this.#entries.get(sourceId);
+		if (!entry) return;
+		if (entry.source.type !== 'geojson') {
+			throw new Error(`Map source "${sourceId}" is not a GeoJSON source.`);
+		}
+		const source = { ...entry.source, ...options };
+		this.#entries.set(sourceId, { ...entry, source });
+		this.#changedSources.add(sourceId);
+		if (!this.#ready) return;
+		await this.#map?.getSource<GeoJSONSource>(sourceId)?.setClusterOptions({
+			cluster: source.cluster,
+			clusterRadius: source.clusterRadius,
+			clusterMaxZoom: source.clusterMaxZoom
+		});
 	}
 
 	/** Set one paint property of a registered layer. Kept for style swaps. */
@@ -279,7 +323,9 @@ export class LayerRegistry {
 
 	#carriedSource(entry: LayerEntry, previous: StyleSpecification | undefined): SourceSpecification {
 		// Data set through the registry is newer than whatever the old style holds.
-		if (this.#pendingData.has(entry.sourceId)) return entry.source;
+		if (this.#pendingData.has(entry.sourceId) || this.#changedSources.has(entry.sourceId)) {
+			return entry.source;
+		}
 		return previous?.sources[entry.sourceId] ?? entry.source;
 	}
 

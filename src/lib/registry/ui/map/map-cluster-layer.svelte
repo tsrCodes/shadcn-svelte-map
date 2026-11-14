@@ -26,7 +26,13 @@
 	} from 'maplibre-gl';
 	import type { GeoJSONData } from './layer-registry.js';
 	import { getMapContext } from './map-context.svelte.js';
-	import { featuresAt, registerLayers, syncData, syncPaint } from './layer-sync.svelte.js';
+	import {
+		featuresAt,
+		registerLayers,
+		syncBeforeId,
+		syncData,
+		syncPaint
+	} from './layer-sync.svelte.js';
 	import { FALLBACK_COLOR } from './theme.svelte.js';
 
 	type PointFeature = Feature<Point, P>;
@@ -37,9 +43,9 @@
 		data: FeatureCollection<Point, P>;
 		/** Source id; layers are `<id>-clusters`, `<id>-count` and `<id>-points`. Read once. */
 		id?: string;
-		/** Pixel radius points are grouped within. Read once. */
+		/** Pixel radius points are grouped within. Changing it regroups in place. */
 		clusterRadius?: number;
-		/** Above this zoom points are never grouped. Read once. */
+		/** Above this zoom points are never grouped. Changing it regroups in place. */
 		clusterMaxZoom?: number;
 		/** Cluster circles. Defaults to the theme's `--primary`. */
 		color?: string;
@@ -56,7 +62,7 @@
 		font?: string[];
 		/** Zoom in on a cluster when it is clicked. */
 		zoomOnClick?: boolean;
-		/** Draw below this layer when it exists. Read once. */
+		/** Draw below this layer when it exists; changing it moves the layers. */
 		beforeId?: string;
 		/** Called with a clicked single point and its index in `data.features`. */
 		onclick?: (feature: PointFeature, index: number) => void;
@@ -170,6 +176,26 @@
 		],
 		beforeId
 	}));
+	syncBeforeId(ctx, sourceId, () => beforeId);
+
+	// Regroup in place when the cluster settings change; the first values went in above.
+	// Deriveds only signal real changes, so passing the same props again does not regroup.
+	const radius = $derived(clusterRadius);
+	const maxZoom = $derived(clusterMaxZoom);
+	let clusterOptionsSynced = false;
+	$effect(() => {
+		const options = { clusterRadius: radius, clusterMaxZoom: maxZoom };
+		if (!clusterOptionsSynced) {
+			clusterOptionsSynced = true;
+			return;
+		}
+		ctx.layers.setClusterOptions(sourceId, options).catch((error: unknown) => {
+			console.error(
+				`MapClusterLayer: could not change the cluster options of "${sourceId}".`,
+				error
+			);
+		});
+	});
 
 	syncData(ctx, sourceId, indexedData);
 	syncPaint(ctx, sourceId, clustersId, 'circle-color', () => fill);

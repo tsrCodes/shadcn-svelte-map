@@ -259,6 +259,18 @@ describe('MapClusterLayer', () => {
 		await expect.poll(() => label()?.dataset.color).toBe('rgb(255, 0, 0)');
 	});
 
+	test('a new cluster radius regroups the live source without rebuilding it', async () => {
+		const { map, screen } = await mountData({ clusters: CLUSTERED });
+		await layerReady(map, 'h-clusters-clusters');
+		const source = map.getSource<GeoJSONSource>('h-clusters');
+		if (!source) throw new Error('Source "h-clusters" is missing.');
+		expect(source.getClusterOptions().clusterRadius).toBe(40);
+
+		await screen.rerender({ clusters: CLUSTERED, clusterRadius: 90 });
+		await expect.poll(() => source.getClusterOptions().clusterRadius).toBe(90);
+		expect(map.getSource('h-clusters')).toBe(source);
+	});
+
 	test('a single point click returns the original feature; a cluster click zooms in', async () => {
 		const onpointclick = vi.fn();
 		const onclusterclick = vi.fn();

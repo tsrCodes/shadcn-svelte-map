@@ -13,6 +13,7 @@
 		featuresAt,
 		plainGeoJSON,
 		registerLayers,
+		syncBeforeId,
 		syncData,
 		syncPaint
 	} from './layer-sync.svelte.js';
@@ -43,7 +44,7 @@
 		circleRadius?: number;
 		/** Point radius of the hovered feature. */
 		hoverCircleRadius?: number;
-		/** Draw below this layer when it exists. Read once. */
+		/** Draw below this layer when it exists; changing it moves the layers. */
 		beforeId?: string;
 		/** Called with the clicked feature. */
 		onclick?: (feature: MapGeoJSONFeature, event: MapMouseEvent) => void;
@@ -132,6 +133,7 @@
 		],
 		beforeId
 	}));
+	syncBeforeId(ctx, sourceId, () => beforeId);
 
 	syncPaint(ctx, sourceId, fillId, 'fill-color', () => fill);
 	syncPaint(ctx, sourceId, fillId, 'fill-opacity', () => byHover(hoverFillOpacity, fillOpacity));

@@ -9,7 +9,13 @@
 		syncPopupLook,
 		type PopupOffset
 	} from './popup.svelte.js';
-	import type { GeoJSONData } from './layer-registry.js';
+	import {
+		plainGeoJSON,
+		registerLayers,
+		syncBeforeId,
+		syncData,
+		syncPaint
+	} from './layer-sync.svelte.js';
 	import { FALLBACK_COLOR } from './theme.svelte.js';
 
 	type PointFeature = Feature<Point, P>;
@@ -27,7 +33,7 @@
 		strokeColor?: string;
 		/** Outline width in pixels. */
 		strokeWidth?: number;
-		/** Draw below this layer when it exists. Read once. */
+		/** Draw below this layer when it exists; changing it moves the layers. */
 		beforeId?: string;
 		/** Called with the clicked point and its index in `data.features`. */
 		onclick?: (feature: PointFeature, index: number) => void;
@@ -76,50 +82,32 @@
 	const fill = $derived(color ?? ctx.colors?.primary ?? FALLBACK_COLOR);
 	const stroke = $derived(strokeColor ?? ctx.colors?.background ?? FALLBACK_COLOR);
 
-	/** A plain copy of `data`; MapLibre posts it to a worker, which cannot take proxies. */
-	function plainData(): GeoJSONData {
-		return $state.snapshot(data) as GeoJSONData;
-	}
-
 	// Register once; the registry adds it when the style is ready and after every swap.
-	$effect(() =>
-		untrack(() =>
-			ctx.layers.add({
-				sourceId,
-				// `generateId` numbers features by index, so a click maps back to `data`.
-				source: { type: 'geojson', data: plainData(), generateId: true },
-				layers: [
-					{
-						id: layerId,
-						type: 'circle',
-						source: sourceId,
-						paint: {
-							'circle-color': fill,
-							'circle-radius': radius,
-							'circle-stroke-color': stroke,
-							'circle-stroke-width': strokeWidth
-						}
-					}
-				],
-				beforeId
-			})
-		)
-	);
-
-	let dataSynced = false;
-	$effect(() => {
-		const next = plainData();
-		if (!dataSynced) {
-			dataSynced = true;
-			return;
-		}
-		ctx.layers.setData(sourceId, next);
-	});
-
-	$effect(() => ctx.layers.setPaintProperty(sourceId, layerId, 'circle-color', fill));
-	$effect(() => ctx.layers.setPaintProperty(sourceId, layerId, 'circle-radius', radius));
-	$effect(() => ctx.layers.setPaintProperty(sourceId, layerId, 'circle-stroke-color', stroke));
-	$effect(() => ctx.layers.setPaintProperty(sourceId, layerId, 'circle-stroke-width', strokeWidth));
+	registerLayers(ctx, () => ({
+		sourceId,
+		// `generateId` numbers features by index, so a click maps back to `data`.
+		source: { type: 'geojson', data: plainGeoJSON(data), generateId: true },
+		layers: [
+			{
+				id: layerId,
+				type: 'circle',
+				source: sourceId,
+				paint: {
+					'circle-color': fill,
+					'circle-radius': radius,
+					'circle-stroke-color': stroke,
+					'circle-stroke-width': strokeWidth
+				}
+			}
+		],
+		beforeId
+	}));
+	syncData(ctx, sourceId, () => plainGeoJSON(data));
+	syncBeforeId(ctx, sourceId, () => beforeId);
+	syncPaint(ctx, sourceId, layerId, 'circle-color', () => fill);
+	syncPaint(ctx, sourceId, layerId, 'circle-radius', () => radius);
+	syncPaint(ctx, sourceId, layerId, 'circle-stroke-color', () => stroke);
+	syncPaint(ctx, sourceId, layerId, 'circle-stroke-width', () => strokeWidth);
 
 	function featureAt(event: MapMouseEvent): Selection | null {
 		const map = ctx.map;

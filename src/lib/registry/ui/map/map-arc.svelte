@@ -17,6 +17,7 @@
 		featuresAt,
 		plainGeoJSON,
 		registerLayers,
+		syncBeforeId,
 		syncData,
 		syncPaint
 	} from './layer-sync.svelte.js';
@@ -40,7 +41,7 @@
 		opacity?: number;
 		/** Dash pattern in line widths. */
 		dashArray?: number[];
-		/** Draw below this layer when it exists. Read once. */
+		/** Draw below this layer when it exists; changing it moves the layers. */
 		beforeId?: string;
 		/** Called with the clicked arc and its index in `arcs`. */
 		onclick?: (arc: T, index: number, event: MapMouseEvent) => void;
@@ -106,6 +107,7 @@
 		],
 		beforeId
 	}));
+	syncBeforeId(ctx, sourceId, () => beforeId);
 
 	syncData(ctx, sourceId, arcData);
 	syncPaint(ctx, sourceId, lineId, 'line-color', () => stroke);

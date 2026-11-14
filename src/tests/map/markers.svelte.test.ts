@@ -201,6 +201,18 @@ describe('MapMarker', () => {
 		expect(markerButton()).toBe(button);
 	});
 
+	test('a new anchor rebuilds the marker in place', async () => {
+		const { screen, refs, markerButton } = await mountMarkers();
+		await expect.poll(() => refs().marker).not.toBeNull();
+		const first = refs().marker;
+		expect(markerButton().classList).toContain('maplibregl-marker-anchor-center');
+
+		await screen.rerender({ markerAnchor: 'bottom' });
+		await expect.poll(() => refs().marker).not.toBe(first);
+		expect(markerButton().classList).toContain('maplibregl-marker-anchor-bottom');
+		expect(markerButton().isConnected).toBe(true);
+	});
+
 	test('standalone popup closes on Escape', async () => {
 		const { refs } = await mountMarkers({ showPopup: true, showMarker: false });
 		await expect.poll(() => refs().popup?.isOpen()).toBe(true);
@@ -252,6 +264,24 @@ describe('MapPointLayer', () => {
 		await expect
 			.poll(async () => ((await source.getData()) as FeatureCollection).features.length)
 			.toBe(1);
+	});
+
+	test('a new beforeId moves the live layer', async () => {
+		const { screen, map } = await mountMarkers({
+			showMarker: false,
+			points: POINTS,
+			mapStyle: DARK_STYLE
+		});
+		await expect.poll(() => Boolean(map.getLayer(POINT_LAYER))).toBe(true);
+		expect(map.getLayersOrder()).toEqual(['background', 'overlay', POINT_LAYER]);
+
+		await screen.rerender({
+			showMarker: false,
+			points: POINTS,
+			mapStyle: DARK_STYLE,
+			pointsBeforeId: 'overlay'
+		});
+		await expect.poll(() => map.getLayersOrder()).toEqual(['background', POINT_LAYER, 'overlay']);
 	});
 
 	test('theme colours follow the theme without rebuilding the layer', async () => {
