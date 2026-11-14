@@ -45,7 +45,7 @@ Fills, lines and points use the theme's `--primary` colour by default and follow
 
 ## Layer ids
 
-The source id comes from `id`, or a unique id from `$props.id()`. The layers are `<id>-fill`, `<id>-line` and `<id>-circle`. Polygon outlines are drawn by the line layer. Pass `beforeId` to draw below another layer.
+The source id comes from `id`, or a unique id from `$props.id()`. The layers are `<id>-fill`, `<id>-line` and `<id>-circle`. Polygon outlines are drawn by the line layer. Pass `beforeId` to draw below another layer; changing it moves the layers.
 
 ## API Reference
 

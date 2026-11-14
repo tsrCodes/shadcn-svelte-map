@@ -74,7 +74,7 @@ Shapes survive a basemap or theme swap.
 
 ## Layer ids
 
-The source id comes from `id`, or a unique id from `$props.id()`. The layers are `<id>-fill` and `<id>-line`. Pass `beforeId` to draw below another layer.
+The source id comes from `id`, or a unique id from `$props.id()`. The layers are `<id>-fill` and `<id>-line`. Pass `beforeId` to draw below another layer; changing it moves the layers.
 
 ## API Reference
 

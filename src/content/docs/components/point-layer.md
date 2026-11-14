@@ -51,7 +51,7 @@ Points use the theme's `--primary` colour with a `--background` outline, and fol
 
 ## Layer ids
 
-The source id comes from `id`, or a unique id from `$props.id()` if you leave it out. The circle layer is `<id>-circles`. Pass `beforeId` to draw the points below another layer.
+The source id comes from `id`, or a unique id from `$props.id()` if you leave it out. The circle layer is `<id>-circles`. Pass `beforeId` to draw the points below another layer; changing it moves them.
 
 ## API Reference
 

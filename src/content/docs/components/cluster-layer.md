@@ -32,7 +32,7 @@ Clustering runs in MapLibre's worker, so thousands of points stay smooth.
 
 ## Grouping
 
-`clusterRadius` is the distance in pixels within which points join a cluster. It defaults to 50. Above `clusterMaxZoom`, which defaults to 14, points are never grouped. Both are read once, when the layer is created.
+`clusterRadius` is the distance in pixels within which points join a cluster. It defaults to 50. Above `clusterMaxZoom`, which defaults to 14, points are never grouped. Changing either regroups the points in place, without rebuilding the layer.
 
 Changing `data` updates the source in place, so you can filter points without remounting the layer.
 
