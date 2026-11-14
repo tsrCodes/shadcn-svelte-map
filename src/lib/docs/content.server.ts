@@ -29,11 +29,15 @@ const EXAMPLE_SOURCES = import.meta.glob<string>('/src/lib/docs/examples/*.svelt
 });
 
 /**
- * A self-closing docs tag with one attribute, e.g. `<ApiTable component="map" />`, with
- * either quote and any other attributes around it. Group 2 is the attribute's value.
+ * A docs tag with one attribute, e.g. `<ApiTable component="map" />`, with either quote
+ * and any other attributes around it. It may also be written with an empty closing tag,
+ * `<ApiTable component="map"></ApiTable>`. Group 2 is the attribute's value.
  */
 function tagPattern(tag: string, attribute: string): RegExp {
-	return new RegExp(`<${tag}\\b[^>]*?\\s${attribute}=(["'])(.*?)\\1[^>]*?\\/>`, 'g');
+	return new RegExp(
+		`<${tag}\\b[^>]*?\\s${attribute}=(["'])(.*?)\\1[^>]*?(?:\\/>|>\\s*<\\/${tag}\\s*>)`,
+		'g'
+	);
 }
 
 // Frontmatter is a flat list of one-line `key: value` pairs; anything richer is rejected.

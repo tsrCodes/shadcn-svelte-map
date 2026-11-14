@@ -60,6 +60,23 @@ describe('docs content', () => {
 		expect(leftovers).toEqual([]);
 	});
 
+	test('docs tags are found whether self-closing or closed', () => {
+		const page = {
+			...DOC_PAGES[0],
+			body: [
+				`<ApiTable component="map" />`,
+				`<ApiTable component='map-marker'></ApiTable>`,
+				`<ComponentPreview name="marker" class="h-80"></ComponentPreview>`,
+				`<CodeBlockCommand command="pnpm dlx x"></CodeBlockCommand>`
+			].join('\n\n')
+		};
+		expect(getApiNames(page)).toEqual(['map', 'map-marker']);
+		expect(getPreviewNames(page)).toEqual(['marker']);
+		const markdown = toMarkdown(page);
+		expect(markdown).toContain('```bash\npnpm dlx x\n```');
+		expect(markdown).not.toMatch(/<\/?(ApiTable|ComponentPreview|CodeBlockCommand)\b/);
+	});
+
 	test('pages credit no other projects', () => {
 		const hits = DOC_PAGES.filter((page) => BANNED.test(page.body)).map((page) => page.path);
 		expect(hits).toEqual([]);
