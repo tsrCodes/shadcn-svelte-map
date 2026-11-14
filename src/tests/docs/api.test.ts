@@ -58,6 +58,20 @@ describe('API reference extraction', () => {
 		expect([...bindable]).toEqual(['open']);
 	});
 
+	test('aliased props keep their public name, with either quote', () => {
+		const source = [
+			'<script lang="ts">',
+			"\tlet { class: className = 'a', \"aria-label\": label = 'Map', 'data-x': x = 1 } = $props();",
+			'</script>'
+		].join('\n');
+		const { values } = defaultsFromSource(source);
+		expect(Object.fromEntries(values)).toEqual({
+			class: "'a'",
+			'aria-label': "'Map'",
+			'data-x': '1'
+		});
+	});
+
 	test('renders markdown tables', () => {
 		const markdown = apiMarkdown('map-zoom-control');
 		expect(markdown).toContain('### MapZoomControl');

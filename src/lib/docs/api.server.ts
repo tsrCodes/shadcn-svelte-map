@@ -222,6 +222,13 @@ interface Defaults {
 	bindable: Set<string>;
 }
 
+/** A prop's public name, whatever quotes it is written with: `'aria-label'` → `aria-label`. */
+function propertyName(node: ts.PropertyName | ts.BindingName): string {
+	if (ts.isIdentifier(node) || ts.isStringLiteral(node) || ts.isNumericLiteral(node))
+		return node.text;
+	return node.getText();
+}
+
 function isPropsCall(node: ts.Expression | undefined): boolean {
 	return node !== undefined && ts.isCallExpression(node) && node.expression.getText() === '$props';
 }
@@ -258,7 +265,7 @@ function defaultsOf(file: ts.SourceFile): Defaults {
 		) {
 			for (const element of node.name.elements) {
 				if (element.dotDotDotToken) continue;
-				const name = (element.propertyName ?? element.name).getText().replace(/^'|'$/g, '');
+				const name = propertyName(element.propertyName ?? element.name);
 				const init = element.initializer;
 				if (!init) continue;
 				const bound = ts.isCallExpression(init) && init.expression.getText() === '$bindable';
@@ -312,7 +319,7 @@ function readEntry(component: string, seen: Set<string>): ApiEntry | undefined {
 
 	const own = new Map<string, ApiProp>();
 	for (const member of out.members) {
-		const name = member.name.getText().replace(/^'|'$/g, '');
+		const name = propertyName(member.name);
 		const type = member.type?.getText().replace(/\s+/g, ' ') ?? 'unknown';
 		own.set(name, {
 			name,
