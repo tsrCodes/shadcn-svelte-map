@@ -39,17 +39,28 @@ async function shoot(page: Page, name: string, mode: 'light' | 'dark'): Promise<
 	});
 }
 
+// A few pages at a time: faster than one by one, light enough for CPU WebGL.
+const CONCURRENCY = 3;
+
 async function main(): Promise<void> {
 	await mkdir(OUT_DIR, { recursive: true });
 	const browser = await chromium.launch({ args: WEBGL_ARGS });
+	const jobs = BLOCKS.flatMap((block) =>
+		(['light', 'dark'] as const).map((mode) => ({ name: block.name, mode }))
+	);
 	try {
-		const page = await browser.newPage({ viewport: VIEWPORT, deviceScaleFactor: SCALE });
-		for (const block of BLOCKS) {
-			for (const mode of ['light', 'dark'] as const) {
-				await shoot(page, block.name, mode);
-				process.stdout.write(`${block.name}-${mode}.jpg\n`);
+		const worker = async () => {
+			const page = await browser.newPage({ viewport: VIEWPORT, deviceScaleFactor: SCALE });
+			try {
+				for (let job = jobs.shift(); job; job = jobs.shift()) {
+					await shoot(page, job.name, job.mode);
+					process.stdout.write(`${job.name}-${job.mode}.jpg\n`);
+				}
+			} finally {
+				await page.close();
 			}
-		}
+		};
+		await Promise.all(Array.from({ length: CONCURRENCY }, worker));
 	} finally {
 		await browser.close();
 	}
