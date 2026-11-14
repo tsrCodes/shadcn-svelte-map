@@ -10,7 +10,6 @@
 		MapClusterLayer,
 		MapCompassControl,
 		MapControlContainer,
-		MapDrawControl,
 		MapFullscreenControl,
 		MapGeoJSON,
 		MapHeatmap,
@@ -25,12 +24,15 @@
 		MapRectangle,
 		MapRoute,
 		MapScaleControl,
-		MapSearchControl,
 		MapZoomControl,
-		type DrawFeature,
-		type DrawTool,
 		type MapViewport
 	} from '#lib/registry/ui/map/index.js';
+	import {
+		MapDrawControl,
+		type DrawFeature,
+		type DrawTool
+	} from '#lib/registry/ui/map-draw/index.js';
+	import { MapSearchControl } from '#lib/registry/ui/map-search/index.js';
 	import {
 		DELIVERIES,
 		MUSEUM_ISLAND,

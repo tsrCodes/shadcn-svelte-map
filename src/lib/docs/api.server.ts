@@ -24,7 +24,12 @@ export interface ApiEntry {
 }
 
 const SOURCES = import.meta.glob<string>(
-	['/src/lib/registry/ui/map/*.svelte', '/src/lib/registry/ui/place-autocomplete/*.svelte'],
+	[
+		'/src/lib/registry/ui/map/*.svelte',
+		'/src/lib/registry/ui/map-draw/*.svelte',
+		'/src/lib/registry/ui/map-search/*.svelte',
+		'/src/lib/registry/ui/place-autocomplete/*.svelte'
+	],
 	{ query: '?raw', import: 'default', eager: true }
 );
 
@@ -59,7 +64,12 @@ function scripts(source: string): string {
 }
 
 const BARRELS = import.meta.glob<string>(
-	['/src/lib/registry/ui/map/index.ts', '/src/lib/registry/ui/place-autocomplete/index.ts'],
+	[
+		'/src/lib/registry/ui/map/index.ts',
+		'/src/lib/registry/ui/map-draw/index.ts',
+		'/src/lib/registry/ui/map-search/index.ts',
+		'/src/lib/registry/ui/place-autocomplete/index.ts'
+	],
 	{ query: '?raw', import: 'default', eager: true }
 );
 

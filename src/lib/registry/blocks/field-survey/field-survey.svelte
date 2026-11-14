@@ -11,17 +11,19 @@
 	import {
 		Map,
 		MapControlContainer,
-		MapDrawControl,
 		MapPolygon,
 		MapScaleControl,
 		MapZoomControl,
 		lineLength,
 		pointInPolygon,
-		type DrawFeature,
-		type DrawTool,
 		type LngLatTuple,
 		type MapStyle
 	} from '#lib/registry/ui/map/index.js';
+	import {
+		MapDrawControl,
+		type DrawFeature,
+		type DrawTool
+	} from '#lib/registry/ui/map-draw/index.js';
 	import { CATEGORIES, SURVEY_AREA, VIEWPORT, type Category } from './data.js';
 
 	interface Props {

@@ -8,17 +8,19 @@
 	import {
 		Map,
 		MapControlContainer,
-		MapDrawControl,
 		MapMarker,
 		MapMarkerContent,
 		MapMarkerTooltip,
 		MapZoomControl,
 		pointInPolygon,
-		type DrawFeature,
-		type DrawTool,
 		type LngLatTuple,
 		type MapStyle
 	} from '#lib/registry/ui/map/index.js';
+	import {
+		MapDrawControl,
+		type DrawFeature,
+		type DrawTool
+	} from '#lib/registry/ui/map-draw/index.js';
 	import { DEPOT, ORDERS, TIERS, VIEWPORT, type Order, type TierId } from './data.js';
 	import OrderLayers from './order-layers.svelte';
 

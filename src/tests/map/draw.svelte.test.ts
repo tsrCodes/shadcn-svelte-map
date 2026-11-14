@@ -3,7 +3,8 @@ import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { TerraDraw } from 'terra-draw';
-import { MapContext, type DrawFeature } from '#lib/registry/ui/map/index.js';
+import { MapContext } from '#lib/registry/ui/map/index.js';
+import { type DrawFeature } from '#lib/registry/ui/map-draw/index.js';
 import DrawHarness from './DrawHarness.svelte';
 
 type HarnessProps = NonNullable<Parameters<typeof render<typeof DrawHarness>>[1]>;

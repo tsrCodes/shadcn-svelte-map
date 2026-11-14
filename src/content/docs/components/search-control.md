@@ -6,6 +6,7 @@ description: A search box that finds places and moves the map to the one you pic
 <script>
 	import ComponentPreview from '#lib/docs/components/component-preview.svelte';
 	import ApiTable from '#lib/docs/components/api-table.svelte';
+	import CodeBlockCommand from '#lib/docs/components/code-block-command.svelte';
 </script>
 
 <ComponentPreview name="search-control-demo" description="A map of Madrid with a place search box that drops a marker on the chosen place" />
@@ -14,13 +15,20 @@ Type a place name and pick a result with the mouse or the arrow keys and Enter. 
 
 The search control is the [Place Autocomplete](/docs/components/place-autocomplete) box wired to the map. Results come from the [Photon](https://photon.komoot.io) geocoder, built on OpenStreetMap data, which needs no API key.
 
+## Installation
+
+It adds the [Place Autocomplete](/docs/components/place-autocomplete) box and needs the map.
+
+<CodeBlockCommand command="npx shadcn-svelte@latest add https://shadcn-svelte-map.vercel.app/r/map-search.json" />
+
 ## Usage
 
 Place the control inside a [Control Container](/docs/components/control-container). The top-left corner leaves room for the results list.
 
 ```svelte
 <script lang="ts">
-	import { Map, MapControlContainer, MapSearchControl } from '$lib/components/ui/map/index.js';
+	import { Map, MapControlContainer } from '$lib/components/ui/map/index.js';
+	import { MapSearchControl } from '$lib/components/ui/map-search/index.js';
 </script>
 
 <Map class="h-96">

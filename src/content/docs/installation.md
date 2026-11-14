@@ -19,10 +19,9 @@ description: Add the map to a SvelteKit project with the shadcn-svelte CLI.
 
 <CodeBlockCommand command="npx shadcn-svelte@latest add https://shadcn-svelte-map.vercel.app/r/map.json" />
 
-This copies the map components into `src/lib/components/ui/map`, adds the shadcn items they use (button, button group, dropdown menu, spinner, command) and the place search box, and installs these packages:
+This copies the map components into `src/lib/components/ui/map`, adds the shadcn items they use (button, button group, dropdown menu, spinner) and installs these packages:
 
 - `maplibre-gl` renders the map.
-- `terra-draw` and `terra-draw-maplibre-gl-adapter` power the drawing tools.
 - `@lucide/svelte` provides the icons.
 
 The MapLibre worker is bundled with your app through Vite, so the map loads nothing from a CDN.
@@ -54,9 +53,19 @@ Blocks are complete examples, such as a store locator. Each one installs into it
 
 Browse them all in the [block gallery](/blocks).
 
+## Drawing and place search
+
+The drawing toolbar and the map search box are separate items, so a plain map does not install a drawing engine or a geocoder. Add them when you need them:
+
+<CodeBlockCommand command="npx shadcn-svelte@latest add https://shadcn-svelte-map.vercel.app/r/map-draw.json" />
+
+<CodeBlockCommand command="npx shadcn-svelte@latest add https://shadcn-svelte-map.vercel.app/r/map-search.json" />
+
+`map-draw` goes into `src/lib/components/ui/map-draw` and installs `terra-draw` and its MapLibre adapter. `map-search` goes into `src/lib/components/ui/map-search` and adds the place search box. Blocks that use them pull them in for you.
+
 ## Place search on its own
 
-The search box the map uses is its own item. Add it if you want place search without a map:
+The search box behind the map search control is its own item. Add it if you want place search without a map:
 
 <CodeBlockCommand command="npx shadcn-svelte@latest add https://shadcn-svelte-map.vercel.app/r/place-autocomplete.json" />
 

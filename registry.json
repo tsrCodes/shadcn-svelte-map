@@ -14,27 +14,11 @@
 			"name": "map",
 			"type": "registry:ui",
 			"title": "Map",
-			"description": "An interactive MapLibre GL map with markers, popups, data layers, controls and drawing, styled with shadcn-svelte theme colours.",
-			"dependencies": [
-				"@lucide/svelte@^1.61.0",
-				"maplibre-gl@^6.16.0",
-				"svelte@^5.40.0",
-				"terra-draw@^1.39.0",
-				"terra-draw-maplibre-gl-adapter@^1.5.0"
-			],
+			"description": "An interactive MapLibre GL map with markers, popups, data layers and controls, styled with shadcn-svelte theme colours.",
+			"dependencies": ["@lucide/svelte@^1.61.0", "maplibre-gl@^6.16.0", "svelte@^5.40.0"],
 			"devDependencies": ["@types/geojson@^7946.0.16"],
-			"registryDependencies": [
-				"button",
-				"button-group",
-				"dropdown-menu",
-				"local:place-autocomplete",
-				"spinner"
-			],
+			"registryDependencies": ["button", "button-group", "dropdown-menu", "spinner"],
 			"files": [
-				{
-					"path": "src/lib/registry/ui/map/draw.ts",
-					"type": "registry:ui"
-				},
 				{
 					"path": "src/lib/registry/ui/map/geometry.ts",
 					"type": "registry:ui"
@@ -77,10 +61,6 @@
 				},
 				{
 					"path": "src/lib/registry/ui/map/map-control-container.svelte",
-					"type": "registry:ui"
-				},
-				{
-					"path": "src/lib/registry/ui/map/map-draw-control.svelte",
 					"type": "registry:ui"
 				},
 				{
@@ -148,10 +128,6 @@
 					"type": "registry:ui"
 				},
 				{
-					"path": "src/lib/registry/ui/map/map-search-control.svelte",
-					"type": "registry:ui"
-				},
-				{
 					"path": "src/lib/registry/ui/map/map-shape.svelte",
 					"type": "registry:ui"
 				},
@@ -193,6 +169,51 @@
 				},
 				{
 					"path": "src/lib/registry/ui/map/webgl.ts",
+					"type": "registry:ui"
+				}
+			]
+		},
+		{
+			"name": "map-draw",
+			"type": "registry:ui",
+			"title": "Map Draw Control",
+			"description": "A drawing toolbar for the map: points, lines and shapes, editing, undo and redo.",
+			"dependencies": [
+				"@lucide/svelte@^1.61.0",
+				"maplibre-gl@^6.16.0",
+				"terra-draw-maplibre-gl-adapter@^1.5.0",
+				"terra-draw@^1.39.0"
+			],
+			"devDependencies": ["@types/geojson@^7946.0.16"],
+			"registryDependencies": ["local:map", "button", "button-group"],
+			"files": [
+				{
+					"path": "src/lib/registry/ui/map-draw/draw.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map-draw/index.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map-draw/map-draw-control.svelte",
+					"type": "registry:ui"
+				}
+			]
+		},
+		{
+			"name": "map-search",
+			"type": "registry:ui",
+			"title": "Map Search Control",
+			"description": "A place search box that moves the map to the chosen place.",
+			"registryDependencies": ["local:map", "local:place-autocomplete"],
+			"files": [
+				{
+					"path": "src/lib/registry/ui/map-search/index.ts",
+					"type": "registry:ui"
+				},
+				{
+					"path": "src/lib/registry/ui/map-search/map-search-control.svelte",
 					"type": "registry:ui"
 				}
 			]
@@ -248,7 +269,7 @@
 			"description": "Draw fences around a harbour and see which assets sit inside them.",
 			"dependencies": ["@lucide/svelte@^1.61.0"],
 			"devDependencies": ["@types/geojson@^7946.0.16"],
-			"registryDependencies": ["local:map", "badge", "card", "input"],
+			"registryDependencies": ["local:map", "local:map-draw", "badge", "card", "input"],
 			"files": [
 				{
 					"path": "src/lib/registry/blocks/geofence-editor/geofence-editor.svelte",
@@ -269,7 +290,14 @@
 			"description": "Search an address to list the nearest stores, and pin spots for new ones.",
 			"dependencies": ["@lucide/svelte@^1.61.0"],
 			"devDependencies": ["@types/geojson@^7946.0.16"],
-			"registryDependencies": ["local:map", "badge", "card", "input"],
+			"registryDependencies": [
+				"local:map",
+				"local:map-search",
+				"local:map-draw",
+				"badge",
+				"card",
+				"input"
+			],
 			"files": [
 				{
 					"path": "src/lib/registry/blocks/store-locator/store-locator.svelte",
@@ -290,7 +318,7 @@
 			"description": "Trace fields over registry parcels, pick a crop for each and total the hectares.",
 			"dependencies": ["@lucide/svelte@^1.61.0"],
 			"devDependencies": ["@types/geojson@^7946.0.16"],
-			"registryDependencies": ["local:map", "card", "native-select"],
+			"registryDependencies": ["local:map", "local:map-draw", "card", "native-select"],
 			"files": [
 				{
 					"path": "src/lib/registry/blocks/plot-mapper/plot-mapper.svelte",
@@ -311,7 +339,7 @@
 			"description": "Draw delivery zones around a depot, price each one and see how many orders they cover.",
 			"dependencies": ["@lucide/svelte@^1.61.0"],
 			"devDependencies": ["@types/geojson@^7946.0.16"],
-			"registryDependencies": ["local:map", "card", "native-select"],
+			"registryDependencies": ["local:map", "local:map-draw", "card", "native-select"],
 			"files": [
 				{
 					"path": "src/lib/registry/blocks/delivery-zone-planner/delivery-zone-planner.svelte",
@@ -337,7 +365,15 @@
 			"description": "Record observations and transects in a park, add notes, and copy the survey as GeoJSON.",
 			"dependencies": ["@lucide/svelte@^1.61.0"],
 			"devDependencies": ["@types/geojson@^7946.0.16"],
-			"registryDependencies": ["local:map", "badge", "button", "card", "input", "native-select"],
+			"registryDependencies": [
+				"local:map",
+				"local:map-draw",
+				"badge",
+				"button",
+				"card",
+				"input",
+				"native-select"
+			],
 			"files": [
 				{
 					"path": "src/lib/registry/blocks/field-survey/field-survey.svelte",

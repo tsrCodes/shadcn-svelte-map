@@ -4,12 +4,14 @@
 	import {
 		Map,
 		MapControlContainer,
-		MapDrawControl,
-		type DrawFeature,
-		type DrawTool,
 		type MapContext,
 		type MapStyle
 	} from '#lib/registry/ui/map/index.js';
+	import {
+		MapDrawControl,
+		type DrawFeature,
+		type DrawTool
+	} from '#lib/registry/ui/map-draw/index.js';
 	import ContextProbe from './ContextProbe.svelte';
 	import { DARK_STYLE, LIGHT_STYLE } from './fixtures.js';
 

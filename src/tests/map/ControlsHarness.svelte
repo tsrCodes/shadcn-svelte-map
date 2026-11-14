@@ -8,12 +8,12 @@
 		MapFullscreenControl,
 		MapLocateControl,
 		MapScaleControl,
-		MapSearchControl,
 		MapZoomControl,
 		type MapBasemap,
 		type MapContext,
 		type ScaleUnit
 	} from '#lib/registry/ui/map/index.js';
+	import { MapSearchControl } from '#lib/registry/ui/map-search/index.js';
 	import type { Place } from '#lib/registry/ui/place-autocomplete/index.js';
 	import ContextProbe from './ContextProbe.svelte';
 	import { DARK_STYLE, LIGHT_STYLE } from './fixtures.js';

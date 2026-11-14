@@ -1,6 +1,6 @@
 import type { Feature, LineString, Point, Polygon } from 'geojson';
 import type { GeoJSONStoreFeatures } from 'terra-draw';
-import { toHex, type ThemeColors } from './theme.svelte.js';
+import { toHex, type ThemeColors } from '#lib/registry/ui/map/theme.svelte.js';
 
 /** Shapes a user can draw. */
 export type DrawMode = 'point' | 'polyline' | 'polygon' | 'rectangle' | 'circle' | 'freehand';

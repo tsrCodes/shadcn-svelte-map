@@ -28,8 +28,8 @@
 		type DrawStyles,
 		type DrawTool
 	} from './draw.js';
-	import { CONTROL_BUTTON_CLASS } from './map-control-container.svelte';
-	import { getMapContext } from './map-context.svelte.js';
+	import { CONTROL_BUTTON_CLASS } from '#lib/registry/ui/map/map-control-container.svelte';
+	import { getMapContext } from '#lib/registry/ui/map/map-context.svelte.js';
 
 	interface Props extends Omit<
 		HTMLAttributes<HTMLDivElement>,

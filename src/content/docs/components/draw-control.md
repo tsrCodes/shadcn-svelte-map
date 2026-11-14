@@ -6,6 +6,7 @@ description: A toolbar to draw points, lines and shapes, edit and delete them, a
 <script>
 	import ComponentPreview from '#lib/docs/components/component-preview.svelte';
 	import ApiTable from '#lib/docs/components/api-table.svelte';
+	import CodeBlockCommand from '#lib/docs/components/code-block-command.svelte';
 </script>
 
 <ComponentPreview name="draw-control-demo" description="A map of London with the full drawing toolbar and a summary of what has been drawn" />
@@ -16,18 +17,20 @@ Drawing runs on [terra-draw](https://github.com/JamesLMilner/terra-draw), loaded
 
 This page covers the control's API. For saving drawings, loading them back and other workflows, read the [Drawing](/docs/drawing) guide.
 
+## Installation
+
+It installs `terra-draw` and its MapLibre adapter, and needs the map.
+
+<CodeBlockCommand command="npx shadcn-svelte@latest add https://shadcn-svelte-map.vercel.app/r/map-draw.json" />
+
 ## Usage
 
 Place the control inside a [Control Container](/docs/components/control-container).
 
 ```svelte
 <script lang="ts">
-	import {
-		Map,
-		MapControlContainer,
-		MapDrawControl,
-		type DrawFeature
-	} from '$lib/components/ui/map/index.js';
+	import { Map, MapControlContainer } from '$lib/components/ui/map/index.js';
+	import { MapDrawControl, type DrawFeature } from '$lib/components/ui/map-draw/index.js';
 
 	let features = $state.raw<DrawFeature[]>([]);
 </script>
@@ -58,7 +61,7 @@ Bind `mode` to read or set the active tool. It holds a `DrawTool`: one of the sh
 
 ```svelte
 <script lang="ts">
-	import type { DrawTool } from '$lib/components/ui/map/index.js';
+	import type { DrawTool } from '$lib/components/ui/map-draw/index.js';
 
 	let mode = $state<DrawTool>('polygon');
 </script>

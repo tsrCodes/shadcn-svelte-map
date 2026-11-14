@@ -1,13 +1,10 @@
 <script lang="ts">
+	import { Map, MapControlContainer, lineLength, polygonArea } from '#lib/registry/ui/map/index.js';
 	import {
-		Map,
-		MapControlContainer,
 		MapDrawControl,
-		lineLength,
-		polygonArea,
 		type DrawFeature,
 		type DrawTool
-	} from '#lib/registry/ui/map/index.js';
+	} from '#lib/registry/ui/map-draw/index.js';
 
 	let tool = $state<DrawTool>('none');
 	let drawings = $state.raw<DrawFeature[]>([]);

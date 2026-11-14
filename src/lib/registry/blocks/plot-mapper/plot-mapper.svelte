@@ -6,18 +6,20 @@
 	import {
 		Map,
 		MapControlContainer,
-		MapDrawControl,
 		MapGeoJSON,
 		MapScaleControl,
 		MapZoomControl,
 		pointInPolygon,
 		polygonArea,
 		ringCenter,
-		type DrawFeature,
-		type DrawTool,
 		type LngLatTuple,
 		type MapStyle
 	} from '#lib/registry/ui/map/index.js';
+	import {
+		MapDrawControl,
+		type DrawFeature,
+		type DrawTool
+	} from '#lib/registry/ui/map-draw/index.js';
 	import { CROPS, PARCELS, VIEWPORT, type Crop } from './data.js';
 
 	interface Props {

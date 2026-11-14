@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'vitest';
 import type { GeoJSONStoreFeatures } from 'terra-draw';
-import { drawStyles, engineMode, finishedFeatures, DRAW_MODES } from '#lib/registry/ui/map/draw.js';
+import {
+	drawStyles,
+	engineMode,
+	finishedFeatures,
+	DRAW_MODES
+} from '#lib/registry/ui/map-draw/draw.js';
 
 function feature(
 	id: string,

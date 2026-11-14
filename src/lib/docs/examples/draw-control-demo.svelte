@@ -1,12 +1,11 @@
 <script lang="ts">
+	import { Map, MapControlContainer } from '#lib/registry/ui/map/index.js';
 	import {
-		Map,
-		MapControlContainer,
 		MapDrawControl,
 		DRAW_MODES,
 		type DrawFeature,
 		type DrawTool
-	} from '#lib/registry/ui/map/index.js';
+	} from '#lib/registry/ui/map-draw/index.js';
 
 	let mode = $state<DrawTool>('none');
 	let features = $state.raw<DrawFeature[]>([]);

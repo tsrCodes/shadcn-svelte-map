@@ -4,9 +4,9 @@
 		MapControlContainer,
 		MapMarker,
 		MapMarkerLabel,
-		MapSearchControl,
 		MapZoomControl
 	} from '#lib/registry/ui/map/index.js';
+	import { MapSearchControl } from '#lib/registry/ui/map-search/index.js';
 	import type { Place } from '#lib/registry/ui/place-autocomplete/index.js';
 
 	let picked = $state.raw<Place | null>(null);

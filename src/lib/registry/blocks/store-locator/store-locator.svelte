@@ -8,20 +8,22 @@
 	import {
 		Map,
 		MapControlContainer,
-		MapDrawControl,
 		MapMarker,
 		MapMarkerContent,
 		MapMarkerPopup,
 		MapMarkerTooltip,
-		MapSearchControl,
 		MapZoomControl,
 		distanceMeters,
-		type DrawFeature,
-		type DrawTool,
 		type LngLatTuple,
 		type MapStyle,
 		type MapViewport
 	} from '#lib/registry/ui/map/index.js';
+	import {
+		MapDrawControl,
+		type DrawFeature,
+		type DrawTool
+	} from '#lib/registry/ui/map-draw/index.js';
+	import { MapSearchControl } from '#lib/registry/ui/map-search/index.js';
 	import { START, STORES, VIEWPORT } from './data.js';
 
 	interface Props {

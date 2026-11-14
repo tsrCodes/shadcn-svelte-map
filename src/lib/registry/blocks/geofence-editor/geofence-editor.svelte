@@ -7,18 +7,20 @@
 	import {
 		Map,
 		MapControlContainer,
-		MapDrawControl,
 		MapMarker,
 		MapMarkerContent,
 		MapMarkerTooltip,
 		MapZoomControl,
 		pointInPolygon,
 		polygonArea,
-		type DrawFeature,
-		type DrawTool,
 		type LngLatTuple,
 		type MapStyle
 	} from '#lib/registry/ui/map/index.js';
+	import {
+		MapDrawControl,
+		type DrawFeature,
+		type DrawTool
+	} from '#lib/registry/ui/map-draw/index.js';
 	import { ASSETS, VIEWPORT } from './data.js';
 
 	interface Props {

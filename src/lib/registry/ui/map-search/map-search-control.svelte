@@ -5,7 +5,7 @@
 		type Place,
 		type PlacePosition
 	} from '#lib/registry/ui/place-autocomplete/index.js';
-	import { getMapContext } from './map-context.svelte.js';
+	import { getMapContext } from '#lib/registry/ui/map/map-context.svelte.js';
 
 	interface Props extends Omit<ComponentProps<typeof PlaceAutocomplete>, 'near'> {
 		/** Zoom for places that are a point; areas are fitted to the view. */
