@@ -16,7 +16,11 @@
 				(entries) => {
 					for (const entry of entries) visible[entry.target.id] = entry.isIntersecting;
 					const first = headings.find(({ id }) => visible[id]);
-					if (first) activeId = first.id;
+					// Between headings, the section you are reading is the last one scrolled past.
+					const passed = headings.findLast(
+						({ id }) => (document.getElementById(id)?.getBoundingClientRect().top ?? 1) < 0
+					);
+					activeId = first?.id ?? passed?.id ?? null;
 				},
 				{ rootMargin: '0% 0% -80% 0%' }
 			);

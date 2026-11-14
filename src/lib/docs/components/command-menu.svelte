@@ -29,16 +29,16 @@
 		isMac = navigator.platform.toUpperCase().includes('MAC');
 	});
 
+	// Form fields, editable regions, and custom editors that declare a text role.
+	const EDITABLE =
+		'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], [role="searchbox"], [role="combobox"]';
+
 	/** True when the key went to a form field or anywhere inside an editable region. */
 	function isTyping(target: EventTarget | null): boolean {
 		if (!(target instanceof Element)) return false;
 		if (target instanceof HTMLElement && target.isContentEditable) return true;
 		// Rich editors send key events from plain children of an editable element.
-		return (
-			target.closest(
-				'input, textarea, select, [contenteditable]:not([contenteditable="false"])'
-			) !== null
-		);
+		return target.closest(EDITABLE) !== null;
 	}
 
 	function onkeydown(event: KeyboardEvent) {
