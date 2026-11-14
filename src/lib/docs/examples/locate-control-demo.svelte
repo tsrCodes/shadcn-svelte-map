@@ -8,8 +8,16 @@
 		message = `${latitude.toFixed(4)}, ${longitude.toFixed(4)} (within ${Math.round(accuracy)} m)`;
 	}
 
+	// Browser error text varies; show the same plain message on every platform.
+	const GEOLOCATION_MESSAGES: Record<number, string> = {
+		1: 'Location access was denied',
+		2: 'Your position is not available',
+		3: 'Finding your position took too long'
+	};
+
 	function showError(error: GeolocationPositionError | Error) {
-		message = error.message || 'Your location is not available';
+		const code = 'code' in error ? error.code : undefined;
+		message = (code && GEOLOCATION_MESSAGES[code]) || 'Your location is not available';
 	}
 </script>
 

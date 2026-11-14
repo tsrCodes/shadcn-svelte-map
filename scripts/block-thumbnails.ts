@@ -23,10 +23,16 @@ async function shoot(page: Page, name: string, mode: 'light' | 'dark'): Promise<
 	await page.emulateMedia({ colorScheme: mode, reducedMotion: 'reduce' });
 	await page.goto(`${BASE_URL}/blocks/${name}`, { waitUntil: 'load' });
 	const preview = page.locator('section[aria-label$="preview"]');
-	await preview
-		.locator('[data-slot="map"][data-status="ready"]')
-		.first()
-		.waitFor({ timeout: READY_TIMEOUT_MS });
+	// Blocks load lazily, so wait for a ready map. A block with no map at all just settles;
+	// a map that never gets ready is still an error.
+	try {
+		await preview
+			.locator('[data-slot="map"][data-status="ready"]')
+			.first()
+			.waitFor({ timeout: READY_TIMEOUT_MS });
+	} catch (error) {
+		if (await preview.locator('[data-slot="map"]').count()) throw error;
+	}
 	await page.waitForTimeout(SETTLE_MS);
 	const box = await preview.boundingBox();
 	if (!box) throw new Error(`${name}: preview not visible`);

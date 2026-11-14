@@ -9,6 +9,8 @@
 	const COUNTS = [1_000, 10_000, 100_000] as const;
 	const PAN_MS = 3000;
 	const PAN_PIXELS = 600;
+	// Fewer frames than this (a hidden tab, for example) would give meaningless numbers.
+	const MIN_FRAMES = 20;
 	// Points gather around a few city centres, like real data does.
 	const CENTRES: [number, number][] = [
 		[2.35, 48.86],
@@ -51,6 +53,7 @@
 	let data = $state.raw<Stop>(points(100_000));
 	let loadMs = $state<number | null>(null);
 	let frames = $state<{ median: number; p95: number; fps: number } | null>(null);
+	let note = $state<string | null>(null);
 	let running = $state(false);
 
 	// Never wait forever: a removed map fires no more events.
@@ -112,6 +115,12 @@
 		}
 		if (map !== target) return;
 		const sorted = deltas.slice(1).sort((a, b) => a - b);
+		if (sorted.length < MIN_FRAMES) {
+			frames = null;
+			note = 'Too few frames to measure. Keep the page in view and try again.';
+			return;
+		}
+		note = null;
 		const median = percentile(sorted, 0.5);
 		frames = {
 			median: Math.round(median * 10) / 10,
@@ -164,5 +173,8 @@
 			<dt class="text-muted-foreground">Frame, p95</dt>
 			<dd data-testid="perf-p95">{frames ? `${frames.p95} ms` : '–'}</dd>
 		</dl>
+		{#if note}
+			<p class="text-muted-foreground" role="status">{note}</p>
+		{/if}
 	</div>
 </div>
