@@ -5,12 +5,59 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { TerraDraw } from 'terra-draw';
 import { MapContext } from '#lib/registry/ui/map/index.js';
 import { type DrawFeature } from '#lib/registry/ui/map-draw/index.js';
+import { finishedFeatures } from '#lib/registry/ui/map-draw/draw.js';
 import DrawHarness from './DrawHarness.svelte';
 
 type HarnessProps = NonNullable<Parameters<typeof render<typeof DrawHarness>>[1]>;
 type Pixel = [number, number];
 
 const DRAW_PREFIX = 'map-draw-';
+
+const SAVED: DrawFeature[] = [
+	{
+		type: 'Feature',
+		id: 'zone-a',
+		geometry: {
+			type: 'Polygon',
+			coordinates: [
+				[
+					[-10, -10],
+					[10, -10],
+					[10, 10],
+					[-10, -10]
+				]
+			]
+		},
+		properties: { mode: 'polygon' }
+	},
+	{
+		type: 'Feature',
+		id: 7,
+		geometry: { type: 'Point', coordinates: [20, 5] },
+		properties: { mode: 'point' }
+	},
+	{
+		type: 'Feature',
+		id: 'path',
+		geometry: {
+			type: 'LineString',
+			coordinates: [
+				[-20, 0],
+				[0, 15]
+			]
+		},
+		properties: { mode: 'polyline' }
+	}
+];
+
+function byId(list: readonly DrawFeature[]): DrawFeature[] {
+	return list.toSorted((a, b) => String(a.id).localeCompare(String(b.id)));
+}
+
+/** Finished drawings in the live instance, as `onchange` reports them, sorted by id. */
+function drawn(draw: TerraDraw | null): DrawFeature[] {
+	return draw ? byId(finishedFeatures(draw.getSnapshot())) : [];
+}
 // The tool bar sits along the top edge; keep pointer input well below it.
 const POLYGON: Pixel[] = [
 	[150, 110],
@@ -215,6 +262,49 @@ describe('MapDrawControl', () => {
 		await userEvent.click(redo);
 		await expect.poll(() => latest()).toHaveLength(1);
 		expect(redo.disabled).toBe(true);
+	});
+
+	test('loads saved features when drawing starts, ready to edit, without undo history', async () => {
+		const { root, draw, changes } = await mountDraw({ features: SAVED });
+		await expect.poll(() => drawn(draw())).toEqual(byId(SAVED));
+		expect(changes).toEqual([]);
+		expect(button(root, 'Undo').disabled).toBe(true);
+	});
+
+	test('a different list replaces what is drawn', async () => {
+		const { screen, draw, changes } = await mountDraw({ features: SAVED });
+		await expect.poll(() => drawn(draw())).toHaveLength(3);
+
+		await screen.rerender({ features: [SAVED[1]] });
+		await expect.poll(() => drawn(draw())).toEqual([SAVED[1]]);
+		expect(changes).toEqual([]);
+	});
+
+	test('passing back the reported list keeps the drawing and its history', async () => {
+		const { screen, map, root, draw, latest } = await mountDraw();
+		await drawPolygon(map, root);
+		await expect.poll(() => latest()).toHaveLength(1);
+		const undo = button(root, 'Undo');
+		expect(undo.disabled).toBe(false);
+
+		await screen.rerender({ features: latest() });
+		expect(drawn(draw())).toEqual(byId(latest()));
+		expect(undo.disabled).toBe(false);
+	});
+
+	test('a feature that cannot be drawn is reported and the rest still load', async () => {
+		const onerror = vi.fn();
+		const broken: DrawFeature = {
+			type: 'Feature',
+			id: 'broken',
+			geometry: { type: 'Point', coordinates: [0, 0] },
+			properties: { mode: 'polygon' }
+		};
+		const { draw, latest } = await mountDraw({ features: [SAVED[1], broken], onerror });
+		await expect.poll(() => onerror.mock.calls.length).toBe(1);
+		expect(String(onerror.mock.calls[0][0])).toContain('"broken"');
+		await expect.poll(() => drawn(draw())).toEqual([SAVED[1]]);
+		expect(latest()).toEqual([SAVED[1]]);
 	});
 
 	test('the mode prop drives the live instance, and buttons write it back', async () => {

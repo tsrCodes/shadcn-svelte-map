@@ -17,9 +17,11 @@
 	import { ButtonGroup } from '#lib/registry/ui/button-group/index.js';
 	import { cn } from '#lib/utils.js';
 	import {
+		DRAW_ID_STRATEGY,
 		DRAW_MODES,
 		drawPalette,
 		drawStyles,
+		engineFeatures,
 		engineMode,
 		finishedFeatures,
 		SELECT_FLAGS,
@@ -41,9 +43,15 @@
 		modes?: readonly DrawMode[];
 		/** Lay the tool buttons out in a column or a row. */
 		orientation?: 'vertical' | 'horizontal';
+		/**
+		 * The drawings on the map. Loaded when drawing starts, so saved shapes can be edited;
+		 * pass a different list to replace them. Updated after every change, so
+		 * `bind:features` keeps it in step.
+		 */
+		features?: DrawFeature[];
 		/** Every finished drawing, after each create, edit, delete, undo or redo. */
 		onchange?: (features: DrawFeature[]) => void;
-		/** The drawing engine failed to load. Logged when unset. */
+		/** The drawing engine failed to load, or a passed feature could not be drawn. Logged when unset. */
 		onerror?: (error: Error) => void;
 		/** The terra-draw instance, once it runs. */
 		ref?: TerraDraw | null;
@@ -53,6 +61,7 @@
 		mode = $bindable('none'),
 		modes = DRAW_MODES,
 		orientation = 'vertical',
+		features = $bindable(),
 		onchange,
 		onerror,
 		ref = $bindable(null),
@@ -84,8 +93,10 @@
 	let canUndo = $state(false);
 	let canRedo = $state(false);
 	let selectedId = $state<string | number | null>(null);
-	/** Last list sent to `onchange`, to skip calls that would repeat it. */
+	/** Last list sent to `onchange` or loaded, to skip calls and loads that would repeat it. */
 	let lastEmitted = '';
+	/** True while passed features replace the drawings; the store events it causes are ours. */
+	let loading = false;
 
 	// Flips once; later style loads must not restart drawing.
 	const styleReady = $derived(ctx.styleVersion > 0);
@@ -116,12 +127,51 @@
 		target.select.updateOptions({ styles: styles.select });
 	}
 
+	/**
+	 * A list in the exact shape `finishedFeatures` gives, sorted by id, so equal lists
+	 * compare equal whatever order terra-draw keeps them in.
+	 */
+	function featuresKey(list: readonly DrawFeature[]): string {
+		const entries = list.map(({ id, geometry, properties }) => ({
+			type: 'Feature',
+			id,
+			geometry,
+			properties: { mode: properties.mode }
+		}));
+		return JSON.stringify([...entries].sort((a, b) => String(a.id).localeCompare(String(b.id))));
+	}
+
 	function emit(instance: TerraDraw) {
-		const features = finishedFeatures(instance.getSnapshot());
-		const key = JSON.stringify(features);
+		if (loading) return;
+		const next = finishedFeatures(instance.getSnapshot());
+		const key = featuresKey(next);
 		if (key === lastEmitted) return;
 		lastEmitted = key;
-		onchange?.(features);
+		features = next;
+		onchange?.(next);
+	}
+
+	/** Replace the drawings with `list`. Loading is not a step people can undo. */
+	function load(instance: TerraDraw, list: DrawFeature[]) {
+		loading = true;
+		try {
+			if (selectedId !== null) instance.deselectFeature(selectedId);
+			instance.clear();
+			const results = list.length > 0 ? instance.addFeatures(engineFeatures(list)) : [];
+			for (const result of results) {
+				if (result.valid) continue;
+				report(new Error(`MapDrawControl: feature "${result.id}" was not drawn: ${result.reason}`));
+			}
+			instance.clearUndoRedoHistory();
+		} finally {
+			loading = false;
+		}
+		selectedId = null;
+		canUndo = false;
+		canRedo = false;
+		lastEmitted = featuresKey(list);
+		// Reports the list again only when something was left out or changed on the way in.
+		emit(instance);
 	}
 
 	function listen(instance: TerraDraw) {
@@ -145,6 +195,7 @@
 		const instance = new lib.TerraDraw({
 			adapter: new adapterLib.TerraDrawMapLibreGLAdapter({ map, prefixId: prefix }),
 			modes: Object.values(modesForEngine),
+			idStrategy: DRAW_ID_STRATEGY,
 			undoRedo: { sessionLevel: new lib.TerraDrawSessionUndoRedo() }
 		});
 		instance.start();
@@ -239,6 +290,16 @@
 		const map = ctx.map;
 		if (!map || !styleReady) return;
 		return untrack(() => mountDraw(map));
+	});
+
+	// Load passed features once drawing runs, and again whenever a different list comes in.
+	$effect(() => {
+		const instance = draw;
+		if (!instance || features === undefined) return;
+		const list = $state.snapshot(features) as DrawFeature[];
+		untrack(() => {
+			if (featuresKey(list) !== lastEmitted) load(instance, list);
+		});
 	});
 
 	$effect(() => {

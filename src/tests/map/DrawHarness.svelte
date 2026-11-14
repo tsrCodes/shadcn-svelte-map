@@ -19,6 +19,8 @@
 		showDraw?: boolean;
 		mode?: DrawTool;
 		mapStyle?: MapStyle;
+		features?: DrawFeature[];
+		onerror?: (error: Error) => void;
 		oncontext?: (context: MapContext) => void;
 		onchange?: (features: DrawFeature[]) => void;
 		ondraw?: (draw: TerraDraw | null) => void;
@@ -28,6 +30,8 @@
 		showDraw = true,
 		mode = $bindable('none'),
 		mapStyle = { light: LIGHT_STYLE, dark: DARK_STYLE },
+		features,
+		onerror,
 		oncontext,
 		onchange,
 		ondraw
@@ -43,7 +47,14 @@
 		<ContextProbe {oncontext} />
 		{#if showDraw}
 			<MapControlContainer position="top-left">
-				<MapDrawControl orientation="horizontal" bind:mode bind:ref={draw} {onchange} />
+				<MapDrawControl
+					orientation="horizontal"
+					bind:mode
+					bind:ref={draw}
+					{features}
+					{onchange}
+					{onerror}
+				/>
 			</MapControlContainer>
 		{/if}
 	</Map>

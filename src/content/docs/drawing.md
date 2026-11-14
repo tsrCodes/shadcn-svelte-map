@@ -80,4 +80,19 @@ The map exports geometry helpers that work on drawings directly. `polygonArea` r
 
 ## Loading saved drawings
 
-`bind:ref` gives you the terra-draw instance once it runs. Use its `addFeatures` method to put saved shapes back. terra-draw names the line tool `linestring`, so a saved polyline needs `properties.mode` set to `linestring`.
+Pass saved drawings to `features` and they load when the toolbar starts, ready to select and edit. Bind it to keep your list in step with every change:
+
+```svelte
+<script lang="ts">
+	import { MapDrawControl, type DrawFeature } from '$lib/components/ui/map-draw/index.js';
+
+	let { saved }: { saved: DrawFeature[] } = $props();
+	let drawings = $state.raw(saved);
+</script>
+
+<MapDrawControl bind:features={drawings} />
+```
+
+Give `features` a different list, such as another user's zones, and it replaces what is on the map. Passing back the list the control reported changes nothing, so undo history is kept. Loading is not a step people can undo.
+
+Saved features keep their ids, so ids from your database work as they are. A feature that cannot be drawn, such as a point marked `polygon`, is left out and reported through `onerror`; `onchange` then reports the list without it.
