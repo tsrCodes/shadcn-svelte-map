@@ -80,9 +80,10 @@
 		frames = null;
 		const start = performance.now();
 		data = points(next);
+		const target = map;
 		try {
-			await idle(map);
-			loadMs = Math.round(performance.now() - start);
+			await idle(target);
+			if (map === target) loadMs = Math.round(performance.now() - start);
 		} finally {
 			running = false;
 		}
@@ -98,16 +99,18 @@
 			last = now;
 			frame = requestAnimationFrame(tick);
 		});
+		const target = map;
 		try {
 			// Benchmark on purpose: always animate, so frames are measured.
-			map.panBy([PAN_PIXELS, 0], { duration: PAN_MS / 2, essential: true });
-			await mapEvent(map, 'moveend');
-			map.panBy([-PAN_PIXELS, 0], { duration: PAN_MS / 2, essential: true });
-			await mapEvent(map, 'moveend');
+			target.panBy([PAN_PIXELS, 0], { duration: PAN_MS / 2, essential: true });
+			await mapEvent(target, 'moveend');
+			target.panBy([-PAN_PIXELS, 0], { duration: PAN_MS / 2, essential: true });
+			await mapEvent(target, 'moveend');
 		} finally {
 			cancelAnimationFrame(frame);
 			running = false;
 		}
+		if (map !== target) return;
 		const sorted = deltas.slice(1).sort((a, b) => a - b);
 		const median = percentile(sorted, 0.5);
 		frames = {
@@ -121,7 +124,8 @@
 		map = loaded;
 		const start = performance.now();
 		await idle(loaded);
-		loadMs = Math.round(performance.now() - start);
+		// A newer map may have loaded meanwhile; its numbers win.
+		if (map === loaded) loadMs = Math.round(performance.now() - start);
 	}
 </script>
 

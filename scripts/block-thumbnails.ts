@@ -45,6 +45,7 @@ const CONCURRENCY = 3;
 async function main(): Promise<void> {
 	await mkdir(OUT_DIR, { recursive: true });
 	const browser = await chromium.launch({ args: WEBGL_ARGS });
+	let next = 0;
 	const jobs = BLOCKS.flatMap((block) =>
 		(['light', 'dark'] as const).map((mode) => ({ name: block.name, mode }))
 	);
@@ -52,7 +53,9 @@ async function main(): Promise<void> {
 		const worker = async () => {
 			const page = await browser.newPage({ viewport: VIEWPORT, deviceScaleFactor: SCALE });
 			try {
-				for (let job = jobs.shift(); job; job = jobs.shift()) {
+				// Each worker claims the next index; the jobs list itself never changes.
+				for (let index = next++; index < jobs.length; index = next++) {
+					const job = jobs[index];
 					await shoot(page, job.name, job.mode);
 					process.stdout.write(`${job.name}-${job.mode}.jpg\n`);
 				}
