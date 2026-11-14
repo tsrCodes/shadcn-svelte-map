@@ -53,8 +53,24 @@
 	let frames = $state<{ median: number; p95: number; fps: number } | null>(null);
 	let running = $state(false);
 
+	// Never wait forever: a removed map fires no more events.
+	const EVENT_TIMEOUT_MS = 20_000;
+
+	/** Resolves on the map event, or after a timeout so the demo never gets stuck. */
+	function mapEvent(target: MapLibreMap, event: 'idle' | 'moveend'): Promise<void> {
+		return new Promise((resolve) => {
+			const timer = setTimeout(done, EVENT_TIMEOUT_MS);
+			function done() {
+				clearTimeout(timer);
+				target.off(event, done);
+				resolve();
+			}
+			target.once(event, done);
+		});
+	}
+
 	function idle(target: MapLibreMap): Promise<void> {
-		return new Promise((resolve) => target.once('idle', () => resolve()));
+		return mapEvent(target, 'idle');
 	}
 
 	async function show(next: (typeof COUNTS)[number]) {
@@ -64,9 +80,12 @@
 		frames = null;
 		const start = performance.now();
 		data = points(next);
-		await idle(map);
-		loadMs = Math.round(performance.now() - start);
-		running = false;
+		try {
+			await idle(map);
+			loadMs = Math.round(performance.now() - start);
+		} finally {
+			running = false;
+		}
 	}
 
 	async function pan() {
@@ -79,12 +98,16 @@
 			last = now;
 			frame = requestAnimationFrame(tick);
 		});
-		// Benchmark on purpose: always animate, so frames are measured.
-		map.panBy([PAN_PIXELS, 0], { duration: PAN_MS / 2, essential: true });
-		await new Promise((resolve) => map?.once('moveend', resolve));
-		map.panBy([-PAN_PIXELS, 0], { duration: PAN_MS / 2, essential: true });
-		await new Promise((resolve) => map?.once('moveend', resolve));
-		cancelAnimationFrame(frame);
+		try {
+			// Benchmark on purpose: always animate, so frames are measured.
+			map.panBy([PAN_PIXELS, 0], { duration: PAN_MS / 2, essential: true });
+			await mapEvent(map, 'moveend');
+			map.panBy([-PAN_PIXELS, 0], { duration: PAN_MS / 2, essential: true });
+			await mapEvent(map, 'moveend');
+		} finally {
+			cancelAnimationFrame(frame);
+			running = false;
+		}
 		const sorted = deltas.slice(1).sort((a, b) => a - b);
 		const median = percentile(sorted, 0.5);
 		frames = {
@@ -92,7 +115,6 @@
 			p95: Math.round(percentile(sorted, 0.95) * 10) / 10,
 			fps: Math.round(1000 / (median || 1))
 		};
-		running = false;
 	}
 
 	async function onload(loaded: MapLibreMap) {
