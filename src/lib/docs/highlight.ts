@@ -1,5 +1,8 @@
 import { createHighlighter, type Highlighter, type ShikiTransformer } from 'shiki';
+import { assertHighlightMarkup } from './highlight-markup.js';
 import { CODE_THEMES, styleToClasses } from './shiki-theme.js';
+
+export { assertHighlightMarkup };
 
 // Build time only: the mdsvex preprocessor and the docs page loads use it, so Shiki never ships
 const LANGS = ['svelte', 'ts', 'bash', 'json', 'css', 'html'];
@@ -33,20 +36,6 @@ const styleToClassTransformer: ShikiTransformer = {
 		node.properties['data-line'] = '';
 	}
 };
-
-// Shiki escapes the code itself, so its output is only these tags with these attributes.
-const ALLOWED_TAG = /^<\/?(pre|code|span)\b/i;
-const EVENT_OR_SCRIPT_URL = /\son[a-z]+\s*=|javascript:/i;
-
-/** Throws if highlighted HTML holds anything but Shiki's own markup, before it reaches `{@html}`. */
-export function assertHighlightMarkup(html: string): string {
-	for (const tag of html.match(/<[^>]+>/g) ?? []) {
-		if (!ALLOWED_TAG.test(tag) || EVENT_OR_SCRIPT_URL.test(tag)) {
-			throw new Error(`Unexpected markup in highlighted code: ${tag}`);
-		}
-	}
-	return html;
-}
 
 /** Shiki HTML with light and dark colours as classes. */
 export async function highlightCode(code: string, lang?: string | null): Promise<string> {

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { assertHighlightMarkup } from '#lib/docs/highlight-markup.js';
 	import { page } from '$app/state';
 	import { cn } from '#lib/utils.js';
 	import * as Tabs from '#lib/registry/ui/tabs/index.js';
@@ -79,8 +80,8 @@
 				{#if source}
 					<figure data-rehype-pretty-code-figure class="[&>pre]:max-h-96">
 						<CopyButton value={source.code} />
-						<!-- eslint-disable-next-line svelte/no-at-html-tags -- Shiki output, built from our own sources -->
-						{@html source.html}
+						<!-- eslint-disable-next-line svelte/no-at-html-tags -- Shiki output from our own sources, checked again here -->
+						{@html assertHighlightMarkup(source.html)}
 					</figure>
 				{:else}
 					<p class="p-4 text-sm text-muted-foreground">

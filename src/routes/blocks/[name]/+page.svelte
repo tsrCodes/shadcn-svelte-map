@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { assertHighlightMarkup } from '#lib/docs/highlight-markup.js';
 	import { resolve } from '$app/paths';
 	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 	import { Badge } from '#lib/registry/ui/badge/index.js';
@@ -8,12 +9,14 @@
 	import CopyButton from '#lib/docs/components/copy-button.svelte';
 	import CopyPromptButton from '#lib/docs/components/copy-prompt-button.svelte';
 	import Seo from '#lib/docs/components/seo.svelte';
+	import type { BlockKind } from '../catalog.js';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 
 	const Block = $derived(data.component);
-	const KIND_LABEL = { editing: 'Editing', data: 'Data' } as const;
+	// Typed against every block kind, so a new kind fails the type check until it has a label.
+	const KIND_LABEL: Record<BlockKind, string> = { editing: 'Editing', data: 'Data' };
 </script>
 
 <Seo
@@ -71,8 +74,8 @@
 				<Tabs.Content value={file.path}>
 					<figure data-rehype-pretty-code-figure class="mt-2! [&>pre]:max-h-[32rem]">
 						<CopyButton value={file.code} />
-						<!-- eslint-disable-next-line svelte/no-at-html-tags -- Shiki output, built from our own sources -->
-						{@html file.html}
+						<!-- eslint-disable-next-line svelte/no-at-html-tags -- Shiki output from our own sources, checked again here -->
+						{@html assertHighlightMarkup(file.html)}
 					</figure>
 				</Tabs.Content>
 			{/each}
