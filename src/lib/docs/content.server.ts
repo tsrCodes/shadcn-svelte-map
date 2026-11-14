@@ -1,6 +1,7 @@
 import GithubSlugger from 'github-slugger';
 import { DOCS_NAV, type DocLink, type Heading } from './config.js';
 import { apiMarkdown } from './api.server.js';
+import { codeFence } from './markdown.js';
 import { toUserImports } from './user-imports.js';
 
 export type DocPage = DocLink & {
@@ -132,7 +133,7 @@ export function toMarkdown(page: DocPage): string {
 		.replace(/<script\b[^>]*>[\s\S]*?<\/script>\n*/, '')
 		.replace(tagPattern('ComponentPreview', 'name'), (_, _quote: string, name: string) => {
 			const source = getExampleSource(name);
-			return source ? `\`\`\`svelte\n${source.trimEnd()}\n\`\`\`` : '';
+			return source ? codeFence(source, 'svelte') : '';
 		})
 		.replace(tagPattern('ApiTable', 'component'), (_, _quote: string, name: string) =>
 			apiMarkdown(name)

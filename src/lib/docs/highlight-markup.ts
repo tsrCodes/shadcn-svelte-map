@@ -1,6 +1,7 @@
 // Shiki escapes the code itself, so its output is only these tags with these attributes.
 const ALLOWED_TAG = /^<\/?(pre|code|span)\b/i;
-const EVENT_OR_SCRIPT_URL = /\son[a-z]+\s*=|javascript:/i;
+// Colours are classes (strict CSP), so a style attribute is never expected either.
+const EVENT_OR_SCRIPT_URL = /\son[a-z]+\s*=|\sstyle\s*=|javascript:/i;
 
 /** Throws if highlighted HTML holds anything but Shiki's own markup, before it reaches `{@html}`. */
 export function assertHighlightMarkup(html: string): string {

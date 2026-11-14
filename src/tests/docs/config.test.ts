@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { ogImagePath } from '#lib/docs/config.js';
+import { codeFence } from '#lib/docs/markdown.js';
 import { DOC_PAGES, getHeadings, parseFrontmatter, toMarkdown } from '#lib/docs/content.server.js';
 
 describe('docs helpers', () => {
@@ -58,5 +59,10 @@ describe('docs helpers', () => {
 			body: `<CodeBlockCommand class="x" command='npx shadcn-svelte@latest add map' />`
 		};
 		expect(toMarkdown(page)).toContain('```bash\nnpx shadcn-svelte@latest add map\n```');
+	});
+
+	test('code fences stay longer than any backtick run in the code', () => {
+		expect(codeFence('let a = 1;', 'ts')).toBe('```ts\nlet a = 1;\n```');
+		expect(codeFence('const md = "```js";', 'ts')).toBe('````ts\nconst md = "```js";\n````');
 	});
 });

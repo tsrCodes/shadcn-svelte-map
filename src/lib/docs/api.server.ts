@@ -35,6 +35,12 @@ const ELEMENT_TYPES: Record<string, string> = {
 	HTMLInputElement: 'input'
 };
 
+const NAMED_ATTRIBUTES: Record<string, string> = {
+	HTMLButtonAttributes: 'button',
+	HTMLInputAttributes: 'input',
+	HTMLAnchorAttributes: 'a'
+};
+
 /** Source offsets the Svelte parser adds to a script's program (missing from its types). */
 function offsets(node: object): [number, number] {
 	const { start, end } = node as { start?: unknown; end?: unknown };
@@ -194,9 +200,10 @@ function collectHeritage(
 		return;
 	}
 	if (/Attributes$/.test(name)) {
+		// `HTMLAttributes<HTMLDivElement>` names its element; `HTMLButtonAttributes` and friends
+		// name it in the type. Anything else is left out rather than guessed.
 		const element = args[0]?.getText();
-		out.restElement =
-			(element && ELEMENT_TYPES[element]) ?? (name === 'HTMLButtonAttributes' ? 'button' : 'div');
+		out.restElement = element ? ELEMENT_TYPES[element] : NAMED_ATTRIBUTES[name];
 		return;
 	}
 	if (name === 'ComponentProps' && args[0]) {

@@ -1,4 +1,5 @@
 import { highlightCode } from './highlight.js';
+import { codeFence } from './markdown.js';
 import { toUserImports } from './user-imports.js';
 
 const SOURCES = import.meta.glob<string>('/src/lib/registry/blocks/**/*.{svelte,ts}', {
@@ -40,8 +41,6 @@ export async function getBlockFiles(name: string): Promise<BlockFile[]> {
 /** The block's files as one markdown reference, for the "Copy for AI" prompt. */
 export function blockMarkdown(files: BlockFile[]): string {
 	return files
-		.map(
-			(file) => `\`${file.path}\`\n\n\`\`\`${language(file.path)}\n${file.code.trimEnd()}\n\`\`\``
-		)
+		.map((file) => `\`${file.path}\`\n\n${codeFence(file.code, language(file.path))}`)
 		.join('\n\n');
 }
