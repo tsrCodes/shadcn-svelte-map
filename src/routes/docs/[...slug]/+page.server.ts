@@ -33,6 +33,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	const api: Record<string, ApiEntry> = {};
 	for (const name of getApiNames(page)) {
 		const entry = getApiEntry(name);
+		// A page that names a component the extractor cannot read is a docs bug: fail the build.
 		if (!entry) error(500, `No API entry for ${name}`);
 		api[name] = entry;
 	}
