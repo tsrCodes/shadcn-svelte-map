@@ -1,3 +1,4 @@
+import { parse as parseSvelte } from 'svelte/compiler';
 import ts from 'typescript';
 
 /** One prop of a component, read from its `Props` interface and its `$props()` call. */
@@ -34,8 +35,21 @@ const ELEMENT_TYPES: Record<string, string> = {
 	HTMLInputElement: 'input'
 };
 
+/** Source offsets the Svelte parser adds to a script's program (missing from its types). */
+function offsets(node: object): [number, number] {
+	const { start, end } = node as { start?: unknown; end?: unknown };
+	if (typeof start !== 'number' || typeof end !== 'number') {
+		throw new Error('The Svelte parser gave a script without source offsets');
+	}
+	return [start, end];
+}
+
+/** The module and instance scripts of a component, found by the Svelte parser itself. */
 function scripts(source: string): string {
-	return [...source.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]).join('\n');
+	const ast = parseSvelte(source, { modern: true });
+	return [ast.module, ast.instance]
+		.flatMap((script) => (script ? [source.slice(...offsets(script.content))] : []))
+		.join('\n');
 }
 
 const BARRELS = import.meta.glob<string>(
@@ -208,16 +222,39 @@ interface Defaults {
 	bindable: Set<string>;
 }
 
+function isPropsCall(node: ts.Expression | undefined): boolean {
+	return node !== undefined && ts.isCallExpression(node) && node.expression.getText() === '$props';
+}
+
+/** Names bound to the whole props object, as in `let props = $props()`. */
+function propsObjects(file: ts.SourceFile): Set<string> {
+	const names = new Set<string>();
+	const visit = (node: ts.Node) => {
+		if (
+			ts.isVariableDeclaration(node) &&
+			ts.isIdentifier(node.name) &&
+			isPropsCall(node.initializer)
+		) {
+			names.add(node.name.text);
+		}
+		node.forEachChild(visit);
+	};
+	visit(file);
+	return names;
+}
+
 function defaultsOf(file: ts.SourceFile): Defaults {
 	const values = new Map<string, string>();
 	const bindable = new Set<string>();
+	const objects = propsObjects(file);
+	// Defaults sit in a destructure of `$props()`, or of a variable that holds it.
+	const isPropsSource = (init: ts.Expression | undefined) =>
+		isPropsCall(init) || (init !== undefined && ts.isIdentifier(init) && objects.has(init.text));
 	const visit = (node: ts.Node) => {
 		if (
 			ts.isVariableDeclaration(node) &&
 			ts.isObjectBindingPattern(node.name) &&
-			node.initializer !== undefined &&
-			ts.isCallExpression(node.initializer) &&
-			node.initializer.expression.getText() === '$props'
+			isPropsSource(node.initializer)
 		) {
 			for (const element of node.name.elements) {
 				if (element.dotDotDotToken) continue;
@@ -234,6 +271,11 @@ function defaultsOf(file: ts.SourceFile): Defaults {
 	};
 	visit(file);
 	return { values, bindable };
+}
+
+/** Defaults and bindables of a component's source, for tests and tools. */
+export function defaultsFromSource(source: string): Defaults {
+	return defaultsOf(parse(scripts(source)));
 }
 
 function fileOf(component: string): string | undefined {

@@ -1,5 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import { API_COMPONENTS, apiMarkdown, getApiEntry } from '#lib/docs/api.server.js';
+import {
+	API_COMPONENTS,
+	apiMarkdown,
+	defaultsFromSource,
+	getApiEntry
+} from '#lib/docs/api.server.js';
 
 describe('API reference extraction', () => {
 	test('reads props, defaults, bindables, events and snippets from the source', () => {
@@ -37,6 +42,20 @@ describe('API reference extraction', () => {
 	test('uses the exported name, not the file name', () => {
 		expect(getApiEntry('map-geojson')?.name).toBe('MapGeoJSON');
 		expect(getApiEntry('place-autocomplete')?.name).toBe('PlaceAutocomplete');
+	});
+
+	test('finds defaults through a props variable and with a module script', () => {
+		const source = [
+			'<script module lang="ts">export const SIZE = 2;</script>',
+			'<script lang="ts">',
+			'\tconst props = $props();',
+			"\tlet { size = SIZE, open = $bindable(false), label = 'Pin' } = props;",
+			'</script>',
+			'<p>{label}</p>'
+		].join('\n');
+		const { values, bindable } = defaultsFromSource(source);
+		expect(Object.fromEntries(values)).toEqual({ size: 'SIZE', open: 'false', label: "'Pin'" });
+		expect([...bindable]).toEqual(['open']);
 	});
 
 	test('renders markdown tables', () => {
