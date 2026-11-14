@@ -1,4 +1,5 @@
 import type { LngLatTuple, MapViewport } from '#lib/registry/ui/map/index.js';
+import type { DrawFeature } from '#lib/registry/ui/map-draw/index.js';
 
 export interface Asset {
 	id: string;
@@ -22,3 +23,26 @@ export const ASSETS: Asset[] = [
 	{ id: 'crane-2', name: 'Crane 2', lngLat: [9.9533, 53.5263] },
 	{ id: 'van-1', name: 'Van 1', lngLat: [9.9805, 53.5427] }
 ];
+
+/** A fence saved earlier, loaded into the draw control so it can be edited. */
+export const SAVED_FENCES: DrawFeature[] = [
+	{
+		type: 'Feature',
+		id: 'container-yard',
+		geometry: {
+			type: 'Polygon',
+			coordinates: [
+				[
+					[9.926, 53.537],
+					[9.936, 53.537],
+					[9.936, 53.542],
+					[9.926, 53.542],
+					[9.926, 53.537]
+				]
+			]
+		},
+		properties: { mode: 'rectangle' }
+	}
+];
+
+export const SAVED_NAMES: Record<string, string> = { 'container-yard': 'Container yard' };

@@ -21,7 +21,7 @@
 		type DrawFeature,
 		type DrawTool
 	} from '#lib/registry/ui/map-draw/index.js';
-	import { ASSETS, VIEWPORT } from './data.js';
+	import { ASSETS, SAVED_FENCES, SAVED_NAMES, VIEWPORT } from './data.js';
 
 	interface Props {
 		/** Basemap. Defaults to OpenFreeMap. */
@@ -43,9 +43,9 @@
 	const SQUARE_METRES_PER_KM2 = 1_000_000;
 
 	let tool = $state<DrawTool>('none');
-	let drawings = $state.raw<DrawFeature[]>([]);
+	let drawings = $state.raw<DrawFeature[]>(SAVED_FENCES);
 	// Names are kept by feature id and never pruned, so undoing a delete brings the name back.
-	let names = $state.raw<Record<string, string>>({});
+	let names = $state.raw<Record<string, string>>(SAVED_NAMES);
 
 	const fences: Fence[] = $derived(
 		drawings.flatMap((feature, index): Fence[] => {
@@ -112,7 +112,7 @@
 				orientation="horizontal"
 				modes={FENCE_MODES}
 				bind:mode={tool}
-				onchange={(features) => (drawings = features)}
+				bind:features={drawings}
 			/>
 		</MapControlContainer>
 		<MapControlContainer position="top-right">
