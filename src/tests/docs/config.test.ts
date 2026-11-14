@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { ogImagePath } from '#lib/docs/config.js';
-import { DOC_PAGES, getHeadings, toMarkdown } from '#lib/docs/content.server.js';
+import { DOC_PAGES, getHeadings, parseFrontmatter, toMarkdown } from '#lib/docs/content.server.js';
 
 describe('docs helpers', () => {
 	test('Open Graph image names ignore query and hash', () => {
@@ -25,5 +25,13 @@ describe('docs helpers', () => {
 			{ depth: 2, title: 'Spaced  heading', id: 'spaced--heading' },
 			{ depth: 3, title: 'Code title', id: 'code-title' }
 		]);
+	});
+
+	test('frontmatter parses with Windows line endings', () => {
+		const { data, body } = parseFrontmatter(
+			'---\r\ntitle: Map\r\ndescription: Root\r\n---\r\nBody'
+		);
+		expect(data).toEqual({ title: 'Map', description: 'Root' });
+		expect(body).toBe('Body');
 	});
 });

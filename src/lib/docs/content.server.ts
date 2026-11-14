@@ -27,11 +27,11 @@ const EXAMPLE_SOURCES = import.meta.glob<string>('/src/lib/docs/examples/*.svelt
 	eager: true
 });
 
-function parseFrontmatter(raw: string): { data: Record<string, string>; body: string } {
-	const match = /^---\n([\s\S]*?)\n---\n/.exec(raw);
+export function parseFrontmatter(raw: string): { data: Record<string, string>; body: string } {
+	const match = /^---\r?\n([\s\S]*?)\r?\n---\r?\n/.exec(raw);
 	if (!match) throw new Error('Docs page without frontmatter');
 	const data: Record<string, string> = {};
-	for (const line of match[1].split('\n')) {
+	for (const line of match[1].split(/\r?\n/)) {
 		const colon = line.indexOf(':');
 		if (colon > 0) data[line.slice(0, colon).trim()] = line.slice(colon + 1).trim();
 	}
@@ -43,7 +43,7 @@ export function getHeadings(body: string): Heading[] {
 	const slugger = new GithubSlugger();
 	const headings: Heading[] = [];
 	let inFence = false;
-	for (const line of body.split('\n')) {
+	for (const line of body.split(/\r?\n/)) {
 		if (line.startsWith('```')) inFence = !inFence;
 		const match = !inFence && /^(#{2,3})\s+(.+?)\s*$/.exec(line);
 		if (!match) continue;

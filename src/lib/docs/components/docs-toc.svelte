@@ -9,6 +9,8 @@
 	// Observer entries arrive in any order, so visibility is tracked per id.
 	function observeHeadings(headings: Heading[]) {
 		return () => {
+			// A new page starts with nothing highlighted, not the last page's heading.
+			activeId = null;
 			const visible: Record<string, boolean> = {};
 			const observer = new IntersectionObserver(
 				(entries) => {

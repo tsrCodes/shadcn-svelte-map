@@ -15,7 +15,7 @@ export const GET: RequestHandler = () => {
 			(page) =>
 				`- [${inline(page.title)}](${siteConfig.url}${page.url}.md): ${inline(page.description)}`
 		);
-		return `## ${section}\n\n${links.join('\n')}`;
+		return `## ${inline(section)}\n\n${links.join('\n')}`;
 	});
 	const body = `# ${siteConfig.name}\n\n> ${siteConfig.description}\n\n${sections.join('\n\n')}\n`;
 	return new Response(body, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
