@@ -1,3 +1,7 @@
+<script lang="ts" module>
+	let warnedBlankLabel = false;
+</script>
+
 <script lang="ts">
 	import { untrack, type Snippet } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
@@ -61,7 +65,9 @@
 	const label = $derived(ariaLabel?.trim() || FALLBACK_LABEL);
 
 	$effect(() => {
-		if (ariaLabel?.trim()) return;
+		if (ariaLabel?.trim() || warnedBlankLabel) return;
+		// Once per page: a list of unnamed markers should not flood the console.
+		warnedBlankLabel = true;
 		console.warn(
 			`MapMarker: aria-label is empty, using "${FALLBACK_LABEL}". Give each marker a name people can tell apart.`
 		);
