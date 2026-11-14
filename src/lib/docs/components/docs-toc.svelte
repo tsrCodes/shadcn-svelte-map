@@ -5,14 +5,16 @@
 
 	let activeId = $state<string | null>(null);
 
-	// Highlights the heading nearest the top of the viewport
+	// Highlights the first heading, in page order, inside the top band of the viewport.
+	// Observer entries arrive in any order, so visibility is tracked per id.
 	function observeHeadings(headings: Heading[]) {
 		return () => {
+			const visible: Record<string, boolean> = {};
 			const observer = new IntersectionObserver(
 				(entries) => {
-					for (const entry of entries) {
-						if (entry.isIntersecting) activeId = entry.target.id;
-					}
+					for (const entry of entries) visible[entry.target.id] = entry.isIntersecting;
+					const first = headings.find(({ id }) => visible[id]);
+					if (first) activeId = first.id;
 				},
 				{ rootMargin: '0% 0% -80% 0%' }
 			);
