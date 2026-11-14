@@ -5,6 +5,15 @@
 
 	let activeId = $state<string | null>(null);
 
+	/** The last heading whose top has scrolled above the viewport, if any. */
+	function lastPassed(headings: Heading[]): Heading | undefined {
+		for (let index = headings.length - 1; index >= 0; index--) {
+			const top = document.getElementById(headings[index].id)?.getBoundingClientRect().top;
+			if (top !== undefined && top < 0) return headings[index];
+		}
+		return undefined;
+	}
+
 	// Highlights the first heading, in page order, inside the top band of the viewport.
 	// Observer entries arrive in any order, so visibility is tracked per id.
 	function observeHeadings(headings: Heading[]) {
@@ -17,9 +26,7 @@
 					for (const entry of entries) visible[entry.target.id] = entry.isIntersecting;
 					const first = headings.find(({ id }) => visible[id]);
 					// Between headings, the section you are reading is the last one scrolled past.
-					const passed = headings.findLast(
-						({ id }) => (document.getElementById(id)?.getBoundingClientRect().top ?? 1) < 0
-					);
+					const passed = lastPassed(headings);
 					activeId = first?.id ?? passed?.id ?? null;
 				},
 				{ rootMargin: '0% 0% -80% 0%' }
