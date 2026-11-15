@@ -303,7 +303,9 @@
 			const label = labels.get(clusterId) ?? createLabel(lib, map);
 			labels.set(clusterId, label);
 			const [lng, lat] = (cluster.geometry as Point).coordinates;
-			label.setLngLat([lng, lat]);
+			// The marker follows the map by itself; only a moved cluster needs a new position.
+			const position = label.getLngLat();
+			if (position.lng !== lng || position.lat !== lat) label.setLngLat([lng, lat]);
 			const element = label.getElement();
 			const count = String(cluster.properties.point_count_abbreviated);
 			if (element.textContent !== count) element.textContent = count;
@@ -320,24 +322,53 @@
 		}
 	}
 
+	/** Asks the running label sync for a pass; `null` while there are no HTML labels. */
+	let requestLabels = $state.raw<(() => void) | null>(null);
+
+	/**
+	 * The clusters only change when this source loads tiles, the whole-number zoom
+	 * changes or a move ends, so the labels sync on those events, at most once a frame,
+	 * instead of querying the tiles on every frame the map draws.
+	 */
 	$effect(() => {
 		const map = ctx.map;
 		const lib = ctx.maplibre;
 		if (!map || !lib || !htmlLabels) return;
 		const labels = new Map<number, Marker>();
-		const subscription = map.on('render', () => syncLabels(map, lib, labels));
+		let frame = 0;
+		let tileZoom = Math.floor(map.getZoom());
+		const request = () => {
+			if (frame) return;
+			frame = requestAnimationFrame(() => {
+				frame = 0;
+				syncLabels(map, lib, labels);
+			});
+		};
+		const subscriptions = [
+			map.on('sourcedata', (event) => {
+				if (event.sourceId === sourceId) request();
+			}),
+			map.on('zoom', () => {
+				const next = Math.floor(map.getZoom());
+				if (next === tileZoom) return;
+				tileZoom = next;
+				request();
+			}),
+			map.on('moveend', request)
+		];
 		untrack(() => syncLabels(map, lib, labels));
+		requestLabels = request;
 		return () => {
-			subscription.unsubscribe();
+			requestLabels = null;
+			cancelAnimationFrame(frame);
+			for (const subscription of subscriptions) subscription.unsubscribe();
 			for (const label of labels.values()) label.remove();
 		};
 	});
 
-	// A new text colour alone does not make the map draw; ask for a frame so the labels
-	// pick it up on the next render.
+	// A new text colour alone changes no tiles; ask for a pass so the labels take it.
 	$effect(() => {
-		const map = ctx.map;
-		if (map && htmlLabels && text) map.triggerRepaint();
+		if (text) requestLabels?.();
 	});
 </script>
 

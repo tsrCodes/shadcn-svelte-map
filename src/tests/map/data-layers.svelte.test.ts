@@ -277,6 +277,25 @@ describe('MapClusterLayer', () => {
 		expect(labels()[0].getAttribute('aria-hidden')).toBe('true');
 	});
 
+	test('HTML counts do not query tiles on frames where nothing changed', async () => {
+		const { map } = await mountData({ clusters: CLUSTERED });
+		const label = () => map.getContainer().querySelector<HTMLElement>('.map-cluster-label');
+		await expect.poll(() => label()?.textContent).toBe('3');
+		await expect.poll(() => map.loaded()).toBe(true);
+		const query = vi.spyOn(map, 'querySourceFeatures');
+
+		for (let frame = 0; frame < 10; frame += 1) {
+			map.triggerRepaint();
+			await new Promise((resolve) => requestAnimationFrame(resolve));
+		}
+		expect(query).not.toHaveBeenCalled();
+
+		map.panBy([20, 0], { duration: 0 });
+		await expect.poll(() => query.mock.calls.length).toBeGreaterThan(0);
+		expect(query.mock.calls.length).toBeLessThanOrEqual(2);
+		expect(label()?.textContent).toBe('3');
+	});
+
 	test('HTML counts take a new text colour without the map moving', async () => {
 		const { map, screen } = await mountData({ clusters: CLUSTERED });
 		const label = () => map.getContainer().querySelector<HTMLElement>('.map-cluster-label');
