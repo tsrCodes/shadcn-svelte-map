@@ -7,6 +7,7 @@ import {
 	getExampleSource,
 	getHeadings,
 	getPreviewNames,
+	parseFrontmatter,
 	toMarkdown
 } from '#lib/docs/content.server.js';
 
@@ -87,6 +88,11 @@ describe('docs content', () => {
 			'### After'
 		].join('\n');
 		expect(getHeadings(body).map((heading) => heading.title)).toEqual(['Real', 'After']);
+	});
+
+	test('a frontmatter key given twice is rejected', () => {
+		const raw = '---\ntitle: One\ntitle: Two\n---\nBody';
+		expect(() => parseFrontmatter(raw)).toThrow(/"title"/);
 	});
 
 	test('docs tags are found whether self-closing or closed', () => {

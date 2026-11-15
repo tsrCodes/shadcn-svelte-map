@@ -63,6 +63,7 @@ export function parseFrontmatter(raw: string): { data: Record<string, string>; b
 		if (!entry || UNSUPPORTED_VALUE.test(value)) {
 			throw new Error(`Unsupported frontmatter line: "${line}". Use one-line key: value pairs.`);
 		}
+		if (entry[1] in data) throw new Error(`Frontmatter key "${entry[1]}" is given twice.`);
 		data[entry[1]] = unquote(value);
 	}
 	return { data, body: raw.slice(match[0].length) };
