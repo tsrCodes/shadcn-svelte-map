@@ -90,6 +90,11 @@ function drawable(layers: LayerSpecification[], hasGlyphs: boolean): LayerSpecif
 	return hasGlyphs ? layers : layers.filter((layer) => !needsGlyphs(layer));
 }
 
+/** Errors from updates nobody awaits, such as cluster options re-sent after a style load. */
+function reportError(error: unknown): void {
+	console.error(error);
+}
+
 function withoutKey(state: FeatureState, key: string): FeatureState {
 	return Object.fromEntries(Object.entries(state).filter(([name]) => name !== key));
 }
@@ -117,6 +122,8 @@ export class LayerRegistry {
 	#clusterUpdates = new Map<string, Promise<void>>();
 	/** Sources whose spec changed through the registry; a swap must not take the old copy. */
 	#changedSources = new Set<string>();
+	/** Sources whose cluster options changed while a style was loading. */
+	#pendingCluster = new Set<string>();
 	/** Paint values set through the registry, by layer id; they win over any older style copy. */
 	#paint = new Map<string, PaintValues>();
 	/** Id prefixes of sources and layers added outside the registry that swaps must keep. */
@@ -147,7 +154,11 @@ export class LayerRegistry {
 		this.#ready = true;
 		for (const entry of this.#pendingRemoval.values()) this.#removeFromMap(entry);
 		this.#pendingRemoval.clear();
+		// A source the new style already holds may predate the change; one added below will not.
+		const staleClusters = [...this.#pendingCluster].filter((id) => this.#map?.getSource(id));
+		this.#pendingCluster.clear();
 		for (const entry of this.#entries.values()) this.#addToMap(entry);
+		for (const sourceId of staleClusters) this.#queueClusterUpdate(sourceId).catch(reportError);
 		this.#flushData();
 		this.#replayPaint();
 		this.#replayFeatureState();
@@ -175,6 +186,7 @@ export class LayerRegistry {
 		this.#featureState.delete(sourceId);
 		this.#pendingData.delete(sourceId);
 		this.#changedSources.delete(sourceId);
+		this.#pendingCluster.delete(sourceId);
 		for (const layer of entry.layers) this.#paint.delete(layer.id);
 		if (this.#ready) this.#removeFromMap(entry);
 		else this.#pendingRemoval.set(sourceId, entry);
@@ -218,8 +230,14 @@ export class LayerRegistry {
 		}
 		this.#entries.set(sourceId, { ...entry, source: { ...entry.source, ...options } });
 		this.#changedSources.add(sourceId);
-		// One update at a time per source, each sending the newest options when it starts,
-		// so a slow earlier update can never land after a newer one.
+		await this.#queueClusterUpdate(sourceId);
+	}
+
+	/**
+	 * One update at a time per source, each sending the newest options when it starts,
+	 * so a slow earlier update can never land after a newer one.
+	 */
+	async #queueClusterUpdate(sourceId: string): Promise<void> {
 		const previous = this.#clusterUpdates.get(sourceId) ?? Promise.resolve();
 		const next = previous.catch(() => {}).then(() => this.#applyClusterOptions(sourceId));
 		this.#clusterUpdates.set(sourceId, next);
@@ -232,7 +250,12 @@ export class LayerRegistry {
 
 	async #applyClusterOptions(sourceId: string): Promise<void> {
 		const source = this.#entries.get(sourceId)?.source;
-		if (!this.#ready || source?.type !== 'geojson') return;
+		if (source?.type !== 'geojson') return;
+		if (!this.#ready) {
+			// The loading style may hold the source as it was; send the options once it is ready.
+			this.#pendingCluster.add(sourceId);
+			return;
+		}
 		await this.#map?.getSource<GeoJSONSource>(sourceId)?.setClusterOptions({
 			cluster: source.cluster,
 			clusterRadius: source.clusterRadius,

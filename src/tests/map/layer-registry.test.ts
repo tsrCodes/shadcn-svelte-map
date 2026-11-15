@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 import type { FeatureCollection } from 'geojson';
 import type { LayerSpecification, StyleSpecification } from 'maplibre-gl';
 import {
@@ -520,5 +520,42 @@ describe('LayerRegistry', () => {
 		]);
 		expect(overlapped).toBe(false);
 		expect(applied.at(-1)).toMatchObject({ clusterRadius: 80 });
+	});
+
+	test('cluster options changed while a style loads reach the source the swap carried over', async () => {
+		const fake = createFakeMap();
+		const registry = new LayerRegistry();
+		registry.attach(fake.map);
+		registry.styleLoaded();
+		registry.add({
+			...POINTS_ENTRY,
+			source: { type: 'geojson', data: EMPTY_POINTS, cluster: true, clusterRadius: 50 }
+		});
+
+		// The swap has already copied the old source spec into the next style.
+		registry.styleLoading();
+		await registry.setClusterOptions(POINTS_SOURCE, { clusterRadius: 90 });
+		expect(fake.clusterOptions(POINTS_SOURCE)).toBeUndefined();
+
+		registry.styleLoaded();
+		await vi.waitFor(() =>
+			expect(fake.clusterOptions(POINTS_SOURCE)).toMatchObject({ clusterRadius: 90 })
+		);
+	});
+
+	test('cluster options changed before the first style load are not sent twice', async () => {
+		const fake = createFakeMap();
+		const registry = new LayerRegistry();
+		registry.attach(fake.map);
+		registry.add({
+			...POINTS_ENTRY,
+			source: { type: 'geojson', data: EMPTY_POINTS, cluster: true, clusterRadius: 50 }
+		});
+
+		await registry.setClusterOptions(POINTS_SOURCE, { clusterRadius: 90 });
+		registry.styleLoaded();
+		await Promise.resolve();
+		// The source is added with the new options, so there is nothing left to send.
+		expect(fake.clusterOptions(POINTS_SOURCE)).toBeUndefined();
 	});
 });
