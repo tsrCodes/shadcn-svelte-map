@@ -1,3 +1,4 @@
+import { createSubscriber } from 'svelte/reactivity';
 import type { MapEventType, Map as MapLibreMap } from 'maplibre-gl';
 import type { MapContext } from './map-context.svelte.js';
 
@@ -6,8 +7,9 @@ export interface MapValue<T> {
 }
 
 /**
- * A value read from the map, kept fresh by the given map events. Call it while a
- * component initialises; the listeners go away with the component or the map.
+ * A value read from the map. Reading it inside an effect or the template listens to
+ * the given map events for as long as something reads it; any other read asks the
+ * map directly.
  */
 export function mapValue<T>(
 	ctx: MapContext,
@@ -15,22 +17,30 @@ export function mapValue<T>(
 	read: (map: MapLibreMap) => T,
 	fallback: T
 ): MapValue<T> {
-	let value = $state.raw(fallback);
+	let source: { map: MapLibreMap; subscribe: () => void } | null = null;
 
-	$effect(() => {
-		const map = ctx.map;
-		if (!map) return;
-		const update = () => (value = read(map));
-		update();
-		const subscriptions = events.map((event) => map.on(event, update));
-		return () => {
-			for (const subscription of subscriptions) subscription.unsubscribe();
-		};
-	});
+	// One subscriber per map instance, so a new map never keeps the old one's listeners.
+	function subscriberFor(map: MapLibreMap): () => void {
+		if (source?.map !== map) {
+			source = {
+				map,
+				subscribe: createSubscriber((update) => {
+					const subscriptions = events.map((event) => map.on(event, update));
+					return () => {
+						for (const subscription of subscriptions) subscription.unsubscribe();
+					};
+				})
+			};
+		}
+		return source.subscribe;
+	}
 
 	return {
 		get current() {
-			return value;
+			const map = ctx.map;
+			if (!map) return fallback;
+			subscriberFor(map)();
+			return read(map);
 		}
 	};
 }
