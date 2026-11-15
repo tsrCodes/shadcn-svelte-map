@@ -81,6 +81,7 @@
 		running = true;
 		count = next;
 		frames = null;
+		loadMs = null;
 		const start = performance.now();
 		data = points(next);
 		const target = map;
