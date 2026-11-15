@@ -19,7 +19,7 @@
 					target="_blank"
 					rel="noopener noreferrer"
 					class="font-medium underline underline-offset-4">GitHub</a
-				>. Not affiliated with the Svelte team.
+				>.
 			</p>
 		</div>
 	</div>
