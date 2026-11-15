@@ -38,6 +38,7 @@ export {
 	circleRing,
 	closeRing,
 	distanceMeters,
+	geometryCenter,
 	lineLength,
 	lineProgressAt,
 	pointInPolygon,

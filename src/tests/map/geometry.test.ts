@@ -10,6 +10,7 @@ import {
 	rectangleRing,
 	ringArea,
 	ringCenter,
+	geometryCenter,
 	lineProgressAt,
 	splitLine,
 	type LngLatTuple
@@ -225,5 +226,34 @@ describe('lineProgressAt', () => {
 
 	test('a line with no length reports the progress share as it is', () => {
 		expect(lineProgressAt([[5, 5]], 0.4)).toBe(0.4);
+	});
+});
+
+describe('geometryCenter', () => {
+	test('centres points, lines, polygons and collections on their bounds', () => {
+		expect(geometryCenter({ type: 'Point', coordinates: [3, 4] })).toEqual([3, 4]);
+		expect(
+			geometryCenter({
+				type: 'Polygon',
+				coordinates: [
+					[
+						[0, 0],
+						[10, 0],
+						[10, 4],
+						[0, 0]
+					]
+				]
+			})
+		).toEqual([5, 2]);
+		expect(
+			geometryCenter({
+				type: 'GeometryCollection',
+				geometries: [
+					{ type: 'Point', coordinates: [0, 0] },
+					{ type: 'Point', coordinates: [2, 2] }
+				]
+			})
+		).toEqual([1, 1]);
+		expect(geometryCenter(null)).toBeNull();
 	});
 });

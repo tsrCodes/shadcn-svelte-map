@@ -47,6 +47,10 @@ Fills, lines and points use the theme's `--primary` colour by default and follow
 
 The source id comes from `id`, or a unique id from `$props.id()`. The layers are `<id>-fill`, `<id>-line` and `<id>-circle`. Polygon outlines are drawn by the line layer. Pass `beforeId` to draw below another layer; changing it moves the layers.
 
+## Keyboard
+
+When the layer has `onclick` or `onhover`, its features are also offered as a list for keyboard and screen reader users, one tab stop on the map. Moving through the list highlights each shape, calls `onhover` and pans it into view. Enter calls `onclick` with the feature and no mouse event. Features are named by their `name` property; pass `featureLabel` and `listLabel` to name them another way, or `keyboard={false}` to leave the list out. Data loaded from a URL is not listed.
+
 ## API Reference
 
 <ApiTable component="map-geojson" />

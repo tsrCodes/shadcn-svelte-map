@@ -1,3 +1,5 @@
+import type { Geometry } from 'geojson';
+
 /** `[longitude, latitude]`, as GeoJSON stores a position. */
 export type LngLatTuple = [number, number];
 
@@ -261,4 +263,33 @@ export function ringCenter(ring: LngLatTuple[]): LngLatTuple {
 	if (corners.length === 0) throw new Error('A ring needs at least one position.');
 	const [lng, lat] = corners.reduce(([a, b], [x, y]) => [a + x, b + y], [0, 0]);
 	return [lng / corners.length, lat / corners.length];
+}
+
+type Coordinates = number | Coordinates[];
+
+function collectPositions(coordinates: Coordinates, out: LngLatTuple[]): void {
+	if (!Array.isArray(coordinates)) return;
+	if (typeof coordinates[0] === 'number') {
+		out.push([coordinates[0], coordinates[1] as number]);
+		return;
+	}
+	for (const item of coordinates) collectPositions(item, out);
+}
+
+/** Centre of a geometry's bounding box, or `null` when it has no positions. */
+export function geometryCenter(geometry: Geometry | null): LngLatTuple | null {
+	if (!geometry) return null;
+	const positions: LngLatTuple[] = [];
+	if (geometry.type === 'GeometryCollection') {
+		for (const part of geometry.geometries) {
+			const center = geometryCenter(part);
+			if (center) positions.push(center);
+		}
+	} else {
+		collectPositions(geometry.coordinates as Coordinates, positions);
+	}
+	if (positions.length === 0) return null;
+	const lngs = positions.map(([lng]) => lng);
+	const lats = positions.map(([, lat]) => lat);
+	return [(Math.min(...lngs) + Math.max(...lngs)) / 2, (Math.min(...lats) + Math.max(...lats)) / 2];
 }

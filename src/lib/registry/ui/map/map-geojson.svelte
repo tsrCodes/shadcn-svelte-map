@@ -18,6 +18,8 @@
 		syncPaint
 	} from './layer-sync.svelte.js';
 	import { FALLBACK_COLOR } from './theme.svelte.js';
+	import { geometryCenter } from './geometry.js';
+	import MapFeatureList, { featureName, type FeatureListItem } from './map-feature-list.svelte';
 
 	interface Props {
 		/** GeoJSON to draw, or a URL to load it from. Changing it updates the source in place. */
@@ -46,10 +48,25 @@
 		hoverCircleRadius?: number;
 		/** Draw below this layer when it exists; changing it moves the layers. */
 		beforeId?: string;
-		/** Called with the clicked feature. */
-		onclick?: (feature: MapGeoJSONFeature, event: MapMouseEvent) => void;
-		/** Called when the pointer moves onto a feature, and with `null` when it leaves. */
+		/**
+		 * Called with the clicked feature. `event` is left out when the feature was chosen
+		 * from the keyboard list.
+		 */
+		onclick?: (feature: MapGeoJSONFeature, event?: MapMouseEvent) => void;
+		/**
+		 * Called when the pointer moves onto a feature, or keyboard focus reaches it, and
+		 * with `null` when it leaves.
+		 */
 		onhover?: (feature: MapGeoJSONFeature | null) => void;
+		/**
+		 * Offer the features to keyboard and screen reader users as a list, one tab stop on
+		 * the map. Only added when `onclick` or `onhover` is set and `data` is not a URL.
+		 */
+		keyboard?: boolean;
+		/** Accessible name of the keyboard list, such as "Delivery zones". */
+		listLabel?: string;
+		/** Name of a feature in the keyboard list. Defaults to its `name` property. */
+		featureLabel?: (feature: Feature, index: number) => string;
 	}
 
 	let {
@@ -67,7 +84,10 @@
 		hoverCircleRadius = 7,
 		beforeId,
 		onclick,
-		onhover
+		onhover,
+		keyboard = true,
+		listLabel = 'Shapes',
+		featureLabel
 	}: Props = $props();
 
 	const ctx = getMapContext();
@@ -165,6 +185,42 @@
 		return next;
 	});
 
+	/** Features listed for the keyboard, with the id each one gets in the source. */
+	const listed = $derived.by(() => {
+		if (!keyboard || (!onclick && !onhover) || typeof data === 'string') return [];
+		const features = data.type === 'FeatureCollection' ? data.features : [data];
+		return features.flatMap((feature, index) => {
+			const center = geometryCenter(feature.geometry);
+			if (!center) return [];
+			// Generated ids are positions in the data; a promoted id comes from the property.
+			const sourceIdOf: unknown = promoteId ? feature.properties?.[promoteId] : index;
+			if (typeof sourceIdOf !== 'string' && typeof sourceIdOf !== 'number') return [];
+			const label =
+				featureLabel?.(feature, index) ?? featureName(feature.properties, `Shape ${index + 1}`);
+			const item: FeatureListItem = { key: index, label, lngLat: center };
+			return [{ item, id: sourceIdOf }];
+		});
+	});
+	const listItems = $derived(listed.map(({ item }) => item));
+
+	/** The rendered feature of a listed item, from the tiles that are loaded. */
+	function renderedFeature(index: number): MapGeoJSONFeature | null {
+		const map = ctx.map;
+		const entry = listed[index];
+		if (!map || !entry || !map.getSource(sourceId)) return null;
+		const [feature] = map.querySourceFeatures(sourceId, { filter: ['==', ['id'], entry.id] });
+		return (feature as MapGeoJSONFeature | undefined) ?? null;
+	}
+
+	function activateFromList(index: number | null) {
+		setHovered(index === null ? null : renderedFeature(index));
+	}
+
+	function selectFromList(index: number) {
+		const feature = renderedFeature(index);
+		if (feature) onclick?.(feature);
+	}
+
 	function featureAt(event: MapMouseEvent): MapGeoJSONFeature | null {
 		return featuresAt(event.target, event.point, layerIds)[0] ?? null;
 	}
@@ -202,3 +258,12 @@
 		};
 	});
 </script>
+
+{#if listItems.length > 0 && ctx.map}
+	<MapFeatureList
+		items={listItems}
+		label={listLabel}
+		onselect={selectFromList}
+		onactive={activateFromList}
+	/>
+{/if}

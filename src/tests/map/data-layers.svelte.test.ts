@@ -114,6 +114,38 @@ afterEach(() => {
 });
 
 describe('MapGeoJSON', () => {
+	test('keyboard: focus highlights a shape, Enter reports it like a click', async () => {
+		const onhover = vi.fn();
+		const onclick = vi.fn();
+		const { map, screen } = await mountData({
+			geojson: SQUARE,
+			ongeojsonhover: onhover,
+			ongeojsonclick: onclick
+		});
+		await layerReady(map, 'h-geo-fill');
+		const list = screen.container.querySelector<HTMLElement>('[data-slot="map-feature-list"]');
+		if (!list) throw new Error('feature list not found');
+		expect(list.querySelector('[role="option"]')?.textContent?.trim()).toBe('Square');
+
+		list.focus();
+		await expect.poll(() => map.getFeatureState({ source: 'h-geo', id: 0 }).hover).toBe(true);
+		expect(onhover.mock.lastCall?.[0]?.properties.name).toBe('Square');
+
+		await userEvent.keyboard('{Enter}');
+		await expect.poll(() => onclick.mock.calls.length).toBe(1);
+		expect(onclick.mock.calls[0][0].properties.name).toBe('Square');
+		expect(onclick.mock.calls[0][1]).toBeUndefined();
+
+		list.blur();
+		await expect.poll(() => map.getFeatureState({ source: 'h-geo', id: 0 }).hover).toBeFalsy();
+	});
+
+	test('a shape layer with no click or hover handler adds no keyboard list', async () => {
+		const { map, screen } = await mountData({ geojson: SQUARE });
+		await layerReady(map, 'h-geo-fill');
+		expect(screen.container.querySelector('[data-slot="map-feature-list"]')).toBeNull();
+	});
+
 	test('hover sets feature-state through the registry and clears on new data', async () => {
 		const onhover = vi.fn();
 		const onclick = vi.fn();
