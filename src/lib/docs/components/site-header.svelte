@@ -23,6 +23,12 @@
 		const path = page.url.pathname;
 		return path === href || path.startsWith(`${href}/`);
 	}
+
+	/** `page` on the item's own page, `true` on the pages below it, for screen readers. */
+	function currentOf(href: string): 'page' | 'true' | undefined {
+		if (page.url.pathname === href) return 'page';
+		return isActive(href) ? 'true' : undefined;
+	}
 </script>
 
 <header class="sticky top-0 z-1001 w-full bg-background">
@@ -40,6 +46,7 @@
 						variant="ghost"
 						size="sm"
 						class={cn(isActive(item.href) ? 'text-primary' : 'text-muted-foreground')}
+						aria-current={currentOf(item.href)}
 					>
 						{item.label}
 					</Button>
