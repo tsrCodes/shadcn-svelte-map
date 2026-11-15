@@ -55,7 +55,7 @@ const { point } = splitLine(route, progress);
 
 ## Layers
 
-The route uses one source and four layers: `<id>-casing`, `<id>-rest`, `<id>-done` and `<id>-stops`. Pass `id` if you need to refer to them, for example as a `beforeId` for another layer. `onclick` fires when the line itself is clicked, not the dots.
+The line is one source, `<id>`, with three layers: `<id>-casing`, `<id>-rest` and `<id>-done`. The stop and head dots are a second, small source, `<id>-points`, drawn by `<id>-stops`. The travelled part is a gradient on the full line, so animating `progress` changes a paint value and moves one dot; the line is only sent to MapLibre's worker again when `positions` change. Pass `id` if you need to refer to them, for example as a `beforeId` for another layer. `onclick` fires when the line itself is clicked, not the dots.
 
 ## API Reference
 

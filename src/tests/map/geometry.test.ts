@@ -10,6 +10,7 @@ import {
 	rectangleRing,
 	ringArea,
 	ringCenter,
+	lineProgressAt,
 	splitLine,
 	type LngLatTuple
 } from '#lib/registry/ui/map/geometry.js';
@@ -194,5 +195,35 @@ describe('polygon helpers', () => {
 		expect(ringCenter(closeRing(square))).toEqual([0.5, 0.5]);
 		expect(ringCenter([[3, 4]])).toEqual([3, 4]);
 		expect(() => ringCenter([])).toThrow();
+	});
+});
+
+describe('lineProgressAt', () => {
+	test('matches the share of metres on a line along the equator', () => {
+		const line: LngLatTuple[] = [
+			[0, 0],
+			[10, 0],
+			[20, 0]
+		];
+		expect(lineProgressAt(line, 0.25)).toBeCloseTo(0.25, 6);
+		expect(lineProgressAt(line, 0)).toBe(0);
+		expect(lineProgressAt(line, 1)).toBe(1);
+	});
+
+	test('measures projected length, so a far-north leg counts for more', () => {
+		// Equal metres east at the equator, then north into high latitudes where
+		// Web Mercator stretches distances.
+		const line: LngLatTuple[] = [
+			[0, 0],
+			[0, 60],
+			[0, 80]
+		];
+		const half = lineProgressAt(line, 0.5);
+		expect(half).toBeGreaterThan(0);
+		expect(half).toBeLessThan(0.5);
+	});
+
+	test('a line with no length reports the progress share as it is', () => {
+		expect(lineProgressAt([[5, 5]], 0.4)).toBe(0.4);
 	});
 });

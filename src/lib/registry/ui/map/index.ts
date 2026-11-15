@@ -39,6 +39,7 @@ export {
 	closeRing,
 	distanceMeters,
 	lineLength,
+	lineProgressAt,
 	pointInPolygon,
 	polygonArea,
 	rectangleRing,

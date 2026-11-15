@@ -3,7 +3,7 @@ import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 import type { Feature, FeatureCollection, Point } from 'geojson';
 import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
-import type { MapContext } from '#lib/registry/ui/map/index.js';
+import { lineProgressAt, type MapContext } from '#lib/registry/ui/map/index.js';
 import DataHarness from './DataHarness.svelte';
 import { DARK_STYLE, LIGHT_STYLE } from './fixtures.js';
 
@@ -203,20 +203,48 @@ describe('shapes', () => {
 });
 
 describe('MapRoute', () => {
-	test('progress splits the route and moves the head without rebuilding', async () => {
+	test('progress moves the gradient and the head; the line is sent to the worker once', async () => {
 		const { map, screen } = await mountData({ route: ROUTE, routeProgress: 0.25 });
 		await layerReady(map, 'h-route-done');
-		const source = map.getSource('h-route');
+		await layerReady(map, 'h-route-stops');
+		const line = map.getSource<GeoJSONSource>('h-route');
+		if (!line) throw new Error('Source "h-route" is missing.');
+		const lineData = await sourceData(map, 'h-route');
+		expect(lineData.features.map((feature) => feature.geometry.type)).toEqual(['LineString']);
+		const setData = vi.spyOn(line, 'setData');
 		const parts = async () =>
-			(await sourceData(map, 'h-route')).features.map((feature) => feature.properties?.part);
-		expect(await parts()).toEqual(['rest', 'done', 'start', 'end', 'head']);
+			(await sourceData(map, 'h-route-points')).features.map((feature) => feature.properties?.part);
+		expect(await parts()).toEqual(['start', 'end', 'head']);
 
+		const stop = () => {
+			const gradient = map.getPaintProperty('h-route-done', 'line-gradient') as unknown[];
+			return gradient[3];
+		};
+		expect(stop()).toBeCloseTo(lineProgressAt(ROUTE, 0.25), 6);
+
+		await screen.rerender({ route: ROUTE, routeProgress: 0.75 });
+		await expect.poll(stop).toBeCloseTo(lineProgressAt(ROUTE, 0.75), 6);
 		await screen.rerender({ route: ROUTE, routeProgress: 1 });
-		await expect.poll(parts).toEqual(['done', 'start', 'end']);
-		expect(map.getSource('h-route')).toBe(source);
+		await expect.poll(parts).toEqual(['start', 'end']);
+
+		expect(setData).not.toHaveBeenCalled();
+		expect(map.getSource('h-route')).toBe(line);
 		for (const layer of ['h-route-casing', 'h-route-rest', 'h-route-done', 'h-route-stops']) {
 			expect(map.getLayer(layer)).toBeDefined();
 		}
+	});
+
+	test('a new route is sent once and redraws the line', async () => {
+		const { map, screen } = await mountData({ route: ROUTE, routeProgress: 0.5 });
+		await layerReady(map, 'h-route-done');
+		const shorter = ROUTE.slice(0, 2);
+		await screen.rerender({ route: shorter, routeProgress: 0.5 });
+		await expect
+			.poll(async () => {
+				const [feature] = (await sourceData(map, 'h-route')).features;
+				return feature.geometry.type === 'LineString' ? feature.geometry.coordinates : [];
+			})
+			.toEqual(shorter);
 	});
 });
 

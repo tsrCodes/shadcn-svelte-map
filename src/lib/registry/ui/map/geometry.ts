@@ -133,6 +133,34 @@ export function splitLine(line: LngLatTuple[], progress: number): SplitLine {
 	return { done: [...line], rest: [last], point: last };
 }
 
+/** Web Mercator position of a point, in world widths, as MapLibre lays lines out. */
+function mercator([lng, lat]: LngLatTuple): [number, number] {
+	const y = Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
+	return [(lng + 180) / 360, 0.5 - y / (2 * Math.PI)];
+}
+
+function projectedLength(line: LngLatTuple[]): number {
+	let total = 0;
+	for (let index = 1; index < line.length; index += 1) {
+		const [ax, ay] = mercator(line[index - 1]);
+		const [bx, by] = mercator(line[index]);
+		total += Math.hypot(bx - ax, by - ay);
+	}
+	return total;
+}
+
+/**
+ * Where `splitLine(line, progress)` splits, as a share of the line's projected length.
+ * MapLibre's `line-progress` measures projected length, so this is the stop to give a
+ * `line-gradient` that should end exactly at the split point.
+ */
+export function lineProgressAt(line: LngLatTuple[], progress: number): number {
+	const share = Math.min(1, Math.max(0, progress));
+	const total = line.length > 1 ? projectedLength(line) : 0;
+	if (total === 0) return share;
+	return Math.min(1, projectedLength(splitLine(line, share).done) / total);
+}
+
 /**
  * A curved line from `from` to `to`. At its middle it sits `curvature` times the
  * straight distance to the side. It crosses the antimeridian the short way, so the end
