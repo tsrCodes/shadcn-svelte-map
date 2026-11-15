@@ -5,11 +5,11 @@
 
 	let activeId = $state<string | null>(null);
 
-	/** The last heading whose top has scrolled above the viewport, if any. */
+	/** The last heading whose top is at or above the top of the viewport, if any. */
 	function lastPassed(headings: Heading[]): Heading | undefined {
 		for (let index = headings.length - 1; index >= 0; index--) {
 			const top = document.getElementById(headings[index].id)?.getBoundingClientRect().top;
-			if (top !== undefined && top < 0) return headings[index];
+			if (top !== undefined && top <= 0) return headings[index];
 		}
 		return undefined;
 	}
@@ -26,8 +26,8 @@
 					for (const entry of entries) visible[entry.target.id] = entry.isIntersecting;
 					const first = headings.find(({ id }) => visible[id]);
 					// Between headings, the section you are reading is the last one scrolled past.
-					const passed = lastPassed(headings);
-					activeId = first?.id ?? passed?.id ?? null;
+					// Only measured then, and measured fresh: a jump past a heading never reports it.
+					activeId = (first ?? lastPassed(headings))?.id ?? null;
 				},
 				{ rootMargin: '0% 0% -80% 0%' }
 			);
