@@ -5,7 +5,14 @@
 <script lang="ts">
 	import { untrack, type Snippet } from 'svelte';
 	import type { HTMLButtonAttributes } from 'svelte/elements';
-	import type { LngLat, LngLatLike, Marker, PointLike, PositionAnchor } from 'maplibre-gl';
+	import type {
+		Alignment,
+		LngLat,
+		LngLatLike,
+		Marker,
+		PointLike,
+		PositionAnchor
+	} from 'maplibre-gl';
 	import { cn } from '#lib/utils.js';
 	import { getMapContext } from './map-context.svelte.js';
 	import { MarkerContext, setMarkerContext } from './marker-context.svelte.js';
@@ -30,6 +37,8 @@
 		draggable?: boolean;
 		/** Rotation in degrees, clockwise. */
 		rotation?: number;
+		/** `map` turns the marker with the map, so a heading stays true; `viewport` keeps it upright on screen. */
+		rotationAlignment?: Alignment;
 		/** The MapLibre marker instance. */
 		ref?: Marker | null;
 		/** Called with the position when a drag starts. */
@@ -47,6 +56,7 @@
 		offset = [0, 0],
 		draggable = false,
 		rotation = 0,
+		rotationAlignment = 'auto',
 		ref = $bindable(null),
 		ondragstart,
 		ondrag,
@@ -91,7 +101,14 @@
 		if (!map || !lib || !element) return;
 
 		const instance = untrack(() =>
-			new lib.Marker({ element, anchor: nextAnchor, offset, draggable, rotation })
+			new lib.Marker({
+				element,
+				anchor: nextAnchor,
+				offset,
+				draggable,
+				rotation,
+				rotationAlignment
+			})
 				.setLngLat(lngLat)
 				.addTo(map)
 		);
@@ -139,6 +156,10 @@
 
 	$effect(() => {
 		marker.marker?.setRotation(rotation);
+	});
+
+	$effect(() => {
+		marker.marker?.setRotationAlignment(rotationAlignment);
 	});
 </script>
 
