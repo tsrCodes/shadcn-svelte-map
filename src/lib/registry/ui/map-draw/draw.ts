@@ -64,12 +64,23 @@ export const DRAW_ID_STRATEGY: IdStrategy<FeatureId> = {
 	isValidId: (id) => (typeof id === 'string' ? id.length > 0 : Number.isFinite(id))
 };
 
-/** Saved drawings in the form terra-draw loads, with its mode names. */
+/** A deep copy of nested coordinate arrays; also works on reactive proxies. */
+function copyCoordinates<T>(value: T): T {
+	return (Array.isArray(value) ? value.map(copyCoordinates) : value) as T;
+}
+
+/**
+ * Saved drawings in the form terra-draw loads, with its mode names. Geometry is copied,
+ * so the engine's edits never reach the caller's objects.
+ */
 export function engineFeatures(features: readonly DrawFeature[]): GeoJSONStoreFeatures[] {
 	return features.map((feature) => ({
 		type: 'Feature',
 		id: feature.id,
-		geometry: feature.geometry,
+		geometry: {
+			...feature.geometry,
+			coordinates: copyCoordinates(feature.geometry.coordinates)
+		} as DrawGeometry,
 		properties: { mode: engineMode(feature.properties.mode) }
 	}));
 }

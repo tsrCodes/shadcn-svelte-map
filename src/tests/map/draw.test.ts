@@ -106,6 +106,28 @@ describe('draw helpers', () => {
 		expect(finishedFeatures([converted])).toEqual([line]);
 	});
 
+	test('engineFeatures copies geometry, so engine edits never reach the saved data', () => {
+		const square: DrawFeature = {
+			type: 'Feature',
+			id: 'yard',
+			geometry: {
+				type: 'Polygon',
+				coordinates: [
+					[
+						[0, 0],
+						[1, 0],
+						[1, 1],
+						[0, 0]
+					]
+				]
+			},
+			properties: { mode: 'polygon' }
+		};
+		const [converted] = engineFeatures([square]);
+		(converted.geometry.coordinates as number[][][])[0][1][0] = 5;
+		expect((square.geometry.coordinates as number[][][])[0][1]).toEqual([1, 0]);
+	});
+
 	test('the id strategy accepts any string or number id and makes unique ones', () => {
 		expect(DRAW_ID_STRATEGY.isValidId('site-1')).toBe(true);
 		expect(DRAW_ID_STRATEGY.isValidId(7)).toBe(true);
