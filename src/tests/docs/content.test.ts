@@ -60,6 +60,18 @@ describe('docs content', () => {
 		expect(leftovers).toEqual([]);
 	});
 
+	test('copied markdown keeps a script tag written in the prose', () => {
+		const page = { ...DOC_PAGES[0], body: 'Load it with `<script src="/x.js"></script>` early.' };
+		expect(toMarkdown(page)).toContain('`<script src="/x.js"></script>`');
+		const withBlock = {
+			...page,
+			body: `<script>\n\timport X from 'x';\n</script>\n\n${page.body}`
+		};
+		const markdown = toMarkdown(withBlock);
+		expect(markdown).not.toContain('import X');
+		expect(markdown).toContain('`<script src="/x.js"></script>`');
+	});
+
 	test('docs tags are found whether self-closing or closed', () => {
 		const page = {
 			...DOC_PAGES[0],

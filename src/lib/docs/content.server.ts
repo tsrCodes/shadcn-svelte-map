@@ -138,7 +138,8 @@ export function getApiNames(page: DocPage): string[] {
 /** The page as plain markdown for "Copy Page", `/docs/<slug>.md` and `llms.txt`. */
 export function toMarkdown(page: DocPage): string {
 	const body = page.body
-		.replace(/<script\b[^>]*>[\s\S]*?<\/script>\n*/, '')
+		// Only the page's own script block at the top; a tag quoted in the prose stays.
+		.replace(/^\s*<script\b[^>]*>[\s\S]*?<\/script>\n*/, '')
 		.replace(tagPattern('ComponentPreview', 'name'), (_, _quote: string, name: string) => {
 			const source = getExampleSource(name);
 			return source ? codeFence(source, 'svelte') : '';
