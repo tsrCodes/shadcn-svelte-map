@@ -64,6 +64,15 @@ describe('Map', () => {
 		await expect.poll(() => map.getProjection()?.type).toBe('globe');
 	});
 
+	test('a map that fails to construct shows the error state and calls onerror', async () => {
+		const onerror = vi.fn();
+		// MapLibre throws from its constructor when the zoom range is impossible.
+		const screen = render(MapHarness, { options: { minZoom: 10, maxZoom: 5 }, onerror });
+		await expect.poll(() => onerror.mock.calls.length, { timeout: 15_000 }).toBeGreaterThan(0);
+		expect(onerror.mock.calls[0][0]).toBeInstanceOf(Error);
+		expect(statusOf(screen.container)).toBe('error');
+	});
+
 	test('basemap swap keeps user sources, layers and feature-state', async () => {
 		const { ctx, map } = await mountMap({
 			mapStyle: { light: LIGHT_STYLE, dark: DARK_STYLE },

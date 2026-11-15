@@ -205,7 +205,13 @@
 			let destroy: (() => void) | null = null;
 			import('maplibre-gl').then(
 				(lib) => {
-					if (!cancelled) destroy = createMap(lib, node);
+					if (cancelled) return;
+					// MapLibre throws from its constructor, e.g. when WebGL fails or options clash.
+					try {
+						destroy = createMap(lib, node);
+					} catch (error) {
+						reportError(toError(error));
+					}
 				},
 				(error: unknown) => {
 					if (!cancelled) reportError(toError(error));
