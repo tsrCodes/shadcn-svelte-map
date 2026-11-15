@@ -38,12 +38,13 @@
 	const CHART = { width: 240, height: 56, gap: 2 };
 	const BAR_WIDTH = CHART.width / HOURS_PER_DAY - CHART.gap;
 
-	const hourly = Array.from(
-		{ length: HOURS_PER_DAY },
-		(_, hour) => PICKUPS.filter((pickup) => pickup.properties.hour === hour).length
-	);
+	const hourly = Array.from({ length: HOURS_PER_DAY }, (_, hour) => ({
+		hour,
+		count: PICKUPS.filter((pickup) => pickup.properties.hour === hour).length
+	}));
 	// At least 1, so a day with no pickups draws flat bars instead of dividing by 0.
-	const busiest = Math.max(1, ...hourly);
+	const busiest = Math.max(1, ...hourly.map((bar) => bar.count));
+	const busiestHour = hourly.findIndex((bar) => bar.count === busiest);
 
 	let hour = $state(START_HOUR);
 	let allDay = $state(false);
@@ -119,17 +120,17 @@
 				class="w-full"
 				viewBox="0 0 {CHART.width} {CHART.height}"
 				role="img"
-				aria-label="Pickups per hour, busiest at {clock(hourly.indexOf(busiest))}"
+				aria-label="Pickups per hour, busiest at {clock(busiestHour)}"
 			>
-				{#each hourly as count, index (index)}
-					{@const height = Math.max(1, (count / busiest) * CHART.height)}
+				{#each hourly as bar (bar.hour)}
+					{@const height = Math.max(1, (bar.count / busiest) * CHART.height)}
 					<rect
-						x={index * (BAR_WIDTH + CHART.gap)}
+						x={bar.hour * (BAR_WIDTH + CHART.gap)}
 						y={CHART.height - height}
 						width={BAR_WIDTH}
 						{height}
 						rx="1"
-						class={isShown(index) ? 'fill-primary' : 'fill-muted-foreground/25'}
+						class={isShown(bar.hour) ? 'fill-primary' : 'fill-muted-foreground/25'}
 					/>
 				{/each}
 			</svg>

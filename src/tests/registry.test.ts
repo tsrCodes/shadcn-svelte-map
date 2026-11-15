@@ -60,6 +60,27 @@ function scriptOf(path: string): string {
 		.join('\n');
 }
 
+/** `{#each}` blocks in a Svelte file whose key is just the loop index, as `file:line`. */
+function indexKeyedEachBlocks(path: string): string[] {
+	const source = readFileSync(path, 'utf8');
+	const found: string[] = [];
+	const visit = (node: unknown): void => {
+		if (!node || typeof node !== 'object') return;
+		if (Array.isArray(node)) return node.forEach(visit);
+		const record = node as Record<string, unknown>;
+		const key = record.key as { type?: string; name?: string } | undefined;
+		if (record.type === 'EachBlock' && key?.type === 'Identifier' && key.name === record.index) {
+			const line = source.slice(0, record.start as number).split('\n').length;
+			found.push(`${path}:${line}`);
+		}
+		for (const [field, value] of Object.entries(record)) {
+			if (field !== 'parent') visit(value);
+		}
+	};
+	visit(parse(source, { modern: true }).fragment);
+	return found;
+}
+
 /** Every module a file imports or re-exports, static or dynamic, without `?query`. */
 function importsOf(path: string): string[] {
 	const info = ts.preProcessFile(scriptOf(path), true, true);
@@ -254,5 +275,14 @@ describe('registry.json', () => {
 		expect(blocks.map((item) => item.name).toSorted()).toEqual(
 			BLOCKS.map((block) => block.name).toSorted()
 		);
+	});
+
+	test('no each block in a registry file is keyed by its own index', () => {
+		const keyedByIndex = registry.items.flatMap((item) =>
+			item.files
+				.filter((file) => file.path.endsWith('.svelte'))
+				.flatMap((file) => indexKeyedEachBlocks(file.path))
+		);
+		expect(keyedByIndex).toEqual([]);
 	});
 });
