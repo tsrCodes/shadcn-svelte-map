@@ -10,6 +10,12 @@
 set -euo pipefail
 
 KIT="${1:?usage: scripts/install-test.sh <2|3> [out-dir]}"
+
+# The shadcn-svelte CLI prompts even with flags, so it runs under `expect` below.
+command -v expect > /dev/null || {
+	echo "This test needs expect (macOS ships it; Debian/Ubuntu: apt install expect)." >&2
+	exit 1
+}
 OUT="${2:-${TMPDIR:-/tmp}/shadcn-svelte-map-install/kit$KIT}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # A free port per run, so parallel runs never collide; REGISTRY_PORT pins one for debugging
