@@ -57,6 +57,13 @@ describe('Map', () => {
 		await expect.poll(() => map.getProjection()?.type).toBe('mercator');
 	});
 
+	test('projection: left out, the style keeps its own', async () => {
+		const { map } = await mountMap({
+			mapStyle: { ...LIGHT_STYLE, projection: { type: 'globe' } }
+		});
+		await expect.poll(() => map.getProjection()?.type).toBe('globe');
+	});
+
 	test('basemap swap keeps user sources, layers and feature-state', async () => {
 		const { ctx, map } = await mountMap({
 			mapStyle: { light: LIGHT_STYLE, dark: DARK_STYLE },

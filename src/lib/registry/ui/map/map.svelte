@@ -46,7 +46,10 @@
 		viewport?: MapViewport;
 		/** Called with every proposed camera change. The map then shows whatever `viewport` holds. */
 		onviewportchange?: (viewport: MapViewport) => void;
-		/** `globe` draws the world as a sphere at low zoom; it flattens as you zoom in. */
+		/**
+		 * `globe` draws the world as a sphere at low zoom; it flattens as you zoom in. Leave it
+		 * out to use the style's own projection, which is `mercator` for most styles.
+		 */
 		projection?: MapProjection;
 		/** Extra MapLibre options, read once when the map is created. */
 		options?: MapOptionsInput;
@@ -69,7 +72,7 @@
 		mapStyle = DEFAULT_MAP_STYLE,
 		viewport = $bindable(),
 		onviewportchange,
-		projection = 'mercator',
+		projection,
 		options,
 		workerUrl,
 		ref = $bindable(null),
@@ -138,8 +141,8 @@
 			map.on('styledataloading', () => ctx.layers.styleLoading()),
 			map.on('style.load', () => {
 				ctx.layers.styleLoaded();
-				// A new style brings its own projection; keep the one asked for.
-				map.setProjection({ type: projection });
+				// A new style brings its own projection; keep the one asked for, if any.
+				if (projection) map.setProjection({ type: projection });
 				ctx.styleVersion += 1;
 			}),
 			map.on('load', () => {
@@ -241,7 +244,7 @@
 	$effect(() => {
 		const map = ctx.map;
 		const next = projection;
-		if (!map || ctx.styleVersion === 0) return;
+		if (!map || !next || ctx.styleVersion === 0) return;
 		untrack(() => {
 			if (map.getProjection()?.type !== next) map.setProjection({ type: next });
 		});

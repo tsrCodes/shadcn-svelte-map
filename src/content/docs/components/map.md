@@ -50,7 +50,7 @@ For full control, pass `viewport` without binding it, together with `onviewportc
 
 ## Globe
 
-Set `projection="globe"` to draw the world as a sphere at low zoom. It flattens into the usual map as you zoom in, and stays a globe through theme and basemap swaps. Change it back to `mercator` at any time.
+Set `projection="globe"` to draw the world as a sphere at low zoom. It flattens into the usual map as you zoom in, and stays a globe through theme and basemap swaps. Change it back to `mercator` at any time. Leave `projection` out and the map uses whatever projection the style sets.
 
 ```svelte
 <Map
