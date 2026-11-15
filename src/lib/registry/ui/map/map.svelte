@@ -121,10 +121,23 @@
 		return new Error(String(value));
 	}
 
-	function reportError(error: Error) {
-		if (status === 'loading') status = 'error';
+	function notify(error: Error) {
 		if (onerror) onerror(error);
 		else console.error(error);
+	}
+
+	function reportError(error: Error) {
+		if (status === 'loading') status = 'error';
+		notify(error);
+	}
+
+	/** A projection MapLibre refuses is reported; the map keeps working in the one it has. */
+	function applyProjection(map: MapLibreMap, next: ProjectionSpecification) {
+		try {
+			map.setProjection(next);
+		} catch (error) {
+			notify(toError(error));
+		}
 	}
 
 	function handleCameraUpdate(lib: MapLibreModule, proposed: MapViewport): CameraOverride {
@@ -151,7 +164,7 @@
 				ctx.layers.styleLoaded();
 				// A new style brings its own projection; remember it, then keep the one asked for.
 				styleProjection = map.getProjection();
-				if (projection) map.setProjection({ type: projection });
+				if (projection) applyProjection(map, { type: projection });
 				ctx.styleVersion += 1;
 			}),
 			map.on('load', () => {
@@ -264,11 +277,11 @@
 		untrack(() => {
 			const current = map.getProjection();
 			if (next) {
-				if (current?.type !== next) map.setProjection({ type: next });
+				if (current?.type !== next) applyProjection(map, { type: next });
 			} else if (styleProjection) {
-				if (current?.type !== styleProjection.type) map.setProjection(styleProjection);
+				if (current?.type !== styleProjection.type) applyProjection(map, styleProjection);
 			} else if (current && current.type !== 'mercator') {
-				map.setProjection({ type: 'mercator' });
+				applyProjection(map, { type: 'mercator' });
 			}
 		});
 	});

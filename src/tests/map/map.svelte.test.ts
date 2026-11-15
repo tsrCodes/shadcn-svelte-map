@@ -78,6 +78,24 @@ describe('Map', () => {
 		await expect.poll(() => map.getProjection()?.type).toBe('globe');
 	});
 
+	test('projection: a change MapLibre refuses is reported and later changes still apply', async () => {
+		const onerror = vi.fn();
+		const { screen, map } = await mountMap({ onerror });
+		const refuse = vi.spyOn(map, 'setProjection').mockImplementationOnce(() => {
+			throw new Error('projection refused');
+		});
+
+		await screen.rerender({ onerror, projection: 'globe' });
+		await expect.poll(() => onerror.mock.calls.length).toBeGreaterThan(0);
+		expect(onerror.mock.calls[0][0]).toMatchObject({ message: 'projection refused' });
+		expect(statusOf(screen.container)).toBe('ready');
+
+		refuse.mockRestore();
+		await screen.rerender({ onerror, projection: 'mercator' });
+		await screen.rerender({ onerror, projection: 'globe' });
+		await expect.poll(() => map.getProjection()?.type).toBe('globe');
+	});
+
 	test('a map that fails to construct shows the error state and calls onerror', async () => {
 		const onerror = vi.fn();
 		// MapLibre throws from its constructor when the zoom range is impossible.
