@@ -64,6 +64,20 @@ describe('Map', () => {
 		await expect.poll(() => map.getProjection()?.type).toBe('globe');
 	});
 
+	test('projection: removed again, the style gets its own back', async () => {
+		const { screen, map } = await mountMap({ projection: 'globe' });
+		await expect.poll(() => map.getProjection()?.type).toBe('globe');
+
+		await screen.rerender({ projection: undefined });
+		await expect.poll(() => map.getProjection()?.type ?? 'mercator').toBe('mercator');
+
+		const globeStyle = { ...LIGHT_STYLE, projection: { type: 'globe' } } as const;
+		await screen.rerender({ mapStyle: globeStyle, projection: 'mercator' });
+		await expect.poll(() => map.getProjection()?.type).toBe('mercator');
+		await screen.rerender({ mapStyle: globeStyle, projection: undefined });
+		await expect.poll(() => map.getProjection()?.type).toBe('globe');
+	});
+
 	test('a map that fails to construct shows the error state and calls onerror', async () => {
 		const onerror = vi.fn();
 		// MapLibre throws from its constructor when the zoom range is impossible.

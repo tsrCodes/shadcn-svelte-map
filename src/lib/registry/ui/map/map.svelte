@@ -18,7 +18,13 @@
 	import 'maplibre-gl/dist/maplibre-gl.css';
 	import { untrack, type Snippet } from 'svelte';
 	import type { HTMLAttributes } from 'svelte/elements';
-	import type { LngLat, Map as MapLibreMap, StyleSpecification, Subscription } from 'maplibre-gl';
+	import type {
+		LngLat,
+		Map as MapLibreMap,
+		ProjectionSpecification,
+		StyleSpecification,
+		Subscription
+	} from 'maplibre-gl';
 	import { cn } from '#lib/utils.js';
 	import { Spinner } from '#lib/registry/ui/spinner/index.js';
 	import { MapContext, setMapContext } from './map-context.svelte.js';
@@ -97,6 +103,8 @@
 	let lastApplied: MapViewport | null = null;
 	/** The style last handed to MapLibre, so a theme change only swaps when needed. */
 	let appliedStyle: StyleInput | null = null;
+	/** The projection the current style sets itself, put back when `projection` is removed. */
+	let styleProjection: ProjectionSpecification | undefined;
 
 	const activeStyle = $derived(resolveStyle(ctx.basemap ?? mapStyle, ctx.theme.resolved));
 
@@ -141,7 +149,8 @@
 			map.on('styledataloading', () => ctx.layers.styleLoading()),
 			map.on('style.load', () => {
 				ctx.layers.styleLoaded();
-				// A new style brings its own projection; keep the one asked for, if any.
+				// A new style brings its own projection; remember it, then keep the one asked for.
+				styleProjection = map.getProjection();
 				if (projection) map.setProjection({ type: projection });
 				ctx.styleVersion += 1;
 			}),
@@ -247,12 +256,20 @@
 	});
 
 	// Switch projection live once a style has loaded; style loads apply it themselves.
+	// Removing `projection` hands the map back to the style's own projection.
 	$effect(() => {
 		const map = ctx.map;
 		const next = projection;
-		if (!map || !next || ctx.styleVersion === 0) return;
+		if (!map || ctx.styleVersion === 0) return;
 		untrack(() => {
-			if (map.getProjection()?.type !== next) map.setProjection({ type: next });
+			const current = map.getProjection();
+			if (next) {
+				if (current?.type !== next) map.setProjection({ type: next });
+			} else if (styleProjection) {
+				if (current?.type !== styleProjection.type) map.setProjection(styleProjection);
+			} else if (current && current.type !== 'mercator') {
+				map.setProjection({ type: 'mercator' });
+			}
 		});
 	});
 </script>
