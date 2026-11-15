@@ -166,7 +166,7 @@
 
 	function arcIndexAt(map: MapLibreMap, point: PointLike): number | null {
 		const index = Number(featuresAt(map, point, [lineId])[0]?.id);
-		return Number.isInteger(index) && index < arcs.length ? index : null;
+		return Number.isInteger(index) && index >= 0 && index < arcs.length ? index : null;
 	}
 
 	$effect(() => {
