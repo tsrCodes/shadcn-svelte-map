@@ -45,7 +45,7 @@ export function commandFor(command: string, manager: PackageManager): string {
 		case 'pnpm':
 			return command.replace(/^npx/, 'pnpm dlx');
 		case 'yarn':
-			return command.replace(/^npx/, 'yarn');
+			return command.replace(/^npx/, 'yarn dlx');
 		case 'bun':
 			return command.replace(/^npx/, 'bunx --bun');
 	}
