@@ -1,6 +1,6 @@
 ---
 title: Route
-description: A route line that shows how far along a trip is, with dots at the start, the end and the current position.
+description: A route line that shows how far along a trip is, with dots at the start and the end and a dot or marker at the current position.
 ---
 
 <script>
@@ -45,13 +45,25 @@ With `showStops`, the route gets a dot at its first and last position. The start
 
 With `showHead`, a dot marks where the travelled part ends. It only shows while the trip is under way, so not at 0 or 1. Both are on by default.
 
-If you want a richer marker, such as a vehicle icon, turn `showHead` off and put a [Marker](/docs/components/marker) at the split point. `splitLine` from the [utilities](/docs/components/utilities) gives you that point:
+## Marker
 
-```ts
-import { splitLine } from '$lib/components/ui/map/index.js';
+For a richer marker, such as a vehicle icon, pass a `marker` snippet. The route renders it at the point `progress` has reached, and it replaces the head dot. Unlike the head dot it also shows at 0 and 1, so a vehicle stays on the map before it sets off and after it arrives.
 
-const { point } = splitLine(route, progress);
+The snippet gets `lngLat` and `heading`, the way the route runs at that point in degrees clockwise from north. Give a [Marker](/docs/components/marker) `rotation={heading}` and `rotationAlignment="map"` and an arrow keeps pointing along the line, even when the map is rotated:
+
+```svelte
+<MapRoute positions={route} {progress}>
+	{#snippet marker({ lngLat, heading })}
+		<MapMarker {lngLat} aria-label="Courier" rotation={heading} rotationAlignment="map">
+			<MapMarkerContent>
+				<Navigation2Icon class="size-5" />
+			</MapMarkerContent>
+		</MapMarker>
+	{/snippet}
+</MapRoute>
 ```
+
+Leave out `rotation` for an icon that should stay upright, like a bike or an avatar. Outside a route, `splitLine` and `lineHeadingAt` from the [utilities](/docs/components/utilities) give you the same point and heading.
 
 ## Layers
 

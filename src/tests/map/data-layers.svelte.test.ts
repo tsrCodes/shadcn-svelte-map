@@ -2,8 +2,13 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 import type { Feature, FeatureCollection, Point } from 'geojson';
-import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
-import { lineProgressAt, type MapContext } from '#lib/registry/ui/map/index.js';
+import type { GeoJSONSource, Map as MapLibreMap, Marker } from 'maplibre-gl';
+import {
+	lineHeadingAt,
+	lineProgressAt,
+	splitLine,
+	type MapContext
+} from '#lib/registry/ui/map/index.js';
 import DataHarness from './DataHarness.svelte';
 import { DARK_STYLE, LIGHT_STYLE } from './fixtures.js';
 
@@ -277,6 +282,39 @@ describe('MapRoute', () => {
 				return feature.geometry.type === 'LineString' ? feature.geometry.coordinates : [];
 			})
 			.toEqual(shorter);
+	});
+});
+
+describe('MapRoute marker', () => {
+	test('follows progress and turns with the route', async () => {
+		let courier: Marker | null = null;
+		const onroutemarker = (marker: Marker | null) => (courier = marker);
+		const { map, screen } = await mountData({
+			route: ROUTE,
+			routeProgress: 0.25,
+			routeMarker: true,
+			onroutemarker
+		});
+		await layerReady(map, 'h-route-stops');
+		await expect.poll(() => courier).not.toBeNull();
+		const markerAt = () => courier as unknown as Marker;
+		const expectAt = async (share: number) => {
+			const [lng, lat] = splitLine(ROUTE, share).point;
+			await expect.poll(() => markerAt().getLngLat().lng).toBeCloseTo(lng, 6);
+			expect(markerAt().getLngLat().lat).toBeCloseTo(lat, 6);
+			expect(markerAt().getRotation()).toBeCloseTo(lineHeadingAt(ROUTE, share), 6);
+		};
+
+		await expectAt(0.25);
+		expect(markerAt().getRotationAlignment()).toBe('map');
+		// The marker stands in for the head dot.
+		const parts = (await sourceData(map, 'h-route-points')).features.map(
+			(feature) => feature.properties?.part
+		);
+		expect(parts).not.toContain('head');
+
+		await screen.rerender({ route: ROUTE, routeProgress: 0.75, routeMarker: true, onroutemarker });
+		await expectAt(0.75);
 	});
 });
 

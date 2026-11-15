@@ -11,7 +11,7 @@ export { default as MapCircle } from './map-circle.svelte';
 export { default as MapPolygon } from './map-polygon.svelte';
 export { default as MapPolyline } from './map-polyline.svelte';
 export { default as MapRectangle } from './map-rectangle.svelte';
-export { default as MapRoute } from './map-route.svelte';
+export { default as MapRoute, type MapRouteHead } from './map-route.svelte';
 export { default as MapArc, type MapArcItem } from './map-arc.svelte';
 export {
 	default as MapClusterLayer,

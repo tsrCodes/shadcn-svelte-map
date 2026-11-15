@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../../routes/layout.css';
 	import type { FeatureCollection, Point } from 'geojson';
-	import type { MapGeoJSONFeature } from 'maplibre-gl';
+	import type { MapGeoJSONFeature, Marker } from 'maplibre-gl';
 	import {
 		Map,
 		MapArc,
@@ -9,6 +9,7 @@
 		MapClusterLayer,
 		MapGeoJSON,
 		MapHeatmap,
+		MapMarker,
 		MapPolygon,
 		MapPolyline,
 		MapRectangle,
@@ -33,6 +34,8 @@
 		shapeColor?: string;
 		route?: LngLatTuple[];
 		routeProgress?: number;
+		routeMarker?: boolean;
+		onroutemarker?: (marker: Marker | null) => void;
 		arcs?: (MapArcItem & { name: string })[];
 		onarcclick?: (name: string, index: number) => void;
 		clusters?: FeatureCollection<Point, { name: string }>;
@@ -56,6 +59,8 @@
 		shapeColor,
 		route,
 		routeProgress,
+		routeMarker = false,
+		onroutemarker,
 		arcs,
 		onarcclick,
 		clusters,
@@ -67,6 +72,9 @@
 		heatWeight,
 		oncontext
 	}: Props = $props();
+
+	let courier = $state<Marker | null>(null);
+	$effect(() => onroutemarker?.(courier));
 </script>
 
 <div class="h-[300px] w-[400px]">
@@ -108,7 +116,21 @@
 			/>
 		{/if}
 		{#if route}
-			<MapRoute id="h-route" positions={route} progress={routeProgress} />
+			{#if routeMarker}
+				<MapRoute id="h-route" positions={route} progress={routeProgress}>
+					{#snippet marker({ lngLat, heading })}
+						<MapMarker
+							{lngLat}
+							aria-label="Courier"
+							rotation={heading}
+							rotationAlignment="map"
+							bind:ref={courier}
+						/>
+					{/snippet}
+				</MapRoute>
+			{:else}
+				<MapRoute id="h-route" positions={route} progress={routeProgress} />
+			{/if}
 		{/if}
 		{#if arcs}
 			<MapArc id="h-arc" {arcs} width={6} onclick={(arc, index) => onarcclick?.(arc.name, index)} />

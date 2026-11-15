@@ -1,5 +1,17 @@
+<script lang="ts" module>
+	import type { LngLatTuple } from './geometry.js';
+
+	/** Where the trip has got to, handed to the `marker` snippet. */
+	export interface MapRouteHead {
+		/** The point at `progress` along the route. */
+		lngLat: LngLatTuple;
+		/** Which way the route runs there, in degrees clockwise from north, as drawn on the map. */
+		heading: number;
+	}
+</script>
+
 <script lang="ts">
-	import { untrack } from 'svelte';
+	import { untrack, type Snippet } from 'svelte';
 	import type { Feature, FeatureCollection, LineString, Point } from 'geojson';
 	import type { ExpressionSpecification, MapMouseEvent } from 'maplibre-gl';
 	import type { GeoJSONData } from './layer-registry.js';
@@ -12,7 +24,7 @@
 		syncData,
 		syncPaint
 	} from './layer-sync.svelte.js';
-	import { lineProgressAt, splitLine, type LngLatTuple } from './geometry.js';
+	import { lineHeadingAt, lineProgressAt, splitLine } from './geometry.js';
 	import { FALLBACK_COLOR } from './theme.svelte.js';
 
 	type Part = 'start' | 'end' | 'head';
@@ -41,6 +53,12 @@
 		showStops?: boolean;
 		/** Draw a dot where the travelled part ends, while the trip is under way. */
 		showHead?: boolean;
+		/**
+		 * Content that follows the trip, usually a `MapMarker`. It gets the point at
+		 * `progress` and the route's heading there; it replaces the head dot. Give the
+		 * marker `rotation={heading}` and `rotationAlignment="map"` to turn it with the route.
+		 */
+		marker?: Snippet<[MapRouteHead]>;
 		/** Draw below this layer when it exists; changing it moves the layers. */
 		beforeId?: string;
 		/** Called when the route line is clicked. */
@@ -58,6 +76,7 @@
 		casingWidth = 2,
 		showStops = true,
 		showHead = true,
+		marker,
 		beforeId,
 		onclick
 	}: Props = $props();
@@ -121,12 +140,17 @@
 		const features: FeatureCollection['features'] = [];
 		if (route.length > 0) {
 			if (showStops) features.push(dot('start', route[0]), dot('end', route[route.length - 1]));
-			if (showHead && share > 0 && share < 1) {
+			if (showHead && !marker && share > 0 && share < 1) {
 				features.push(dot('head', splitLine(route, share).point));
 			}
 		}
 		return plainGeoJSON({ type: 'FeatureCollection', features });
 	}
+
+	const head = $derived.by((): MapRouteHead | null => {
+		if (!marker || route.length === 0) return null;
+		return { lngLat: splitLine(route, share).point, heading: lineHeadingAt(route, share) };
+	});
 
 	/** Solid travelled colour up to the split, clear after it. */
 	const doneGradient = $derived.by((): ExpressionSpecification => {
@@ -213,3 +237,7 @@
 		return () => subscription.unsubscribe();
 	});
 </script>
+
+{#if marker && head}
+	{@render marker(head)}
+{/if}
