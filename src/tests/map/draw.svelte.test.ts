@@ -4,7 +4,7 @@ import { render } from 'vitest-browser-svelte';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { TerraDraw } from 'terra-draw';
 import { MapContext } from '#lib/registry/ui/map/index.js';
-import { type DrawFeature } from '#lib/registry/ui/map-draw/index.js';
+import { type DrawFeature, type DrawTool } from '#lib/registry/ui/map-draw/index.js';
 import { finishedFeatures } from '#lib/registry/ui/map-draw/draw.js';
 import DrawHarness from './DrawHarness.svelte';
 
@@ -305,6 +305,20 @@ describe('MapDrawControl', () => {
 		expect(String(onerror.mock.calls[0][0])).toContain('"broken"');
 		await expect.poll(() => drawn(draw())).toEqual([SAVED[1]]);
 		expect(latest()).toEqual([SAVED[1]]);
+	});
+
+	test('a drawing engine that fails to start is reported and leaves nothing running', async () => {
+		const onerror = vi.fn();
+		const draws: (TerraDraw | null)[] = [];
+		// terra-draw throws from `setMode` for a mode it does not know.
+		render(DrawHarness, {
+			mode: 'unknown' as DrawTool,
+			onerror,
+			ondraw: (value: TerraDraw | null) => draws.push(value)
+		});
+		await expect.poll(() => onerror.mock.calls.length, { timeout: 15_000 }).toBe(1);
+		expect(onerror.mock.calls[0][0]).toBeInstanceOf(Error);
+		expect(draws.every((value) => value === null)).toBe(true);
 	});
 
 	test('the mode prop drives the live instance, and buttons write it back', async () => {

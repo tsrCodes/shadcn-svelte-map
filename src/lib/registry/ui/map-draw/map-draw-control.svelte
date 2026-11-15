@@ -199,7 +199,13 @@
 			undoRedo: { sessionLevel: new lib.TerraDrawSessionUndoRedo() }
 		});
 		instance.start();
-		instance.setMode(engineMode(mode));
+		try {
+			instance.setMode(engineMode(mode));
+		} catch (error) {
+			// Give the map its handlers back before the failure is reported.
+			instance.stop();
+			throw error;
+		}
 		listen(instance);
 		engineModes = modesForEngine;
 		return instance;
@@ -241,7 +247,13 @@
 			(engine) => {
 				if (cancelled) return;
 				cancelWait = whenStyleReady(map, () => {
-					const running = start(engine, map);
+					let running: TerraDraw;
+					try {
+						running = start(engine, map);
+					} catch (error) {
+						report(error);
+						return;
+					}
 					instance = running;
 					draw = running;
 					ref = running;
