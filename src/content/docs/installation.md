@@ -45,6 +45,21 @@ Give the map a height. It fills its parent's width.
 
 The map renders in the browser only. On the server it renders an empty frame, so it works with server-side rendering and prerendering without extra checks.
 
+## Optional: skip the first reload in dev
+
+The map loads `maplibre-gl` only in the browser, so Vite finds it the first time a page with a map opens. It then bundles it and reloads the page once, and the console shows a `504 (Outdated Optimize Dep)` error for that first load. The map works after the reload.
+
+To avoid this, tell Vite about `maplibre-gl` up front in `vite.config.ts`:
+
+```ts
+export default defineConfig({
+	optimizeDeps: { include: ['maplibre-gl'] },
+	plugins: [tailwindcss(), sveltekit()]
+});
+```
+
+This only changes the dev server. Production builds work the same either way.
+
 ## Add a block
 
 Blocks are complete examples, such as a store locator. Each one installs into its own folder and pulls in the map if you do not have it yet.
