@@ -28,6 +28,7 @@
 	import { getMapContext } from './map-context.svelte.js';
 	import {
 		featuresAt,
+		pointerCursor,
 		registerLayers,
 		syncBeforeId,
 		syncData,
@@ -261,21 +262,16 @@
 	$effect(() => {
 		const map = ctx.map;
 		if (!map) return;
-		const canvas = map.getCanvas();
-		// Only reset a cursor this layer set, so other layers keep theirs.
-		let pointing = false;
+		const point = pointerCursor(map.getCanvas());
 		const subscriptions = [
 			map.on('click', (event) => handleClick(map, event)),
 			map.on('mousemove', (event) => {
-				const over = featuresAt(map, event.point, [clustersId, pointsId]).length > 0;
-				if (over === pointing) return;
-				pointing = over;
-				canvas.style.cursor = over ? 'pointer' : '';
+				point(featuresAt(map, event.point, [clustersId, pointsId]).length > 0);
 			})
 		];
 		return () => {
 			for (const subscription of subscriptions) subscription.unsubscribe();
-			if (pointing) canvas.style.cursor = '';
+			point(false);
 		};
 	});
 

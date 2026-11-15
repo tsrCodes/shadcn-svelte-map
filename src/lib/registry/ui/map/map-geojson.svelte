@@ -12,6 +12,7 @@
 	import {
 		featuresAt,
 		plainGeoJSON,
+		pointerCursor,
 		registerLayers,
 		syncBeforeId,
 		syncData,
@@ -228,14 +229,7 @@
 	$effect(() => {
 		const map = ctx.map;
 		if (!map) return;
-		const canvas = map.getCanvas();
-		// Only reset a cursor this layer set, so other layers keep theirs.
-		let pointing = false;
-		function point(on: boolean) {
-			if (on === pointing) return;
-			pointing = on;
-			canvas.style.cursor = on ? 'pointer' : '';
-		}
+		const point = pointerCursor(map.getCanvas());
 		const subscriptions = [
 			map.on('mousemove', (event) => {
 				const feature = featureAt(event);

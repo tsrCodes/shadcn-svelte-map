@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { DEFAULT_MAP_STYLE, resolveStyle, styleOrigins } from '#lib/registry/ui/map/styles.js';
+import { pointerCursor } from '#lib/registry/ui/map/layer-sync.svelte.js';
 import { sameViewport, toViewport } from '#lib/registry/ui/map/viewport.js';
 import { DARK_STYLE, LIGHT_STYLE } from './fixtures.js';
 
@@ -50,5 +51,33 @@ describe('viewport helpers', () => {
 		expect(sameViewport(viewport, { ...viewport, zoom: 3 + 1e-12 })).toBe(true);
 		expect(sameViewport(viewport, { ...viewport, zoom: 3.01 })).toBe(false);
 		expect(sameViewport(viewport, { ...viewport, center: [10, 21] })).toBe(false);
+	});
+});
+
+describe('pointerCursor', () => {
+	test('sets the pointer and clears it again', () => {
+		const canvas = { style: { cursor: '' } } as HTMLElement;
+		const point = pointerCursor(canvas);
+		point(true);
+		expect(canvas.style.cursor).toBe('pointer');
+		point(false);
+		expect(canvas.style.cursor).toBe('');
+	});
+
+	test('leaves a cursor it did not set alone', () => {
+		const canvas = { style: { cursor: 'pointer' } } as HTMLElement;
+		const point = pointerCursor(canvas);
+		point(false);
+		expect(canvas.style.cursor).toBe('pointer');
+	});
+
+	test('does not clear the cursor again once it let go', () => {
+		const canvas = { style: { cursor: '' } } as HTMLElement;
+		const point = pointerCursor(canvas);
+		point(true);
+		point(false);
+		canvas.style.cursor = 'crosshair';
+		point(false);
+		expect(canvas.style.cursor).toBe('crosshair');
 	});
 });

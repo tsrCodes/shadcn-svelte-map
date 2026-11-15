@@ -68,6 +68,19 @@ export function featuresAt(
 	return layers.length > 0 ? map.queryRenderedFeatures(point, { layers }) : [];
 }
 
+/**
+ * Shows the pointer cursor over a layer's features. It only clears a cursor it set
+ * itself, so layers drawn on top of each other keep each other's cursor.
+ */
+export function pointerCursor(canvas: HTMLElement): (on: boolean) => void {
+	let pointing = false;
+	return (on) => {
+		if (on === pointing) return;
+		pointing = on;
+		canvas.style.cursor = on ? 'pointer' : '';
+	};
+}
+
 /** A plain copy of reactive GeoJSON. MapLibre posts data to a worker, which cannot take proxies. */
 export function plainGeoJSON(data: unknown): GeoJSONData {
 	return $state.snapshot(data) as GeoJSONData;

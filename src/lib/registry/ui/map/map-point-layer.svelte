@@ -10,7 +10,13 @@
 		syncPopupLook,
 		type PopupOffset
 	} from './popup.svelte.js';
-	import { registerLayers, syncBeforeId, syncData, syncPaint } from './layer-sync.svelte.js';
+	import {
+		pointerCursor,
+		registerLayers,
+		syncBeforeId,
+		syncData,
+		syncPaint
+	} from './layer-sync.svelte.js';
 	import { FALLBACK_COLOR } from './theme.svelte.js';
 	import MapFeatureList, { featureName, pointItems } from './map-feature-list.svelte';
 
@@ -193,7 +199,7 @@
 	$effect(() => {
 		const map = ctx.map;
 		if (!map) return;
-		const canvas = map.getCanvas();
+		const point = pointerCursor(map.getCanvas());
 		const subscriptions = [
 			map.on('click', (event) => {
 				const hit = featureAt(event);
@@ -201,12 +207,12 @@
 				selected = hit;
 				if (hit) onclick?.(hit.feature, hit.index);
 			}),
-			map.on('mouseenter', layerId, () => (canvas.style.cursor = 'pointer')),
-			map.on('mouseleave', layerId, () => (canvas.style.cursor = ''))
+			map.on('mouseenter', layerId, () => point(true)),
+			map.on('mouseleave', layerId, () => point(false))
 		];
 		return () => {
 			for (const subscription of subscriptions) subscription.unsubscribe();
-			canvas.style.cursor = '';
+			point(false);
 		};
 	});
 
