@@ -17,6 +17,12 @@
 	function thumbnail(name: string, mode: 'light' | 'dark'): string {
 		return `/thumbnails/${name}-${mode}.jpg`;
 	}
+
+	// A group with no blocks yet is left out rather than shown as an empty list.
+	const groups = GROUPS.map((group) => ({
+		group,
+		blocks: BLOCKS.filter((block) => block.kind === group.kind)
+	})).filter(({ blocks }) => blocks.length > 0);
 </script>
 
 <Seo
@@ -34,8 +40,7 @@
 		</p>
 	</header>
 
-	{#each GROUPS as group (group.kind)}
-		{@const blocks = BLOCKS.filter((block) => block.kind === group.kind)}
+	{#each groups as { group, blocks } (group.kind)}
 		<section class="flex flex-col gap-4" aria-labelledby="group-{group.kind}">
 			<div>
 				<h2 id="group-{group.kind}" class="text-lg font-medium">{group.title}</h2>
