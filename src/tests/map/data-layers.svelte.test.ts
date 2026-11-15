@@ -145,6 +145,21 @@ describe('MapGeoJSON', () => {
 		await expect.poll(() => map.getFeatureState({ source: 'h-geo', id: 0 }).hover).toBeFalsy();
 	});
 
+	test('keyboard: Enter on a shape out of view reports it once the map gets there', async () => {
+		const onclick = vi.fn();
+		const { map, screen } = await mountData({ geojson: SQUARE, ongeojsonclick: onclick });
+		await layerReady(map, 'h-geo-fill');
+		map.jumpTo({ center: [150, -60], zoom: 6 });
+		await expect.poll(() => map.querySourceFeatures('h-geo').length).toBe(0);
+		const list = screen.container.querySelector<HTMLElement>('[data-slot="map-feature-list"]');
+		if (!list) throw new Error('feature list not found');
+
+		list.focus();
+		await userEvent.keyboard('{Enter}');
+		await expect.poll(() => onclick.mock.calls.length, { timeout: 10_000 }).toBe(1);
+		expect(onclick.mock.calls[0][0].properties.name).toBe('Square');
+	});
+
 	test('a shape layer with no click or hover handler adds no keyboard list', async () => {
 		const { map, screen } = await mountData({ geojson: SQUARE });
 		await layerReady(map, 'h-geo-fill');

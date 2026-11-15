@@ -204,13 +204,17 @@
 	});
 	const listItems = $derived(listed.map(({ item }) => item));
 
+	/** The rendered feature with this source id, from the tiles that are loaded. */
+	function loadedFeature(id: string | number | undefined): MapGeoJSONFeature | null {
+		const map = ctx.map;
+		if (!map || id === undefined || !map.getSource(sourceId)) return null;
+		const [feature] = map.querySourceFeatures(sourceId, { filter: ['==', ['id'], id] });
+		return (feature as MapGeoJSONFeature | undefined) ?? null;
+	}
+
 	/** The rendered feature of a listed item, from the tiles that are loaded. */
 	function renderedFeature(index: number): MapGeoJSONFeature | null {
-		const map = ctx.map;
-		const entry = listed[index];
-		if (!map || !entry || !map.getSource(sourceId)) return null;
-		const [feature] = map.querySourceFeatures(sourceId, { filter: ['==', ['id'], entry.id] });
-		return (feature as MapGeoJSONFeature | undefined) ?? null;
+		return loadedFeature(listed[index]?.id);
 	}
 
 	function activateFromList(index: number | null) {
@@ -219,7 +223,19 @@
 
 	function selectFromList(index: number) {
 		const feature = renderedFeature(index);
-		if (feature) onclick?.(feature);
+		if (feature) {
+			onclick?.(feature);
+			return;
+		}
+		// The list pans to a shape out of view, and its tile may still be loading. Report it
+		// once the map settles; a shape that is still not drawn then has nothing to report.
+		const map = ctx.map;
+		const id = listed[index]?.id;
+		if (!map || id === undefined || (!map.isMoving() && map.areTilesLoaded())) return;
+		map.once('idle', () => {
+			const loaded = loadedFeature(id);
+			if (loaded) onclick?.(loaded);
+		});
 	}
 
 	function featureAt(event: MapMouseEvent): MapGeoJSONFeature | null {
