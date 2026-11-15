@@ -113,6 +113,8 @@ export class LayerRegistry {
 	#pendingRemoval = new Map<string, LayerEntry>();
 	/** Data set while a style was loading, sent to the map once it is ready. */
 	#pendingData = new Set<string>();
+	/** The last queued cluster update per source; the next one waits for it. */
+	#clusterUpdates = new Map<string, Promise<void>>();
 	/** Sources whose spec changed through the registry; a swap must not take the old copy. */
 	#changedSources = new Set<string>();
 	/** Paint values set through the registry, by layer id; they win over any older style copy. */
@@ -214,10 +216,23 @@ export class LayerRegistry {
 		if (entry.source.type !== 'geojson') {
 			throw new Error(`Map source "${sourceId}" is not a GeoJSON source.`);
 		}
-		const source = { ...entry.source, ...options };
-		this.#entries.set(sourceId, { ...entry, source });
+		this.#entries.set(sourceId, { ...entry, source: { ...entry.source, ...options } });
 		this.#changedSources.add(sourceId);
-		if (!this.#ready) return;
+		// One update at a time per source, each sending the newest options when it starts,
+		// so a slow earlier update can never land after a newer one.
+		const previous = this.#clusterUpdates.get(sourceId) ?? Promise.resolve();
+		const next = previous.catch(() => {}).then(() => this.#applyClusterOptions(sourceId));
+		this.#clusterUpdates.set(sourceId, next);
+		try {
+			await next;
+		} finally {
+			if (this.#clusterUpdates.get(sourceId) === next) this.#clusterUpdates.delete(sourceId);
+		}
+	}
+
+	async #applyClusterOptions(sourceId: string): Promise<void> {
+		const source = this.#entries.get(sourceId)?.source;
+		if (!this.#ready || source?.type !== 'geojson') return;
 		await this.#map?.getSource<GeoJSONSource>(sourceId)?.setClusterOptions({
 			cluster: source.cluster,
 			clusterRadius: source.clusterRadius,

@@ -481,4 +481,44 @@ describe('LayerRegistry', () => {
 			'not a GeoJSON source'
 		);
 	});
+	test('cluster option changes run one at a time and end on the newest values', async () => {
+		const applied: unknown[] = [];
+		let inFlight = 0;
+		let overlapped = false;
+		const fake = createFakeMap();
+		const base = fake.map;
+		const map = {
+			...base,
+			getSource: (id: string) => {
+				const source = base.getSource(id);
+				if (!source) return undefined;
+				return {
+					...source,
+					setClusterOptions: async (options: unknown) => {
+						inFlight += 1;
+						if (inFlight > 1) overlapped = true;
+						// The first update is the slowest, so without a queue it would land last.
+						await new Promise((resolve) => setTimeout(resolve, applied.length === 0 ? 30 : 1));
+						applied.push(options);
+						inFlight -= 1;
+					}
+				};
+			}
+		} as unknown as RegistryMap;
+		const registry = new LayerRegistry();
+		registry.attach(map);
+		registry.styleLoaded();
+		registry.add({
+			...POINTS_ENTRY,
+			source: { type: 'geojson', data: EMPTY_POINTS, cluster: true, clusterRadius: 50 }
+		});
+
+		await Promise.all([
+			registry.setClusterOptions(POINTS_SOURCE, { clusterRadius: 60 }),
+			registry.setClusterOptions(POINTS_SOURCE, { clusterRadius: 70 }),
+			registry.setClusterOptions(POINTS_SOURCE, { clusterRadius: 80 })
+		]);
+		expect(overlapped).toBe(false);
+		expect(applied.at(-1)).toMatchObject({ clusterRadius: 80 });
+	});
 });
