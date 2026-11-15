@@ -12,6 +12,9 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+	<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+	<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)" />
 </svelte:head>
 
 <!-- The initial mode script is served from /theme-init.js (see app.html) to keep the CSP strict. -->
