@@ -183,7 +183,8 @@
 		const map = ctx.map;
 		if (!map?.getLayer(layerId)) return null;
 		const hit = map.queryRenderedFeatures(event.point, { layers: [layerId] })[0];
-		if (hit?.properties[VERSION_KEY] !== sent.version) return null;
+		// Tile properties can come back as strings; compare the number either way.
+		if (!hit || Number(hit.properties[VERSION_KEY]) !== sent.version) return null;
 		const index = Number(hit.id);
 		const feature = Number.isInteger(index) ? data.features[index] : undefined;
 		return feature ? { feature, index } : null;
