@@ -191,7 +191,7 @@
 		return () => {
 			for (const subscription of subscriptions) subscription.unsubscribe();
 			point(false);
-			hoveredIndex = null;
+			setHovered(null);
 		};
 	});
 </script>
