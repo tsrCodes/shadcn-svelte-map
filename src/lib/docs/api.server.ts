@@ -378,8 +378,9 @@ export const API_COMPONENTS: string[] = Object.keys(SOURCES)
 	.filter((name) => name && getApiEntry(name) !== undefined)
 	.sort();
 
+/** Text for one Markdown table cell: line breaks would end the row, pipes the cell. */
 function cell(text: string): string {
-	return text.replaceAll('|', '\\|');
+	return text.replace(/\s*\r?\n\s*/g, ' ').replaceAll('|', '\\|');
 }
 
 function table(title: string, rows: ApiProp[]): string {
