@@ -5,6 +5,7 @@ import {
 	DOC_PAGES,
 	getApiNames,
 	getExampleSource,
+	getHeadings,
 	getPreviewNames,
 	toMarkdown
 } from '#lib/docs/content.server.js';
@@ -70,6 +71,22 @@ describe('docs content', () => {
 		const markdown = toMarkdown(withBlock);
 		expect(markdown).not.toContain('import X');
 		expect(markdown).toContain('`<script src="/x.js"></script>`');
+	});
+
+	test('headings inside backtick or tilde code fences are not listed', () => {
+		const body = [
+			'## Real',
+			'~~~md',
+			'## Inside tildes',
+			'```',
+			'## Still inside',
+			'~~~',
+			'```ts',
+			'## Inside backticks',
+			'```',
+			'### After'
+		].join('\n');
+		expect(getHeadings(body).map((heading) => heading.title)).toEqual(['Real', 'After']);
 	});
 
 	test('docs tags are found whether self-closing or closed', () => {

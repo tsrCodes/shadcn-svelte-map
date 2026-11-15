@@ -72,10 +72,15 @@ export function parseFrontmatter(raw: string): { data: Record<string, string>; b
 export function getHeadings(body: string): Heading[] {
 	const slugger = new GithubSlugger();
 	const headings: Heading[] = [];
-	let inFence = false;
+	/** The marker that opened the code fence we are in; only the same marker closes it. */
+	let fence: string | null = null;
 	for (const line of body.split(/\r?\n/)) {
-		if (line.startsWith('```')) inFence = !inFence;
-		const match = !inFence && /^(#{2,3})\s+(.+?)\s*$/.exec(line);
+		const marker = /^(```|~~~)/.exec(line)?.[1];
+		if (marker && (fence === null || fence === marker)) {
+			fence = fence === null ? marker : null;
+			continue;
+		}
+		const match = fence === null && /^(#{2,3})\s+(.+?)\s*$/.exec(line);
 		if (!match) continue;
 		const title = match[2].replace(/`/g, '');
 		headings.push({ depth: match[1].length, title, id: slugger.slug(title) });
