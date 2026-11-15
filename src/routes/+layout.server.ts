@@ -8,7 +8,8 @@ const GITHUB_API = siteConfig.links.github.replace(
 	'https://api.github.com/repos/'
 );
 
-// Fetched once per build, not once per prerendered page
+// Fetched once per build, not once per prerendered page. A failed fetch is tried again
+// on the next page instead of leaving the count out of the whole build.
 let stars: Promise<number | null> | undefined;
 
 /** Star count at build time, or `null` when GitHub does not answer (or the repo is private). */
@@ -38,5 +39,7 @@ export const load: LayoutServerLoad = async ({ fetch }) => {
 		url: `/blocks/${block.name}`
 	}));
 	stars ??= fetchStars(fetch);
-	return { sections, blocks, stars: await stars };
+	const count = await stars;
+	if (count === null) stars = undefined;
+	return { sections, blocks, stars: count };
 };
