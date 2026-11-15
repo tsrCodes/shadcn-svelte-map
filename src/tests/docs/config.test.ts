@@ -53,6 +53,13 @@ describe('docs helpers', () => {
 		expect(parseFrontmatter('---\n# note\ntitle: Map\n\n---\nBody').data).toEqual({ title: 'Map' });
 	});
 
+	test('an empty frontmatter value reads as an empty string', () => {
+		expect(parseFrontmatter('---\ntitle: Map\ndescription:\n---\nBody').data).toEqual({
+			title: 'Map',
+			description: ''
+		});
+	});
+
 	test('docs tags work with either quote and extra attributes', () => {
 		const page = {
 			...DOC_PAGES[0],

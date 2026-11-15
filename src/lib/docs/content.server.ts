@@ -41,8 +41,9 @@ function tagPattern(tag: string, attribute: string): RegExp {
 }
 
 // Frontmatter is a flat list of one-line `key: value` pairs; anything richer is rejected.
+// An empty value is fine: indented lines that would nest under it fail the line pattern.
 const FRONTMATTER_LINE = /^([A-Za-z_][\w-]*):[ \t]*(.*)$/;
-const UNSUPPORTED_VALUE = /^([|>[{&*!]|-\s|$)/;
+const UNSUPPORTED_VALUE = /^([|>[{&*!]|-\s)/;
 
 /** A YAML-style value without its matching surrounding quotes. */
 function unquote(value: string): string {
