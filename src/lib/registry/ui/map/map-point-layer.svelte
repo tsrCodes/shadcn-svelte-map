@@ -154,13 +154,20 @@
 	syncData(ctx, sourceId, () => sent.data);
 
 	// An open popup follows its feature when the data changes, and closes once it is gone.
+	// Data rebuilt from scratch has new objects, so a feature `id` also counts as the same point.
 	$effect(() => {
 		const features = data.features;
 		untrack(() => {
 			if (!selected) return;
-			const index = features.indexOf(selected.feature);
+			const current = selected.feature;
+			let index = features.indexOf(current);
+			if (index < 0 && current.id !== undefined) {
+				index = features.findIndex((feature) => feature.id === current.id);
+			}
 			if (index < 0) selected = null;
-			else if (index !== selected.index) selected = { feature: selected.feature, index };
+			else if (index !== selected.index || features[index] !== current) {
+				selected = { feature: features[index], index };
+			}
 		});
 	});
 	syncBeforeId(ctx, sourceId, () => beforeId);

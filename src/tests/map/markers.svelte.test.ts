@@ -257,6 +257,29 @@ describe('MapPointLayer', () => {
 		await expect.poll(pointPopupText).toBe('South');
 	});
 
+	test('an open popup stays on its point when new data rebuilds the features', async () => {
+		const withIds: typeof POINTS = {
+			type: 'FeatureCollection',
+			features: POINTS.features.map((feature, index) => ({ ...feature, id: `p${index}` }))
+		};
+		const { screen, map } = await mountMarkers({ showMarker: false, points: withIds });
+		await clickPoint(map, [30, 20]);
+		await expect.poll(pointPopupText).toBe('North');
+
+		// A refresh from a server: new objects, same ids, North moved a little.
+		const refreshed: typeof POINTS = {
+			type: 'FeatureCollection',
+			features: [
+				{ ...withIds.features[1] },
+				{ ...withIds.features[0], geometry: { type: 'Point', coordinates: [31, 21] } }
+			]
+		};
+		await screen.rerender({ showMarker: false, points: refreshed });
+		await expect.poll(() => map.getSource(POINT_SOURCE) !== undefined).toBe(true);
+		await new Promise((resolve) => setTimeout(resolve, 200));
+		expect(pointPopupText()).toBe('North');
+	});
+
 	test('changing data and colour updates the live source and layer', async () => {
 		const { screen, map } = await mountMarkers({ showMarker: false, points: POINTS });
 		await expect.poll(() => Boolean(map.getLayer(POINT_LAYER))).toBe(true);
