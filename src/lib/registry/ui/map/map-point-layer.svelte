@@ -95,7 +95,10 @@
 	const sourceId = untrack(() => id ?? `map-points-${uid}`);
 	const layerId = `${sourceId}-circles`;
 
-	let selected = $state.raw<Selection | null>(null);
+	/** The point last clicked or picked from the list. */
+	let picked = $state.raw<Selection | null>(null);
+	/** The picked point in the current data; `null` once it is gone, which closes the popup. */
+	const selected = $derived(picked && follow(picked, data.features));
 	let content = $state.raw<HTMLDivElement | null>(null);
 	let popupInstance = $state.raw<Popup | null>(null);
 	/** The list item that opened the popup, focused again when Escape closes it. */
@@ -153,23 +156,17 @@
 	}));
 	syncData(ctx, sourceId, () => sent.data);
 
-	// An open popup follows its feature when the data changes, and closes once it is gone.
 	// Data rebuilt from scratch has new objects, so a feature `id` also counts as the same point.
-	$effect(() => {
-		const features = data.features;
-		untrack(() => {
-			if (!selected) return;
-			const current = selected.feature;
-			let index = features.indexOf(current);
-			if (index < 0 && current.id !== undefined) {
-				index = features.findIndex((feature) => feature.id === current.id);
-			}
-			if (index < 0) selected = null;
-			else if (index !== selected.index || features[index] !== current) {
-				selected = { feature: features[index], index };
-			}
-		});
-	});
+	function follow(selection: Selection, features: PointFeature[]): Selection | null {
+		const current = selection.feature;
+		let index = features.indexOf(current);
+		if (index < 0 && current.id !== undefined) {
+			index = features.findIndex((feature) => feature.id === current.id);
+		}
+		if (index < 0) return null;
+		if (index === selection.index && features[index] === current) return selection;
+		return { feature: features[index], index };
+	}
 	syncBeforeId(ctx, sourceId, () => beforeId);
 	syncPaint(ctx, sourceId, layerId, 'circle-color', () => fill);
 	syncPaint(ctx, sourceId, layerId, 'circle-radius', () => radius);
@@ -180,7 +177,7 @@
 		const feature = data.features[index];
 		if (!feature) return;
 		returnFocus = element;
-		selected = { feature, index };
+		picked = { feature, index };
 		onclick?.(feature, index);
 	}
 
@@ -211,7 +208,7 @@
 			map.on('click', (event) => {
 				const hit = featureAt(event);
 				returnFocus = null;
-				selected = hit;
+				picked = hit;
 				if (hit) onclick?.(hit.feature, hit.index);
 			}),
 			map.on('mouseenter', layerId, () => point(true)),
@@ -238,11 +235,11 @@
 			}).setDOMContent(node)
 		);
 		const stopEscape = onPopupEscape(instance, () => {
-			selected = null;
+			picked = null;
 			returnFocus?.focus();
 			returnFocus = null;
 		});
-		const closed = instance.on('close', () => (selected = null));
+		const closed = instance.on('close', () => (picked = null));
 		popupInstance = instance;
 		return () => {
 			stopEscape();

@@ -423,6 +423,25 @@ describe('MapPointLayer', () => {
 		await expect.poll(pointPopupText).toBeUndefined();
 	});
 
+	test('a popup closed because its point left stays closed when the point comes back', async () => {
+		const withIds: typeof POINTS = {
+			type: 'FeatureCollection',
+			features: POINTS.features.map((feature, index) => ({ ...feature, id: `p${index}` }))
+		};
+		const { screen, map } = await mountMarkers({ showMarker: false, points: withIds });
+		await clickPoint(map, [30, 20]);
+		await expect.poll(pointPopupText).toBe('North');
+
+		const southOnly: typeof POINTS = { type: 'FeatureCollection', features: [withIds.features[1]] };
+		await screen.rerender({ showMarker: false, points: southOnly });
+		await expect.poll(pointPopupText).toBeUndefined();
+
+		await screen.rerender({ showMarker: false, points: withIds });
+		await expect.poll(() => map.getSource(POINT_SOURCE) !== undefined).toBe(true);
+		await new Promise((resolve) => setTimeout(resolve, 200));
+		expect(pointPopupText()).toBeUndefined();
+	});
+
 	test('a click never reports a feature from older data', async () => {
 		const onpointclick = vi.fn();
 		const { screen, map } = await mountMarkers({ showMarker: false, points: POINTS, onpointclick });
