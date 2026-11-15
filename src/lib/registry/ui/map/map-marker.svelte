@@ -59,7 +59,7 @@
 	}: Props = $props();
 
 	const ctx = getMapContext();
-	const marker = setMarkerContext(new MarkerContext());
+	const marker = setMarkerContext(new MarkerContext(() => label));
 
 	// A blank name leaves screen readers with nothing to announce.
 	const label = $derived(ariaLabel?.trim() || FALLBACK_LABEL);

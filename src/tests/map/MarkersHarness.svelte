@@ -45,6 +45,10 @@
 		pointColor?: string;
 		pointsBeforeId?: string;
 		pointsKeyboard?: boolean;
+		/** `null` leaves the popup unnamed. */
+		markerPopupLabel?: string | null;
+		/** `null` leaves the popup unnamed. */
+		pointPopupLabel?: string | null;
 		onpointclick?: (name: string, index: number) => void;
 		onrefs?: (refs: MarkerRefs) => void;
 		oncontext?: (context: MapContext) => void;
@@ -65,6 +69,8 @@
 		pointColor,
 		pointsBeforeId,
 		pointsKeyboard = true,
+		markerPopupLabel = 'Cafe details',
+		pointPopupLabel = 'Point',
 		onpointclick,
 		onrefs,
 		oncontext
@@ -95,7 +101,11 @@
 				{/if}
 				<MapMarkerLabel>Cafe</MapMarkerLabel>
 				<MapMarkerTooltip maxWidth={tooltipMaxWidth} bind:ref={tooltip}>Open now</MapMarkerTooltip>
-				<MapMarkerPopup aria-label="Cafe details" offset={popupOffset} bind:ref={markerPopup}>
+				<MapMarkerPopup
+					aria-label={markerPopupLabel ?? undefined}
+					offset={popupOffset}
+					bind:ref={markerPopup}
+				>
 					<p>Cafe details</p>
 					<a href="#menu" data-testid="popup-link">Menu</a>
 				</MapMarkerPopup>
@@ -114,7 +124,7 @@
 				beforeId={pointsBeforeId}
 				keyboard={pointsKeyboard}
 				listLabel="Cafes"
-				popupLabel="Point"
+				popupLabel={pointPopupLabel ?? undefined}
 				onclick={(feature, index) => onpointclick?.(feature.properties.name, index)}
 			>
 				{#snippet popup(feature)}

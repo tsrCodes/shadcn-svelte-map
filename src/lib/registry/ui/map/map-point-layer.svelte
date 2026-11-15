@@ -2,6 +2,7 @@
 	import { untrack, type Snippet } from 'svelte';
 	import type { Feature, FeatureCollection, GeoJsonProperties, Point } from 'geojson';
 	import type { ExpressionSpecification, MapMouseEvent, Popup } from 'maplibre-gl';
+	import type { GeoJSONData } from './layer-registry.js';
 	import { getMapContext } from './map-context.svelte.js';
 	import {
 		DEFAULT_POPUP_MAX_WIDTH,
@@ -9,17 +10,14 @@
 		syncPopupLook,
 		type PopupOffset
 	} from './popup.svelte.js';
-	import {
-		plainGeoJSON,
-		registerLayers,
-		syncBeforeId,
-		syncData,
-		syncPaint
-	} from './layer-sync.svelte.js';
+	import { registerLayers, syncBeforeId, syncData, syncPaint } from './layer-sync.svelte.js';
 	import { FALLBACK_COLOR } from './theme.svelte.js';
-	import MapFeatureList, { pointItems } from './map-feature-list.svelte';
+	import MapFeatureList, { featureName, pointItems } from './map-feature-list.svelte';
 
 	type PointFeature = Feature<Point, P>;
+
+	/** Property stamped on each feature with the data version it came from. */
+	const VERSION_KEY = 'map:version';
 
 	/** Extra outline width, in pixels, of the point with keyboard focus. */
 	const FOCUS_STROKE_EXTRA = 3;
@@ -43,7 +41,7 @@
 		onclick?: (feature: PointFeature, index: number) => void;
 		/** Popup shown when a point is clicked. */
 		popup?: Snippet<[PointFeature]>;
-		/** Accessible name of the popup. */
+		/** Accessible name of the popup. Defaults to the point's `name` property. */
 		popupLabel?: string;
 		/** Pixel offset of the popup from the point. */
 		popupOffset?: PopupOffset;
@@ -110,11 +108,28 @@
 	]);
 	const listItems = $derived(keyboard ? pointItems(data.features, featureLabel) : []);
 
+	/**
+	 * Each data change is numbered and the number stamped on its features. Tiles can
+	 * still hold the previous data for a moment after a change, and a click there must
+	 * not map an old index onto the new `data`.
+	 */
+	let dataVersion = 0;
+	const sent = $derived.by(() => {
+		dataVersion += 1;
+		const version = dataVersion;
+		const plain = $state.snapshot(data) as FeatureCollection<Point, P>;
+		const features = plain.features.map((feature) => ({
+			...feature,
+			properties: { ...feature.properties, [VERSION_KEY]: version }
+		}));
+		return { version, data: { ...plain, features } as GeoJSONData };
+	});
+
 	// Register once; the registry adds it when the style is ready and after every swap.
 	registerLayers(ctx, () => ({
 		sourceId,
 		// `generateId` numbers features by index, so a click maps back to `data`.
-		source: { type: 'geojson', data: plainGeoJSON(data), generateId: true },
+		source: { type: 'geojson', data: sent.data, generateId: true },
 		layers: [
 			{
 				id: layerId,
@@ -130,7 +145,18 @@
 		],
 		beforeId
 	}));
-	syncData(ctx, sourceId, () => plainGeoJSON(data));
+	syncData(ctx, sourceId, () => sent.data);
+
+	// An open popup follows its feature when the data changes, and closes once it is gone.
+	$effect(() => {
+		const features = data.features;
+		untrack(() => {
+			if (!selected) return;
+			const index = features.indexOf(selected.feature);
+			if (index < 0) selected = null;
+			else if (index !== selected.index) selected = { feature: selected.feature, index };
+		});
+	});
 	syncBeforeId(ctx, sourceId, () => beforeId);
 	syncPaint(ctx, sourceId, layerId, 'circle-color', () => fill);
 	syncPaint(ctx, sourceId, layerId, 'circle-radius', () => radius);
@@ -157,7 +183,8 @@
 		const map = ctx.map;
 		if (!map?.getLayer(layerId)) return null;
 		const hit = map.queryRenderedFeatures(event.point, { layers: [layerId] })[0];
-		const index = Number(hit?.id);
+		if (hit?.properties[VERSION_KEY] !== sent.version) return null;
+		const index = Number(hit.id);
 		const feature = Number.isInteger(index) ? data.features[index] : undefined;
 		return feature ? { feature, index } : null;
 	}
@@ -235,7 +262,13 @@
 
 {#if popup && ctx.map}
 	<div hidden data-slot="map-point-popup-holder">
-		<div bind:this={content} role="dialog" aria-label={popupLabel} data-slot="map-point-popup">
+		<div
+			bind:this={content}
+			role="dialog"
+			aria-label={popupLabel ??
+				(selected ? featureName(selected.feature.properties, 'Point') : undefined)}
+			data-slot="map-point-popup"
+		>
 			{#if selected}
 				{#key selected.index}
 					{@render popup(selected.feature)}

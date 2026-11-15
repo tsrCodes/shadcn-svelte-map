@@ -213,6 +213,15 @@ describe('MapMarker', () => {
 		expect(markerButton().isConnected).toBe(true);
 	});
 
+	test("a marker popup without a name takes the marker's name", async () => {
+		const { refs, markerButton } = await mountMarkers({ markerPopupLabel: null });
+		const button = await readyMarker(refs, markerButton);
+		await userEvent.click(button);
+		await expect.poll(() => refs().markerPopup?.isOpen()).toBe(true);
+		const dialog = document.querySelector('[data-slot="map-marker-popup"]');
+		expect(dialog?.getAttribute('aria-label')).toBe('Cafe');
+	});
+
 	test('standalone popup closes on Escape', async () => {
 		const { refs } = await mountMarkers({ showPopup: true, showMarker: false });
 		await expect.poll(() => refs().popup?.isOpen()).toBe(true);
@@ -358,6 +367,59 @@ describe('MapPointLayer', () => {
 		});
 		await expect.poll(() => Boolean(map.getLayer(POINT_LAYER))).toBe(true);
 		expect(screen.container.querySelector('[data-slot="map-feature-list"]')).toBeNull();
+	});
+
+	test("a point popup without a name takes the point's name", async () => {
+		const { map } = await mountMarkers({
+			showMarker: false,
+			points: POINTS,
+			pointPopupLabel: null
+		});
+		await clickPoint(map, [-30, -20]);
+		await expect.poll(pointPopupText).toBe('South');
+		const dialog = document.querySelector('[data-slot="map-point-popup"]');
+		expect(dialog?.getAttribute('aria-label')).toBe('South');
+	});
+
+	test('an open popup follows its point when the data changes, and closes when it is gone', async () => {
+		const onpointclick = vi.fn();
+		const { screen, map } = await mountMarkers({ showMarker: false, points: POINTS, onpointclick });
+		await clickPoint(map, [30, 20]);
+		await expect.poll(pointPopupText).toBe('North');
+
+		const swapped: typeof POINTS = {
+			type: 'FeatureCollection',
+			features: [POINTS.features[1], POINTS.features[0]]
+		};
+		await screen.rerender({ showMarker: false, points: swapped, onpointclick });
+		await new Promise((resolve) => setTimeout(resolve, 100));
+		expect(pointPopupText()).toBe('North');
+
+		const southOnly: typeof POINTS = { type: 'FeatureCollection', features: [POINTS.features[1]] };
+		await screen.rerender({ showMarker: false, points: southOnly, onpointclick });
+		await expect.poll(pointPopupText).toBeUndefined();
+	});
+
+	test('a click never reports a feature from older data', async () => {
+		const onpointclick = vi.fn();
+		const { screen, map } = await mountMarkers({ showMarker: false, points: POINTS, onpointclick });
+		await expect.poll(() => Boolean(map.getLayer(POINT_LAYER))).toBe(true);
+		const swapped: typeof POINTS = {
+			type: 'FeatureCollection',
+			features: [POINTS.features[1], POINTS.features[0]]
+		};
+		const north = map.project([30, 20]);
+		await expect
+			.poll(() => map.queryRenderedFeatures(north, { layers: [POINT_LAYER] }).length)
+			.toBeGreaterThan(0);
+		await screen.rerender({ showMarker: false, points: swapped, onpointclick });
+		// Straight after the change the tiles may still hold the old order.
+		await userEvent.click(map.getCanvas(), { position: { x: north.x, y: north.y } });
+		await clickPoint(map, [30, 20]);
+		await expect.poll(() => onpointclick.mock.calls.length).toBeGreaterThan(0);
+		for (const [name, index] of onpointclick.mock.calls) {
+			expect([name, index]).toEqual(['North', 1]);
+		}
 	});
 
 	test('a new beforeId moves the live layer', async () => {

@@ -19,6 +19,18 @@ export class MarkerContext {
 	popupOpen = $state(false);
 	/** Id of the marker's tooltip, used for `aria-describedby`. */
 	tooltipId = $state<string | undefined>(undefined);
+
+	#label: () => string;
+
+	/** `label` reads the marker's accessible name, for parts that have none of their own. */
+	constructor(label: () => string = () => '') {
+		this.#label = label;
+	}
+
+	/** The marker's accessible name. */
+	get label(): string {
+		return this.#label();
+	}
 }
 
 const [getContext, setContext] = createContext<MarkerContext>();

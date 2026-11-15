@@ -155,7 +155,13 @@
 </script>
 
 <span hidden data-slot="map-marker-popup-holder">
-	<div bind:this={content} role="dialog" {...restProps} data-slot="map-marker-popup">
+	<div
+		bind:this={content}
+		role="dialog"
+		{...restProps}
+		aria-label={restProps['aria-label'] || marker.label}
+		data-slot="map-marker-popup"
+	>
 		{@render children?.()}
 	</div>
 </span>
