@@ -112,6 +112,30 @@ describe('docs content', () => {
 		expect(markdown).not.toMatch(/<\/?(ApiTable|ComponentPreview|CodeBlockCommand)\b/);
 	});
 
+	test('docs tags with content inside are found and replaced whole', () => {
+		const page = {
+			...DOC_PAGES[0],
+			body: [
+				`<ComponentPreview name="marker">\n\tA caption\n</ComponentPreview>`,
+				`<CodeBlockCommand command="pnpm dlx x">ignored</CodeBlockCommand>`,
+				`<ComponentPreview name="popup" />`
+			].join('\n\n')
+		};
+		expect(getPreviewNames(page)).toEqual(['marker', 'popup']);
+		const markdown = toMarkdown(page);
+		expect(markdown).toContain('```bash\npnpm dlx x\n```');
+		expect(markdown).not.toContain('A caption');
+		expect(markdown).not.toMatch(/<\/?(ComponentPreview|CodeBlockCommand)\b/);
+	});
+
+	test('an unclosed docs tag does not swallow the rest of the page', () => {
+		const page = {
+			...DOC_PAGES[0],
+			body: `<ComponentPreview name="marker">\n\n## Usage\n\nText.`
+		};
+		expect(toMarkdown(page)).toContain('## Usage');
+	});
+
 	test('pages credit no other projects', () => {
 		const hits = DOC_PAGES.filter((page) => BANNED.test(page.body)).map((page) => page.path);
 		expect(hits).toEqual([]);

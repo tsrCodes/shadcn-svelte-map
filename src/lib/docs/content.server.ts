@@ -28,16 +28,53 @@ const EXAMPLE_SOURCES = import.meta.glob<string>('/src/lib/docs/examples/*.svelt
 	eager: true
 });
 
+/** The docs tags that stand in for generated content, and the attribute each one reads. */
+const TAG_ATTRIBUTE = {
+	ApiTable: 'component',
+	ComponentPreview: 'name',
+	CodeBlockCommand: 'command'
+} as const;
+type DocTag = keyof typeof TAG_ATTRIBUTE;
+
 /**
- * A docs tag with one attribute, e.g. `<ApiTable component="map" />`, with either quote
- * and any other attributes around it. It may also be written with an empty closing tag,
- * `<ApiTable component="map"></ApiTable>`. Group 2 is the attribute's value.
+ * Each tag self-closing, `<ApiTable component="map" />`, or closed, with anything inside
+ * it: `<ComponentPreview name="x">caption</ComponentPreview>`. Group 1 is the attributes;
+ * quoted values may hold `>`. The content stops at a second opening tag, so one left
+ * unclosed never runs into the next one.
  */
-function tagPattern(tag: string, attribute: string): RegExp {
-	return new RegExp(
-		`<${tag}\\b[^>]*?\\s${attribute}=(["'])(.*?)\\1[^>]*?(?:\\/>|>\\s*<\\/${tag}\\s*>)`,
-		'g'
-	);
+const TAG_PATTERN: Record<DocTag, RegExp> = {
+	ApiTable:
+		/<ApiTable\b((?:[^>"']|"[^"]*"|'[^']*')*)(?:\/>|>(?:(?!<ApiTable\b)[\s\S])*?<\/ApiTable\s*>)/g,
+	ComponentPreview:
+		/<ComponentPreview\b((?:[^>"']|"[^"]*"|'[^']*')*)(?:\/>|>(?:(?!<ComponentPreview\b)[\s\S])*?<\/ComponentPreview\s*>)/g,
+	CodeBlockCommand:
+		/<CodeBlockCommand\b((?:[^>"']|"[^"]*"|'[^']*')*)(?:\/>|>(?:(?!<CodeBlockCommand\b)[\s\S])*?<\/CodeBlockCommand\s*>)/g
+};
+
+const ATTRIBUTE = /\s([\w:-]+)=(["'])([\s\S]*?)\2/g;
+
+/** The value of the tag's own attribute, from the raw attribute text of one match. */
+function tagValue(tag: DocTag, attributes: string): string | undefined {
+	for (const [, name, , value] of attributes.matchAll(ATTRIBUTE)) {
+		if (name === TAG_ATTRIBUTE[tag]) return value;
+	}
+	return undefined;
+}
+
+/** The values of every `tag` in the body, in order. */
+function tagValues(body: string, tag: DocTag): string[] {
+	return [...body.matchAll(TAG_PATTERN[tag])].flatMap(([, attributes]) => {
+		const value = tagValue(tag, attributes);
+		return value === undefined ? [] : [value];
+	});
+}
+
+/** The body with every `tag` swapped for `replace(value)`; a tag without the value stays. */
+function replaceTags(body: string, tag: DocTag, replace: (value: string) => string): string {
+	return body.replace(TAG_PATTERN[tag], (text, attributes: string) => {
+		const value = tagValue(tag, attributes);
+		return value === undefined ? text : replace(value);
+	});
 }
 
 // Frontmatter is a flat list of one-line `key: value` pairs; anything richer is rejected.
@@ -127,7 +164,7 @@ export function getNeighbours(page: DocPage): { previous?: DocLink; next?: DocLi
 
 /** Names of the examples a page shows, in order. */
 export function getPreviewNames(page: DocPage): string[] {
-	return [...page.body.matchAll(tagPattern('ComponentPreview', 'name'))].map((m) => m[2]);
+	return tagValues(page.body, 'ComponentPreview');
 }
 
 /** An example's source as users get it: imports point at `$lib/components/ui`. */
@@ -138,21 +175,18 @@ export function getExampleSource(name: string): string | undefined {
 
 /** Component files whose API tables a page shows, in order. */
 export function getApiNames(page: DocPage): string[] {
-	return [...page.body.matchAll(tagPattern('ApiTable', 'component'))].map((m) => m[2]);
+	return tagValues(page.body, 'ApiTable');
 }
 
 /** The page as plain markdown for "Copy Page", `/docs/<slug>.md` and `llms.txt`. */
 export function toMarkdown(page: DocPage): string {
-	const body = page.body
-		// Only the page's own script block at the top; a tag quoted in the prose stays.
-		.replace(/^\s*<script\b[^>]*>[\s\S]*?<\/script>\n*/, '')
-		.replace(tagPattern('ComponentPreview', 'name'), (_, _quote: string, name: string) => {
-			const source = getExampleSource(name);
-			return source ? codeFence(source, 'svelte') : '';
-		})
-		.replace(tagPattern('ApiTable', 'component'), (_, _quote: string, name: string) =>
-			apiMarkdown(name)
-		)
-		.replace(tagPattern('CodeBlockCommand', 'command'), '```bash\n$2\n```');
+	// Only the page's own script block at the top; a tag quoted in the prose stays.
+	let body = page.body.replace(/^\s*<script\b[^>]*>[\s\S]*?<\/script>\n*/, '');
+	body = replaceTags(body, 'ComponentPreview', (name) => {
+		const source = getExampleSource(name);
+		return source ? codeFence(source, 'svelte') : '';
+	});
+	body = replaceTags(body, 'ApiTable', apiMarkdown);
+	body = replaceTags(body, 'CodeBlockCommand', (command) => `\`\`\`bash\n${command}\n\`\`\``);
 	return `# ${page.title}\n\n${page.description}\n\n${body.trim()}\n`;
 }
