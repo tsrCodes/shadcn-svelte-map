@@ -305,7 +305,12 @@ export function defaultsFromSource(source: string): Defaults {
 }
 
 function fileOf(component: string): string | undefined {
-	return Object.keys(SOURCES).find((path) => path.endsWith(`/${component}.svelte`));
+	const matches = Object.keys(SOURCES).filter((path) => path.endsWith(`/${component}.svelte`));
+	// Two files with one name would make the API table guess; fail the build instead.
+	if (matches.length > 1) {
+		throw new Error(`Component name "${component}" matches ${matches.join(', ')}.`);
+	}
+	return matches[0];
 }
 
 const FILES_BY_EXPORT = new Map([...EXPORT_NAMES].map(([file, name]) => [name, file]));
