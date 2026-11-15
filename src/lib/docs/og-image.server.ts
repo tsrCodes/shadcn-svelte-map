@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import satori from 'satori';
 import { Resvg } from '@resvg/resvg-js';
+import logoSvg from '#lib/assets/logo.svg?raw';
 
 const WIDTH = 1200;
 const HEIGHT = 628;
@@ -35,10 +36,8 @@ function loadFonts() {
 	return fonts;
 }
 
-// lucide "map", the site logo
-const MAP_ICON = `data:image/svg+xml,${encodeURIComponent(
-	'<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/><path d="M15 5.764v15"/><path d="M9 3.236v15"/></svg>'
-)}`;
+const LOGO = `data:image/svg+xml,${encodeURIComponent(logoSvg)}`;
+const LOGO_SIZE = 96;
 
 /** The Open Graph image of a page as a PNG, set in Inter. */
 export async function renderOgImage(title: string, description: string): Promise<Buffer> {
@@ -82,10 +81,10 @@ export async function renderOgImage(title: string, description: string): Promise
 			{
 				type: 'img',
 				props: {
-					src: MAP_ICON,
-					width: 48,
-					height: 48,
-					style: { position: 'absolute', bottom: 96, right: 96 }
+					src: LOGO,
+					width: LOGO_SIZE,
+					height: LOGO_SIZE,
+					style: { position: 'absolute', bottom: 80, right: 80 }
 				}
 			},
 			el(

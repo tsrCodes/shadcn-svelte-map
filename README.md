@@ -1,3 +1,5 @@
+<p align="center"><img src="src/lib/assets/logo.svg" width="96" height="96" alt="" /></p>
+
 # shadcn-svelte Map
 
 Map components for [shadcn-svelte](https://shadcn-svelte.com), built on [MapLibre GL](https://maplibre.org). Markers, popups, routes, shapes, clusters, heatmaps, drawing and place search, themed with your shadcn tokens. You copy the source into your project, and no API key is needed.
@@ -98,6 +100,8 @@ pnpm dev
 ## License
 
 MIT
+
+The Svelte logo belongs to the Svelte project. This project is not affiliated with or endorsed by the Svelte team.
 
 ---
 
