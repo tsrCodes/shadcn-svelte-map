@@ -1,4 +1,4 @@
-export { default as Map, type MapOptionsInput } from './map.svelte';
+export { default as Map, type MapOptionsInput, type MapProjection } from './map.svelte';
 export { default as MapMarker } from './map-marker.svelte';
 export { default as MapMarkerContent } from './map-marker-content.svelte';
 export { default as MapMarkerLabel } from './map-marker-label.svelte';

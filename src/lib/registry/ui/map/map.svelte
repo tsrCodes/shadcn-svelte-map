@@ -5,6 +5,9 @@
 	let workerConfigured = false;
 
 	/** MapLibre options `<Map>` accepts; camera and style have their own props. */
+	/** How the world is drawn: flat, or as a sphere at low zoom. */
+	export type MapProjection = 'mercator' | 'globe';
+
 	export type MapOptionsInput = Omit<
 		import('maplibre-gl').MapOptions,
 		'container' | 'style' | 'center' | 'zoom' | 'bearing' | 'pitch' | 'transformCameraUpdate'
@@ -43,6 +46,8 @@
 		viewport?: MapViewport;
 		/** Called with every proposed camera change. The map then shows whatever `viewport` holds. */
 		onviewportchange?: (viewport: MapViewport) => void;
+		/** `globe` draws the world as a sphere at low zoom; it flattens as you zoom in. */
+		projection?: MapProjection;
 		/** Extra MapLibre options, read once when the map is created. */
 		options?: MapOptionsInput;
 		/** URL of the MapLibre worker. Defaults to the copy bundled with your app. */
@@ -64,6 +69,7 @@
 		mapStyle = DEFAULT_MAP_STYLE,
 		viewport = $bindable(),
 		onviewportchange,
+		projection = 'mercator',
 		options,
 		workerUrl,
 		ref = $bindable(null),
@@ -132,6 +138,8 @@
 			map.on('styledataloading', () => ctx.layers.styleLoading()),
 			map.on('style.load', () => {
 				ctx.layers.styleLoaded();
+				// A new style brings its own projection; keep the one asked for.
+				map.setProjection({ type: projection });
 				ctx.styleVersion += 1;
 			}),
 			map.on('load', () => {
@@ -226,6 +234,16 @@
 		untrack(() => {
 			map.stop();
 			map.jumpTo(target);
+		});
+	});
+
+	// Switch projection live once a style has loaded; style loads apply it themselves.
+	$effect(() => {
+		const map = ctx.map;
+		const next = projection;
+		if (!map || ctx.styleVersion === 0) return;
+		untrack(() => {
+			if (map.getProjection()?.type !== next) map.setProjection({ type: next });
 		});
 	});
 </script>

@@ -48,6 +48,18 @@ For full control, pass `viewport` without binding it, together with `onviewportc
 
 <ComponentPreview name="map-controlled" description="A controlled camera that keeps the zoom inside a range" />
 
+## Globe
+
+Set `projection="globe"` to draw the world as a sphere at low zoom. It flattens into the usual map as you zoom in, and stays a globe through theme and basemap swaps. Change it back to `mercator` at any time.
+
+```svelte
+<Map
+	class="h-96"
+	projection="globe"
+	viewport={{ center: [0, 20], zoom: 1.5, bearing: 0, pitch: 0 }}
+/>
+```
+
 ## Loading and errors
 
 The root element has a `data-status` attribute: `checking`, `loading`, `ready`, `error` or `unsupported`.

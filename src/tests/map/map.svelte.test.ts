@@ -37,6 +37,26 @@ afterEach(() => {
 });
 
 describe('Map', () => {
+	test('projection: globe at mount, kept through a theme swap, and switchable live', async () => {
+		const { screen, map } = await mountMap({
+			mapStyle: { light: LIGHT_STYLE, dark: DARK_STYLE },
+			projection: 'globe'
+		});
+		await expect.poll(() => map.getProjection()?.type).toBe('globe');
+
+		document.documentElement.classList.add('dark');
+		await expect
+			.poll(() => map.getStyle().layers.some((layer) => layer.id === 'overlay'))
+			.toBe(true);
+		await expect.poll(() => map.getProjection()?.type).toBe('globe');
+
+		await screen.rerender({
+			mapStyle: { light: LIGHT_STYLE, dark: DARK_STYLE },
+			projection: 'mercator'
+		});
+		await expect.poll(() => map.getProjection()?.type).toBe('mercator');
+	});
+
 	test('basemap swap keeps user sources, layers and feature-state', async () => {
 		const { ctx, map } = await mountMap({
 			mapStyle: { light: LIGHT_STYLE, dark: DARK_STYLE },
