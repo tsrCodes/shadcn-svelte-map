@@ -352,7 +352,9 @@ function readEntry(component: string, seen: Set<string>): ApiEntry | undefined {
 	}
 	for (const forwarded of out.forwarded) {
 		const target = importedComponent(file, forwarded);
-		const inner = target ? readEntry(target, seen) : undefined;
+		// Each branch gets its own copy of the path so far: that still stops cycles, and a
+		// component two siblings both forward is read for each of them.
+		const inner = target ? readEntry(target, new Set(seen)) : undefined;
 		for (const prop of inner?.props ?? []) {
 			if (out.omitted.has(prop.name) || own.has(prop.name)) continue;
 			own.set(prop.name, { ...prop, default: values.get(prop.name) ?? prop.default });
