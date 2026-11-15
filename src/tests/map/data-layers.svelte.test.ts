@@ -332,6 +332,29 @@ describe('MapArc', () => {
 		await clickAt(map, 'h-arc-line', middle);
 		await expect.poll(() => onarcclick.mock.lastCall).toEqual(['East', 1]);
 	});
+
+	test('hover highlights the arc under the pointer and clears on new arcs', async () => {
+		const onarchover = vi.fn();
+		const { map, ctx, screen } = await mountData({ arcs: ARCS, onarchover });
+		await layerReady(map, 'h-arc-line');
+		const east = (await sourceData(map, 'h-arc')).features[1].geometry;
+		if (east.type !== 'LineString') throw new Error('Arc is not a line.');
+		const middle = east.coordinates[Math.floor(east.coordinates.length / 2)] as [number, number];
+		const point = map.project(middle);
+		await expect
+			.poll(() => map.queryRenderedFeatures(point, { layers: ['h-arc-line'] }).length)
+			.toBeGreaterThan(0);
+
+		await userEvent.hover(map.getCanvas(), { position: { x: point.x, y: point.y } });
+		await expect.poll(() => map.getFeatureState({ source: 'h-arc', id: 1 }).hover).toBe(true);
+		expect(onarchover.mock.lastCall).toEqual(['East', 1]);
+		expect(map.getCanvas().style.cursor).toBe('pointer');
+
+		// Ids are positions in `arcs`, so the old hover must not land on a new arc.
+		await screen.rerender({ arcs: [...ARCS].reverse(), onarchover });
+		await expect.poll(() => ctx.layers.getFeatureState({ source: 'h-arc', id: 1 })).toEqual({});
+		expect(onarchover.mock.lastCall).toEqual([null, null]);
+	});
 });
 
 describe('MapClusterLayer', () => {

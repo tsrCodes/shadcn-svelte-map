@@ -33,11 +33,18 @@
 	}));
 
 	let selected = $state<Flight | null>(null);
+	let hovered = $state<Flight | null>(null);
+	const shown = $derived(hovered ?? selected);
 </script>
 
 <div class="relative size-full">
 	<Map class="size-full" viewport={{ center: [9, 48], zoom: 3.4, bearing: 0, pitch: 0 }}>
-		<MapArc arcs={flights} width={3} onclick={(flight) => (selected = flight)} />
+		<MapArc
+			arcs={flights}
+			width={3}
+			onclick={(flight) => (selected = flight)}
+			onhover={(flight) => (hovered = flight)}
+		/>
 		<MapMarker lngLat={HUB} aria-label="Frankfurt hub">
 			<MapMarkerLabel>FRA</MapMarkerLabel>
 		</MapMarker>
@@ -46,11 +53,11 @@
 		class="absolute top-3 left-3 rounded-md bg-background/90 px-2 py-1 text-xs shadow"
 		aria-live="polite"
 	>
-		{#if selected}
-			FRA to {selected.code} ({selected.city}):
-			{Math.round(distanceMeters(selected.from, selected.to) / METRES_PER_KM)} km
+		{#if shown}
+			FRA to {shown.code} ({shown.city}):
+			{Math.round(distanceMeters(shown.from, shown.to) / METRES_PER_KM)} km
 		{:else}
-			Click an arc
+			Point at or click an arc
 		{/if}
 	</p>
 </div>

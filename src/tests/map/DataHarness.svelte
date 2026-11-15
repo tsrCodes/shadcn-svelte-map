@@ -38,6 +38,7 @@
 		onroutemarker?: (marker: Marker | null) => void;
 		arcs?: (MapArcItem & { name: string })[];
 		onarcclick?: (name: string, index: number) => void;
+		onarchover?: (name: string | null, index: number | null) => void;
 		clusters?: FeatureCollection<Point, { name: string }>;
 		clusterTextColor?: string;
 		clusterRadius?: number;
@@ -63,6 +64,7 @@
 		onroutemarker,
 		arcs,
 		onarcclick,
+		onarchover,
 		clusters,
 		clusterTextColor,
 		clusterRadius = 40,
@@ -133,7 +135,13 @@
 			{/if}
 		{/if}
 		{#if arcs}
-			<MapArc id="h-arc" {arcs} width={6} onclick={(arc, index) => onarcclick?.(arc.name, index)} />
+			<MapArc
+				id="h-arc"
+				{arcs}
+				width={6}
+				onclick={(arc, index) => onarcclick?.(arc.name, index)}
+				onhover={(arc, index) => onarchover?.(arc?.name ?? null, index)}
+			/>
 		{/if}
 		{#if clusters}
 			<MapClusterLayer
