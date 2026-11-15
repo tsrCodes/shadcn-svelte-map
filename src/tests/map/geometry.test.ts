@@ -11,6 +11,7 @@ import {
 	ringArea,
 	ringCenter,
 	geometryCenter,
+	lineHeadingAt,
 	lineProgressAt,
 	splitLine,
 	type LngLatTuple
@@ -226,6 +227,63 @@ describe('lineProgressAt', () => {
 
 	test('a line with no length reports the progress share as it is', () => {
 		expect(lineProgressAt([[5, 5]], 0.4)).toBe(0.4);
+	});
+});
+
+describe('lineHeadingAt', () => {
+	test('points along the segment the split lands on, clockwise from north', () => {
+		const line: LngLatTuple[] = [
+			[0, 0],
+			[1, 0],
+			[1, 1]
+		];
+		expect(lineHeadingAt(line, 0.25)).toBeCloseTo(90, 6);
+		expect(lineHeadingAt(line, 0.75)).toBeCloseTo(0, 6);
+	});
+
+	test('uses the first segment at the start and the last at the end', () => {
+		const line: LngLatTuple[] = [
+			[0, 0],
+			[0, -1],
+			[-1, -1]
+		];
+		expect(lineHeadingAt(line, 0)).toBeCloseTo(180, 6);
+		expect(lineHeadingAt(line, 1)).toBeCloseTo(270, 6);
+	});
+
+	test('skips repeated positions', () => {
+		const line: LngLatTuple[] = [
+			[0, 0],
+			[0, 0],
+			[1, 0],
+			[1, 0]
+		];
+		expect(lineHeadingAt(line, 0)).toBeCloseTo(90, 6);
+		expect(lineHeadingAt(line, 1)).toBeCloseTo(90, 6);
+	});
+
+	test('follows the line as drawn, not the great circle', () => {
+		// Due north-east on screen, even far north where metres per degree shrink.
+		const line: LngLatTuple[] = [
+			[0, 60],
+			[2, 60.9]
+		];
+		const heading = lineHeadingAt(line, 0.5);
+		expect(heading).toBeGreaterThan(0);
+		expect(heading).toBeLessThan(90);
+	});
+
+	test('is 0 for a line with no length', () => {
+		expect(lineHeadingAt([[5, 5]], 0.5)).toBe(0);
+		expect(
+			lineHeadingAt(
+				[
+					[5, 5],
+					[5, 5]
+				],
+				0.5
+			)
+		).toBe(0);
 	});
 });
 

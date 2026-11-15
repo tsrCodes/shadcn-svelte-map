@@ -40,6 +40,7 @@ export {
 	distanceMeters,
 	geometryCenter,
 	lineLength,
+	lineHeadingAt,
 	lineProgressAt,
 	pointInPolygon,
 	polygonArea,

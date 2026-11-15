@@ -163,6 +163,33 @@ export function lineProgressAt(line: LngLatTuple[], progress: number): number {
 	return Math.min(1, projectedLength(splitLine(line, share).done) / total);
 }
 
+function samePosition(a: LngLatTuple, b: LngLatTuple): boolean {
+	return a[0] === b[0] && a[1] === b[1];
+}
+
+/** Screen direction from `from` to `to` on a north-up map, in degrees clockwise from north. */
+function screenHeading(from: LngLatTuple, to: LngLatTuple): number {
+	const [ax, ay] = mercator(from);
+	const [bx, by] = mercator(to);
+	// Mercator y grows southwards, so north is -y.
+	const degrees = (Math.atan2(bx - ax, ay - by) * 180) / Math.PI;
+	return (degrees + 360) % 360;
+}
+
+/**
+ * Which way the line runs where `splitLine(line, progress)` splits it, in degrees
+ * clockwise from north. It follows the line as MapLibre draws it, so an icon rotated by
+ * it lines up with the route. 0 when the line has no length.
+ */
+export function lineHeadingAt(line: LngLatTuple[], progress: number): number {
+	if (line.length < 2) return 0;
+	const { done, rest, point } = splitLine(line, progress);
+	const ahead = rest.find((position) => !samePosition(position, point));
+	if (ahead) return screenHeading(point, ahead);
+	const behind = done.findLast((position) => !samePosition(position, point));
+	return behind ? screenHeading(behind, point) : 0;
+}
+
 /**
  * A curved line from `from` to `to`. At its middle it sits `curvature` times the
  * straight distance to the side. It crosses the antimeridian the short way, so the end

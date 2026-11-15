@@ -163,6 +163,23 @@ Splits a line at `progress`, from 0 to 1, of its length on the ground. `progress
 const { point } = splitLine(route, 0.4); // where the courier is now
 ```
 
+### lineHeadingAt
+
+```ts
+lineHeadingAt(line: LngLatTuple[], progress: number): number
+```
+
+Which way the line runs where `splitLine` splits it, in degrees clockwise from north. It follows the line as the map draws it, so an icon rotated by it lines up with the route. Repeated positions are skipped. Returns 0 for a line with no length.
+
+```svelte
+<MapMarker
+	lngLat={splitLine(route, 0.4).point}
+	aria-label="Courier"
+	rotation={lineHeadingAt(route, 0.4)}
+	rotationAlignment="map"
+/>
+```
+
 ### arcLine
 
 ```ts
