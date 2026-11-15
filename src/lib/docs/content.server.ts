@@ -92,6 +92,9 @@ export const DOC_PAGES: DocPage[] = DOCS_NAV.flatMap((section) =>
 		const raw = SOURCES[`/src/content/docs/${path}.md`];
 		if (raw === undefined) throw new Error(`Missing docs page src/content/docs/${path}.md`);
 		const { data, body } = parseFrontmatter(raw);
+		for (const key of ['title', 'description']) {
+			if (!data[key]) throw new Error(`Docs page src/content/docs/${path}.md needs a ${key}`);
+		}
 		const slug = toSlug(path);
 		return {
 			path,
