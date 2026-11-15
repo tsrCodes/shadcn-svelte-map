@@ -72,6 +72,17 @@ export type DocsNavSection = { title: string; pages: (DocLink & { keywords: stri
 export type Heading = { depth: number; title: string; id: string };
 
 /** The prerendered Open Graph image of a page: `/` → `/og/index.png`, `/docs/api` → `/og/docs-api.png`. */
+/**
+ * The absolute URL of a path on this site. Only root-relative paths are taken: a full
+ * or protocol-relative URL would put another origin in canonical and social links.
+ */
+export function siteUrl(path: string): string {
+	if (!path.startsWith('/') || path.startsWith('//')) {
+		throw new Error(`Expected a path starting with one "/", got "${path}"`);
+	}
+	return new URL(path, siteConfig.url).href;
+}
+
 export function ogImagePath(pathname: string): string {
 	const path = pathname.split(/[?#]/)[0];
 	const name = path.replace(/^\/|\/$/g, '').replaceAll('/', '-') || 'index';

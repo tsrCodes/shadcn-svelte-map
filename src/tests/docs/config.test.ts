@@ -1,9 +1,17 @@
 import { describe, expect, test } from 'vitest';
-import { ogImagePath } from '#lib/docs/config.js';
+import { ogImagePath, siteConfig, siteUrl } from '#lib/docs/config.js';
 import { codeFence } from '#lib/docs/markdown.js';
 import { DOC_PAGES, getHeadings, parseFrontmatter, toMarkdown } from '#lib/docs/content.server.js';
 
 describe('docs helpers', () => {
+	test('site URLs keep the site origin and refuse other origins', () => {
+		const origin = new URL(siteConfig.url).origin;
+		expect(new URL(siteUrl('/docs/map')).origin).toBe(origin);
+		expect(() => siteUrl('https://evil.example/x')).toThrow();
+		expect(() => siteUrl('//evil.example/x')).toThrow();
+		expect(() => siteUrl('docs/map')).toThrow();
+	});
+
 	test('Open Graph image names ignore query and hash', () => {
 		expect(ogImagePath('/')).toBe('/og/index.png');
 		expect(ogImagePath('/docs/components/marker')).toBe('/og/docs-components-marker.png');

@@ -2,7 +2,7 @@
 	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 	import ArrowRightIcon from '@lucide/svelte/icons/arrow-right';
 	import { Button } from '#lib/registry/ui/button/index.js';
-	import { siteConfig } from '#lib/docs/config.js';
+	import { siteUrl } from '#lib/docs/config.js';
 	import DocsCopyPage from '#lib/docs/components/docs-copy-page.svelte';
 	import DocsToc from '#lib/docs/components/docs-toc.svelte';
 	import Seo from '#lib/docs/components/seo.svelte';
@@ -13,7 +13,7 @@
 	const COPIED_MS = 2000;
 
 	const Content = $derived(data.content);
-	const absoluteUrl = $derived(new URL(data.url, siteConfig.url).href);
+	const absoluteUrl = $derived(siteUrl(data.url));
 
 	const resetTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
 

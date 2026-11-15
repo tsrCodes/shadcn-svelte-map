@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { installCommand, siteConfig } from '#lib/docs/config.js';
+import { installCommand, siteUrl } from '#lib/docs/config.js';
 import { aiPrompt } from '#lib/docs/ai-prompt.js';
 import { blockMarkdown, getBlockFiles } from '#lib/docs/blocks.server.js';
 import { BLOCKS, findBlock } from '../catalog.js';
@@ -13,7 +13,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	const files = await getBlockFiles(block.name);
 	if (files.length === 0) error(500, `Block "${block.name}" has no files`);
 	const install = installCommand(block.name);
-	const url = new URL(`/blocks/${block.name}`, siteConfig.url).href;
+	const url = siteUrl(`/blocks/${block.name}`);
 	return {
 		files,
 		install,

@@ -1,4 +1,4 @@
-import { siteConfig } from '#lib/docs/config.js';
+import { siteUrl } from '#lib/docs/config.js';
 import { DOC_PAGES } from '#lib/docs/content.server.js';
 import { BLOCKS } from '../blocks/catalog.js';
 import type { RequestHandler } from './$types';
@@ -24,9 +24,7 @@ export const GET: RequestHandler = () => {
 		'/blocks',
 		...BLOCKS.map((block) => `/blocks/${block.name}`)
 	];
-	const urls = pages.map(
-		(path) => `\t<url><loc>${escapeXml(new URL(path, siteConfig.url).href)}</loc></url>`
-	);
+	const urls = pages.map((path) => `\t<url><loc>${escapeXml(siteUrl(path))}</loc></url>`);
 	const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`;
 	return new Response(body, { headers: { 'Content-Type': 'application/xml' } });
 };

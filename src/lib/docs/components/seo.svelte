@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { siteConfig, ogImagePath } from '../config.js';
+	import { siteConfig, siteUrl, ogImagePath } from '../config.js';
 
 	/** `title` is the page title without the site name; omit it for the home page. */
 	let {
@@ -15,8 +15,8 @@
 	} = $props();
 
 	const fullTitle = $derived(title ? `${title} - ${siteConfig.name}` : siteConfig.name);
-	const url = $derived(new URL(pathname, siteConfig.url).href);
-	const image = $derived(new URL(ogImagePath(pathname), siteConfig.url).href);
+	const url = $derived(siteUrl(pathname));
+	const image = $derived(siteUrl(ogImagePath(pathname)));
 </script>
 
 <svelte:head>
