@@ -160,6 +160,30 @@ describe('MapGeoJSON', () => {
 		expect(onclick.mock.calls[0][0].properties.name).toBe('Square');
 	});
 
+	test('keyboard: picking a second shape out of view reports only that one', async () => {
+		const onclick = vi.fn();
+		const square = SQUARE.features[0];
+		const two: FeatureCollection = {
+			type: 'FeatureCollection',
+			features: [
+				{ ...square, properties: { name: 'First' } },
+				{ ...square, properties: { name: 'Second' } }
+			]
+		};
+		const { map, screen } = await mountData({ geojson: two, ongeojsonclick: onclick });
+		await layerReady(map, 'h-geo-fill');
+		map.jumpTo({ center: [150, -60], zoom: 6 });
+		await expect.poll(() => map.querySourceFeatures('h-geo').length).toBe(0);
+		const list = screen.container.querySelector<HTMLElement>('[data-slot="map-feature-list"]');
+		if (!list) throw new Error('feature list not found');
+
+		list.focus();
+		await userEvent.keyboard('{Enter}{ArrowDown}{Enter}');
+		await expect.poll(() => onclick.mock.calls.length, { timeout: 10_000 }).toBeGreaterThan(0);
+		await new Promise((resolve) => setTimeout(resolve, 300));
+		expect(onclick.mock.calls.map((call) => call[0].properties.name)).toEqual(['Second']);
+	});
+
 	test('a shape layer with no click or hover handler adds no keyboard list', async () => {
 		const { map, screen } = await mountData({ geojson: SQUARE });
 		await layerReady(map, 'h-geo-fill');

@@ -5,7 +5,8 @@
 		ExpressionSpecification,
 		FeatureIdentifier,
 		MapGeoJSONFeature,
-		MapMouseEvent
+		MapMouseEvent,
+		Subscription
 	} from 'maplibre-gl';
 	import type { GeoJSONData } from './layer-registry.js';
 	import { getMapContext } from './map-context.svelte.js';
@@ -221,7 +222,19 @@
 		setHovered(index === null ? null : renderedFeature(index));
 	}
 
+	/** A pick of a shape out of view, waiting for the map to settle. A newer pick replaces it. */
+	let pendingPick: Subscription | null = null;
+
+	function cancelPendingPick() {
+		pendingPick?.unsubscribe();
+		pendingPick = null;
+	}
+
+	// Unmounting drops a pick that is still waiting.
+	$effect(() => cancelPendingPick);
+
 	function selectFromList(index: number) {
+		cancelPendingPick();
 		const feature = renderedFeature(index);
 		if (feature) {
 			onclick?.(feature);
@@ -232,7 +245,8 @@
 		const map = ctx.map;
 		const id = listed[index]?.id;
 		if (!map || id === undefined || (!map.isMoving() && map.areTilesLoaded())) return;
-		map.once('idle', () => {
+		pendingPick = map.on('idle', () => {
+			cancelPendingPick();
 			const loaded = loadedFeature(id);
 			if (loaded) onclick?.(loaded);
 		});
